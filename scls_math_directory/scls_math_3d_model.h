@@ -1453,6 +1453,14 @@ namespace scls {
 
             return to_return;
         };
+        // Returns a face which make a simple polygon in 3D
+        static std::shared_ptr<Solid> polygon_3d(std::vector<std::shared_ptr<Point>> points) {
+            std::vector<Point> points_to_pass = std::vector<Point>();
+            for(int i = 0;i<static_cast<int>(points.size());i++) {
+                points_to_pass.push_back(*points[i].get());
+            }
+            return polygon_3d(points_to_pass);
+        };
 
         //*********
         //
