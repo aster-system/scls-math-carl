@@ -187,22 +187,29 @@ namespace scls {
 
         // Transform_Object_3D constructor
         Transform_Object_3D(){};
+        // Transform_Object_3D destructor
+        ~Transform_Object_3D(){if(a_parent.get() != 0) a_parent.get()->remove_child(this);};
 
         // Adds a children
-        void add_child(const std::shared_ptr<Transform_Object_3D>& children_to_add) {a_children.push_back(children_to_add);};
+        void add_child(Transform_Object_3D* children_to_add) {a_children.push_back(children_to_add);};
+        void add_child(const std::shared_ptr<Transform_Object_3D>& children_to_add) {a_children.push_back(children_to_add.get());};
         // Removes a children
-        void remove_child(const std::shared_ptr<Transform_Object_3D>& children_to_add){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i].get()==children_to_add.get())a_children.erase(a_children.begin()+i,a_children.begin()+i+1);}};
+        void remove_child(Transform_Object_3D* children_to_remove){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i]==children_to_remove)a_children.erase(a_children.begin()+i,a_children.begin()+i+1);}};
+        void remove_child(const std::shared_ptr<Transform_Object_3D>& children_to_remove){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i]==children_to_remove.get())a_children.erase(a_children.begin()+i,a_children.begin()+i+1);}};
 
         // Getters and setters
-        inline std::vector<std::shared_ptr<Transform_Object_3D>>& children() {return a_children;};
+        inline std::vector<Transform_Object_3D*>& children() {return a_children;};
         inline unsigned int id() const {return a_id;};
         inline Transform_Object_3D* parent() const {return a_parent.get();};
         inline void set_parent(const std::shared_ptr<Transform_Object_3D>& new_parent) {
+            if(a_parent.get() != 0) a_parent.get()->remove_child(this);
             a_parent = new_parent;
+            a_parent.get()->add_child(this);
             update_vectors();
         };
         inline void set_parent(std::shared_ptr<Transform_Object_3D>* new_parent) {
             if(new_parent==0) {
+                if(a_parent.get() != 0) a_parent.get()->remove_child(this);
                 a_parent.reset();
                 update_vectors();
             }
@@ -274,6 +281,8 @@ namespace scls {
         // Returns the Z of the top vector of the object
         inline double top_vector_z() const {return a_top_vector_z;};
 
+        // Update the real local position of the children
+        void update_children_real_local_position() {for(int i = 0;i<static_cast<int>(children().size());i++) children()[i]->update_real_local_position();};
         // Update the real local position of the object
         void update_real_local_position() {
             // Calculate the real local parent position
@@ -294,6 +303,7 @@ namespace scls {
                 a_real_local_parent_y = y();
                 a_real_local_parent_z = z();
             }
+            update_children_real_local_position();
         }
 
         // Update the rotation of the object
@@ -333,7 +343,7 @@ namespace scls {
 
             // Update children
             for(int i = 0;i<static_cast<int>(children().size());i++) {
-                children()[i].get()->update_vectors();
+                children()[i]->update_vectors();
             }
         }
 
@@ -431,7 +441,7 @@ namespace scls {
         //*********
 
         // Children of the object
-        std::vector<std::shared_ptr<Transform_Object_3D>> a_children;
+        std::vector<Transform_Object_3D*> a_children = std::vector<Transform_Object_3D*>();
         // Parent of the object
         std::shared_ptr<Transform_Object_3D> a_parent;
 

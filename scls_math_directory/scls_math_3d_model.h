@@ -38,24 +38,6 @@ namespace scls {
         //
         //*********
 
-        // Returns the arguments for the shader
-        static std::shared_ptr<Bytes_Set> __shader_arguments() {
-            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
-
-            // Add the needed shaders argument
-            to_return.get()->add_data(4);
-            to_return.get()->add_ushort(0x1406, true);
-            to_return.get()->add_ushort(3, true);
-            to_return.get()->add_ushort(0x1406, true);
-            to_return.get()->add_ushort(2, true);
-            to_return.get()->add_ushort(0x1406, true);
-            to_return.get()->add_ushort(4, true);
-            to_return.get()->add_ushort(0x1406, true);
-            to_return.get()->add_ushort(3, true);
-
-            return to_return;
-        }
-
         struct __Point_Datas_By_Face {
             // Datas of a point according to a face
 
@@ -918,6 +900,34 @@ namespace scls {
             //
             //*********
 
+            // Returns the arguments for the shader
+            static std::shared_ptr<Bytes_Set> __shader_arguments(Point::_VBO_Types vbo_type = Point::_VT_Normal) {
+                std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
+
+                if(vbo_type == Point::_VT_Normal) {
+                    // Add the needed shaders argument
+                    to_return.get()->add_data(4);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(3, true);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(2, true);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(4, true);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(3, true);
+                }
+                else if(vbo_type == Point::_VT_Map) {
+                    // Add the needed shaders argument
+                    to_return.get()->add_data(2);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(3, true);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(2, true);
+                }
+
+                return to_return;
+            }
+
             // Returns the solid as binary
             std::shared_ptr<Bytes_Set> binary() {
                 std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
@@ -999,7 +1009,7 @@ namespace scls {
             }
             // Returns the solid as binary a complete VBO
             std::shared_ptr<Bytes_Set> binary_vbo_complete(Point::_VBO_Types vbo_type = Point::_VT_Normal) {
-                std::shared_ptr<Bytes_Set> to_return = __shader_arguments();
+                std::shared_ptr<Bytes_Set> to_return = __shader_arguments(vbo_type);
 
                 // Add each points
                 unsigned int total_points = 0;
@@ -1258,7 +1268,7 @@ namespace scls {
             };
             // Returns the solid as binary VBO
             std::shared_ptr<Bytes_Set> binary_vbo(Point::_VBO_Types vbo_type = Point::_VT_Normal) {
-                std::shared_ptr<Bytes_Set> to_return = __shader_arguments();
+                std::shared_ptr<Bytes_Set> to_return = Solid::__shader_arguments(vbo_type);
 
                 // Add each points
                 unsigned int cursor_position = 0;
@@ -1271,21 +1281,6 @@ namespace scls {
 
                 return to_return;
             };
-            // Loads the solid group from binary
-            static std::shared_ptr<Solid_Group> load_from_binary(std::shared_ptr<Bytes_Set>& file_content) {
-                // Loader for the model
-                std::shared_ptr<__Model_Loader> loader = __model_loader_filled(file_content);
-                std::shared_ptr<Solid_Group> to_return = std::make_shared<Solid_Group>();
-
-                // Create each solid
-                for(std::map<unsigned int, __Model_Loader::Solid_For_Loading>::iterator it = loader.get()->solids().begin();it!=loader.get()->solids().end();it++) {
-                    std::shared_ptr<Solid> current_solid = Solid::__load_from_loader(it->first, it->second, loader);
-                    to_return.get()->add_solid(current_solid);
-                }
-
-                return to_return;
-            };
-            static std::shared_ptr<Solid_Group> load_from_binary(std::string file_path){std::shared_ptr<Bytes_Set> bytes = std::make_shared<Bytes_Set>();bytes.get()->load_from_file(file_path);return load_from_binary(bytes);};;
 
             // Getters
             inline std::shared_ptr<Transform_Object_3D> &attached_transformation() {return a_attached_transformation;};
@@ -1304,6 +1299,22 @@ namespace scls {
             // Transformation of the group
             std::shared_ptr<Transform_Object_3D> a_attached_transformation = std::make_shared<Transform_Object_3D>();
         };
+
+        // Loads the solid group from binary
+        static std::shared_ptr<Solid_Group> load_solid_group_from_binary(std::shared_ptr<Bytes_Set>& file_content) {
+            // Loader for the model
+            std::shared_ptr<__Model_Loader> loader = __model_loader_filled(file_content);
+            std::shared_ptr<Solid_Group> to_return = std::make_shared<Solid_Group>();
+
+            // Create each solid
+            for(std::map<unsigned int, __Model_Loader::Solid_For_Loading>::iterator it = loader.get()->solids().begin();it!=loader.get()->solids().end();it++) {
+                std::shared_ptr<Solid> current_solid = Solid::__load_from_loader(it->first, it->second, loader);
+                to_return.get()->add_solid(current_solid);
+            }
+
+            return to_return;
+        };
+        static std::shared_ptr<Solid_Group> load_solid_group_from_binary(std::string file_path){std::shared_ptr<Bytes_Set> bytes = std::make_shared<Bytes_Set>();bytes.get()->load_from_file(file_path);return load_solid_group_from_binary(bytes);};
 
         //*********
         //
@@ -1326,6 +1337,70 @@ namespace scls {
             double size_x = 0;
             // Size of the Z axis
             double size_z = 0;
+        };
+        // Loads a polygon from binary
+        inline std::shared_ptr<Polygon> load_polygon_binary(std::shared_ptr<Bytes_Set> binary) {
+            std::shared_ptr<Polygon> loaded_polygon = std::make_shared<Polygon>();
+
+            // Get basics datas
+            unsigned int current_position = 0;
+            loaded_polygon.get()->size_x = binary.get()->extract_double(current_position); current_position += 8;
+            loaded_polygon.get()->size_z = binary.get()->extract_double(current_position); current_position += 8;
+            loaded_polygon.get()->min_x = binary.get()->extract_double(current_position); current_position += 8;
+            loaded_polygon.get()->max_x = binary.get()->extract_double(current_position); current_position += 8;
+            loaded_polygon.get()->min_z = binary.get()->extract_double(current_position); current_position += 8;
+            loaded_polygon.get()->max_z = binary.get()->extract_double(current_position); current_position += 8;
+            // Get the points
+            unsigned int point_number = binary.get()->extract_uint(current_position, true); current_position += 4;
+            for(unsigned int i = 0;i<point_number;i++) {
+                // Get the data of the point
+                Point point_to_add = Point();
+                unsigned int current_id = binary.get()->extract_uint(current_position, true); current_position += 4;
+                // Get the position of the point
+                point_to_add.set_x(binary.get()->extract_double(current_position, true)); current_position += 8;
+                point_to_add.set_y(binary.get()->extract_double(current_position, true)); current_position += 8;
+                point_to_add.set_z(binary.get()->extract_double(current_position, true)); current_position += 8;
+                unsigned int parent_id = binary.get()->extract_uint(current_position, true); current_position += 4;
+                // Get each datas of the face
+                unsigned int attribute_size = binary.get()->extract_uint(current_position, true); current_position += 4;
+                for(unsigned int j = 0;j<attribute_size;j++) {
+                    unsigned int attribute_number = binary.get()->extract_uint(current_position, true); current_position += 4;
+                    double attribute_value = binary.get()->extract_double(current_position, true); current_position += 8;
+                    point_to_add.set_attribute(attribute_number, attribute_value);
+                }
+                loaded_polygon.get()->points.push_back(point_to_add);
+            }
+
+            return loaded_polygon;
+        };
+        // Returns a polygon in binary
+        inline std::shared_ptr<Bytes_Set> polygon_binary(std::string path, Polygon* polygon_to_save) {
+            unsigned int polygon_size = 52;
+
+            // Get each points to save
+            std::vector<std::shared_ptr<Bytes_Set>> points_datas = std::vector<std::shared_ptr<Bytes_Set>>();
+            for(int i = 0;i<static_cast<int>(polygon_to_save->points.size());i++) {
+                std::shared_ptr<Bytes_Set> point_binary = polygon_to_save->points[i].binary();
+                points_datas.push_back(point_binary);
+                polygon_size += point_binary.get()->datas_size();
+            }
+
+            // Create the set to return
+            unsigned int current_position = 0;
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>(polygon_size);
+            to_return.get()->put_double(polygon_to_save->size_x, current_position); current_position += 8;
+            to_return.get()->put_double(polygon_to_save->size_z, current_position); current_position += 8;
+            to_return.get()->put_double(polygon_to_save->min_x, current_position); current_position += 8;
+            to_return.get()->put_double(polygon_to_save->max_x, current_position); current_position += 8;
+            to_return.get()->put_double(polygon_to_save->min_z, current_position); current_position += 8;
+            to_return.get()->put_double(polygon_to_save->max_z, current_position); current_position += 8;
+            // Save the points
+            to_return.get()->put_uint(points_datas.size(), current_position, true); current_position += 4;
+            for(int i = 0;i<static_cast<int>(points_datas.size());i++) {
+                to_return.get()->put_datas(points_datas[i].get(), current_position); current_position += points_datas[i].get()->datas_size();
+            }
+
+            return to_return;
         };
 
         // Returns a face which make a simple polygon
@@ -1453,6 +1528,8 @@ namespace scls {
 
             return to_return;
         };
+        // Returns a face which make a simple polygon in 3D
+        static std::shared_ptr<Solid> polygon_3d(std::shared_ptr<Polygon> points) {return polygon_3d(points.get()->points);};
         // Returns a face which make a simple polygon in 3D
         static std::shared_ptr<Solid> polygon_3d(std::vector<std::shared_ptr<Point>> points) {
             std::vector<Point> points_to_pass = std::vector<Point>();
@@ -1646,8 +1723,8 @@ namespace scls {
                     std::shared_ptr<Face> current_face = regular_polygon(4);
                     current_face.get()->set_scale(face_width, 1, face_height);
                     current_face.get()->set_parent(to_return);
-                    current_face.get()->set_x(current_x);
-                    current_face.get()->set_z(current_z);
+                    current_face.get()->set_x(current_x + face_width / 2.0);
+                    current_face.get()->set_z(current_z + face_height / 2.0);
                     to_return.get()->faces().push_back(current_face); to_return.get()->add_child(current_face);
 
                     // Change the points
