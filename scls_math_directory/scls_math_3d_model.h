@@ -219,6 +219,105 @@ namespace scls {
         //
         //*********
 
+        // Returns the datas point of two crossing lines
+        struct __Crossing_Datas {bool crossed = false;double crossing_x = 0;double crossing_y = 0;};
+        static __Crossing_Datas __check_crossing(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y) {
+            __Crossing_Datas to_return;
+
+            // Get the carthesian coordonates of the given points
+            // Get some basic informations
+            double base_x = (second_point_x - first_point_x);
+            double base_y = (second_point_y - first_point_y);
+            double line_ratio = base_x / base_y;
+            double min_y = second_point_y; double max_y = first_point_y;
+            if(min_y > max_y) {min_y = first_point_y; max_y = second_point_y;}
+            // Get the carthesian coordonates
+            double a_part = base_y;
+            double b_part = -base_x;
+            double c_part = -(a_part * first_point_x + b_part * first_point_y);
+
+            // Check the second sides with carthesian coordonates
+            // Get the carthesian coordonates
+            double current_base_x = (fourth_point_x - third_point_x);
+            double current_base_y = (fourth_point_y - third_point_y);
+            double current_line_ratio = current_base_x / current_base_y;
+            // Check the value
+            if(current_line_ratio != line_ratio) {
+                to_return.crossed = true;
+                if(current_base_y == 0) {
+                    // Constant X
+                    to_return.crossing_y = third_point_y;
+                }
+                else if(current_base_x == 0) {
+                    // Constant Y
+                    to_return.crossing_y = ((a_part * third_point_x) + c_part) / (-b_part);
+                }
+                else {
+                    // Get the carthesian coordonates
+                    double current_a_part = current_base_y;
+                    double current_b_part = -current_base_x;
+                    double current_c_part = -(current_a_part * third_point_x + current_b_part * third_point_y);
+                    // Resolve the equation for the intersection point
+                    to_return.crossing_y = (-current_a_part * c_part) + (a_part * current_c_part);
+                    to_return.crossing_y /= (current_a_part * b_part) - (a_part * current_b_part);
+                }
+            }
+
+            return to_return;
+        };
+        static __Crossing_Datas __check_crossing(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point) {
+            return __check_crossing(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z());
+        };
+        // Returns the datas point of two crossing segments
+        struct __Crossing_Datas_Segment {bool crossed_in_segment = false;__Crossing_Datas crossing_datas;};
+        static __Crossing_Datas_Segment __check_crossing_segment(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point) {
+            // Get Y about the first segment
+            double min_y = second_point->z(); double max_y = first_point->z();
+            if(min_y > max_y) {min_y = first_point->z(); max_y = second_point->z();}
+
+            // Get Y about the second segment
+            double current_min_y = fourth_point->z(); double current_max_y = third_point->z();
+            if(current_min_y > current_max_y) {current_min_y = third_point->z(); current_max_y = fourth_point->z();}
+
+            // Get the crossing datas
+            __Crossing_Datas_Segment datas;
+            datas.crossing_datas = __check_crossing(first_point, second_point, third_point, fourth_point);
+            if(datas.crossing_datas.crossing_y - min_y > 0.0001 && max_y - datas.crossing_datas.crossing_y > 0.0001 &&
+               datas.crossing_datas.crossing_y - current_min_y > 0.0001 && current_max_y - datas.crossing_datas.crossing_y > 0.0001) datas.crossed_in_segment = true;
+
+            return datas;
+        };
+        // Returns if a point is in a set of point
+        static bool __check_shape_content(const std::vector<std::shared_ptr<Point>>& points, double point_to_test_x, double point_to_test_y) {
+            // Check each sides
+            unsigned int top_collision = 0;
+            for(int i = 0;i<static_cast<int>(points.size() - 1);i++) {
+                // Get Y about the second segment
+                double current_min_y = points.at(i).get()->z(); double current_max_y = points.at(i + 1).get()->z();
+                if(current_min_y > current_max_y) {current_min_y = points.at(i + 1).get()->z(); current_max_y = points.at(i).get()->z();}
+
+                // Check each sides with carthesian coordonates
+                __Crossing_Datas datas = __check_crossing(point_to_test_x, point_to_test_y, point_to_test_x, point_to_test_y + 1.0, points.at(i).get()->x(), points.at(i).get()->z(), points.at(i + 1).get()->x(), points.at(i + 1).get()->z());
+                if(datas.crossed && current_max_y - datas.crossing_y > 0.0001 && datas.crossing_y - current_min_y > 0.0001) {
+                    if(datas.crossing_y > point_to_test_y) top_collision++;
+                }
+            }
+            return top_collision % 2 == 1;
+        };
+        static bool __check_shape_content(const std::vector<std::shared_ptr<Point>>& points, Point* point_to_test) {return __check_shape_content(points, point_to_test->x(), point_to_test->z());};
+        static bool __check_shape_content(const std::vector<std::shared_ptr<Point>>& points, std::shared_ptr<Point> point_to_test) {return __check_shape_content(points, point_to_test.get());};
+
+        // Returns if a side of points cross the boundary of a set of points or not
+        static bool __cross_boundary(const std::vector<std::shared_ptr<Point>>& points, std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point) {
+            // Check each sides
+            for(int i = 0;i<static_cast<int>(points.size() - 1);i++) {
+                // Check each sides with carthesian coordonates
+                __Crossing_Datas_Segment datas = __check_crossing_segment(first_point.get(), second_point.get(), points.at(i).get(), points.at(i + 1).get());
+                if(datas.crossed_in_segment) return true;
+            }
+            return false;
+        }
+
         struct __Face_Datas_By_Solid {
             // Datas of a point according to a face
 
@@ -378,6 +477,7 @@ namespace scls {
             static int a_faces_number;
 
             // Getters and setters
+            inline std::vector<std::shared_ptr<Point>>& exclusion_points() {if(a_exclusion_points.size() <= 0) a_exclusion_points.push_back(std::vector<std::shared_ptr<Point>>()); return a_exclusion_points[0];};
             inline std::vector<std::shared_ptr<Point>>& points() {return a_points;};
             inline std::vector<unsigned int>& points_for_rendering() {return a_points_for_rendering;};
 
@@ -418,8 +518,46 @@ namespace scls {
                 }
             };
 
+            // Returns if a side of points cross the boundary or not
+            bool cross_boundary(std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point) {return __cross_boundary(points(), first_point, second_point);}
+            // Do a triangulation of the face
+            void triangulate() {
+                points_for_rendering().clear();
+
+                // Trace each triangles
+                unsigned int current_i = 0;
+                unsigned int erase_offset = 0;
+                std::vector<std::shared_ptr<model_maker::Point>> point_copy = points();
+                for(int i = 0;i<static_cast<int>(point_copy.size());i++) {
+                    if(point_copy[i].get() == 0) {point_copy.erase((point_copy.begin() + i) - erase_offset);erase_offset++;}
+                    else point_copy[i].get()->set_attribute(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR, i);
+                }
+                // Check each points
+                while(point_copy.size() > 3) {
+                    // Get the point to test
+                    std::shared_ptr<model_maker::Point> current_point = point_copy[current_i];
+                    std::shared_ptr<model_maker::Point> current_point_1 = point_copy[current_i + 1];
+                    std::shared_ptr<model_maker::Point> current_point_2 = point_copy[current_i + 2];
+
+                    // Check if the out points are in the triangle
+                    bool in_shape = __check_shape_content(point_copy, (current_point_2.get()->x() + current_point.get()->x()) / 2.0, (current_point_2.get()->z() + current_point.get()->z()) / 2.0);
+                    if(__cross_boundary(point_copy, current_point, current_point_2) || !in_shape) {
+                        current_i++;
+                        continue;
+                    }
+                    point_copy.erase(point_copy.begin() + current_i + 1);
+                    points_for_rendering().push_back(current_point.get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
+                    points_for_rendering().push_back(current_point_1.get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
+                    points_for_rendering().push_back(current_point_2.get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
+                    current_i = 0;
+                }
+                // Trace the last triangle
+                points_for_rendering().push_back(point_copy[0].get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
+                points_for_rendering().push_back(point_copy[1].get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
+                points_for_rendering().push_back(point_copy[2].get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
+            }
             // Do a convex triangulation of the face
-            void convex_triangulation() {
+            void triangulate_convex() {
                 // Add each points for rendering
                 points_for_rendering().clear();
                 for(unsigned short i = 0;i<points().size() - 2;i++) {
@@ -482,6 +620,8 @@ namespace scls {
             //
             //*********
 
+            // Each exclusion points in the face
+            std::vector<std::vector<std::shared_ptr<Point>>> a_exclusion_points = std::vector<std::vector<std::shared_ptr<Point>>>();
             // Each points in the face
             std::vector<std::shared_ptr<Point>> a_points = std::vector<std::shared_ptr<Point>>();
             // Each points position in the face for rendering
@@ -1424,6 +1564,8 @@ namespace scls {
         //*********
 
         struct Polygon {
+            // Each exclusion points in the polygon
+            std::vector<std::vector<Point>> exclusion_points = std::vector<std::vector<Point>>();
             // Maximum of the X axis
             double max_x = 0;
             // Maximum of the Z axis
@@ -1533,7 +1675,7 @@ namespace scls {
 
                 to_return.get()->points().push_back(to_add);
             }
-            to_return.get()->convex_triangulation();
+            to_return.get()->triangulate();
 
             return to_return;
         };
@@ -1665,7 +1807,7 @@ namespace scls {
 
                 to_return.get()->points().push_back(to_add);
             }
-            to_return.get()->convex_triangulation();
+            to_return.get()->triangulate_convex();
 
             return to_return;
         };
