@@ -27,6 +27,8 @@
 #ifndef SCLS_MATH_3D_MODEL
 #define SCLS_MATH_3D_MODEL
 
+#define SCLS_MATH_TOLERANCE 0.00000001
+
 #include "scls_math_3d_core.h"
 
 // The namespace "scls" is used to simplify the all.
@@ -220,7 +222,7 @@ namespace scls {
         //*********
 
         // Returns the datas point of two crossing lines
-        struct __Crossing_Datas {bool crossed = false;double crossing_x = 0;double crossing_y = 0;};
+        struct __Crossing_Datas {bool crossed = false;double crossing_x = 0;double crossing_y = 0;bool same_lines = false;};
         static __Crossing_Datas __check_crossing(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y) {
             __Crossing_Datas to_return;
 
@@ -241,15 +243,21 @@ namespace scls {
             double current_line_ratio = current_base_x / current_base_y;
             // Check the value
             if(current_base_y == 0) {
-                if(base_y != 0) {
-                    // Constant X line
+                if(base_y > 0) {
+                    // Constant horizontal line
                     to_return.crossed = true;
                     to_return.crossing_x = ((b_part * third_point_y) + c_part) / (-a_part);
                     to_return.crossing_y = third_point_y;
                 }
+                else if(abs(first_point_y - third_point_y) < SCLS_MATH_TOLERANCE) {
+                    // Same constant horizontal
+                    to_return.crossed = true;
+                    to_return.crossing_x = third_point_y;
+                    to_return.same_lines = true;
+                }
             }
             else if(base_y == 0) {
-                // Constant X line
+                // Constant horizontal line
                 to_return.crossed = true;
                 // Get the carthesian coordonates
                 double current_a_part = current_base_y;
@@ -260,14 +268,20 @@ namespace scls {
             }
             else if(current_base_x == 0) {
                 if(base_x != 0) {
-                    // Constant Y
+                    // Constant vertical
                     to_return.crossed = true;
                     to_return.crossing_x = third_point_x;
                     to_return.crossing_y = ((a_part * third_point_x) + c_part) / (-b_part);
                 }
+                else if(abs(first_point_x - third_point_x) < SCLS_MATH_TOLERANCE) {
+                    // Same constant vertical
+                    to_return.crossed = true;
+                    to_return.crossing_x = third_point_x;
+                    to_return.same_lines = true;
+                }
             }
             else if(base_x == 0) {
-                // Constant Y line
+                // Constant vertical line
                 to_return.crossed = true;
                 // Get the carthesian coordonates
                 double current_a_part = current_base_y;
@@ -294,81 +308,109 @@ namespace scls {
         };
         // Returns the datas point of two crossing segments
         struct __Crossing_Datas_Segment {bool crossed_in_segment = false;__Crossing_Datas crossing_datas;};
-        static __Crossing_Datas_Segment __check_crossing_segment(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point) {
+        static __Crossing_Datas_Segment __check_crossing_segment(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {
             // Get Y about the first segment
-            double min_y = second_point->z(); double max_y = first_point->z();
-            if(min_y > max_y) {min_y = first_point->z(); max_y = second_point->z();}
+            double min_y = second_point_y; double max_y = first_point_y;
+            if(min_y > max_y) {min_y = first_point_y; max_y = second_point_y;}
+            // Get X about the first segment
+            double min_x = second_point_x; double max_x = first_point_x;
+            if(min_x > max_x) {min_x = first_point_x; max_x = second_point_x;}
 
             // Get Y about the second segment
-            double current_min_y = fourth_point->z(); double current_max_y = third_point->z();
-            if(current_min_y > current_max_y) {current_min_y = third_point->z(); current_max_y = fourth_point->z();}
+            double current_min_y = fourth_point_y; double current_max_y = third_point_y;
+            if(current_min_y > current_max_y) {current_min_y = third_point_y; current_max_y = fourth_point_y;}
+            // Get X about the second segment
+            double current_min_x = fourth_point_x; double current_max_x = third_point_x;
+            if(current_min_x > current_max_x) {current_min_x = third_point_x; current_max_x = fourth_point_x;}
 
             // Get the crossing datas
             __Crossing_Datas_Segment datas;
-            datas.crossing_datas = __check_crossing(first_point, second_point, third_point, fourth_point);
-            if(datas.crossing_datas.crossing_y - min_y > 0.0001 && max_y - datas.crossing_datas.crossing_y > 0.0001 &&
-               datas.crossing_datas.crossing_y - current_min_y > 0.0001 && current_max_y - datas.crossing_datas.crossing_y > 0.0001) datas.crossed_in_segment = true;
-
-            return datas;
-        };
-        // Check if a point is in a segment
-        static bool __check_point_in_segment(__Crossing_Datas& datas, double point_to_test_x, double point_to_test_y, double point_1_segment_x, double point_1_segment_y, double point_2_segment_x, double point_2_segment_y) {
-            // Get X about the second segment
-            double current_min_x = point_2_segment_x; double current_max_x = point_1_segment_x;
-            if(current_min_x > current_max_x) {current_min_x = point_1_segment_x; current_max_x = point_2_segment_x;}
-            // Get Y about the second segment
-            double current_min_y = point_2_segment_y; double current_max_y = point_1_segment_y;
-            if(current_min_y > current_max_y) {current_min_y = point_1_segment_y; current_max_y = point_2_segment_y;}
-
-            // Check each sides with carthesian coordonates
-            datas = __check_crossing(point_to_test_x, point_to_test_y, point_to_test_x, point_to_test_y + 1.0, point_1_segment_x, point_1_segment_y, point_2_segment_x, point_2_segment_y);
-            double tolerance = 0.0001;
-            if(datas.crossed) {
-                if(current_min_y == current_max_y && current_max_x - datas.crossing_x > tolerance && datas.crossing_x - current_min_x > tolerance) {
-                    // For horizontals lines
-                    return true;
+            datas.crossing_datas = __check_crossing(first_point_x, first_point_y, second_point_x, second_point_y, third_point_x, third_point_y, fourth_point_x, fourth_point_y);
+            //print("Informations type 1", "Math", std::to_string(current_min_y) + " < " + std::to_string(current_max_y) + " & " + std::to_string(min_y) + " < " + std::to_string(max_y) + " -> " + std::to_string(datas.crossing_datas.crossing_y));
+            bool on_first_segment = false;
+            bool on_second_segment = false;
+            // Check the segments
+            if(datas.crossing_datas.crossed) {
+                if(current_max_y - current_min_y < SCLS_MATH_TOLERANCE) {
+                    // Horizontal lines
+                    if(datas.crossing_datas.crossing_x - current_min_x >= 0 && current_max_x - datas.crossing_datas.crossing_x >= 0) on_first_segment = true;
+                    if(datas.crossing_datas.crossing_y - min_y >= 0 && max_y - datas.crossing_datas.crossing_y >= 0) on_second_segment = true;
                 }
-                else if(current_min_x == current_max_x && datas.crossing_x == current_max_x) {
-                    // For verticals lines
-                    return true;
+                else if(max_y - min_y < SCLS_MATH_TOLERANCE) {
+                    // Horizontal lines
+                    if(datas.crossing_datas.crossing_y - current_min_y >= 0 && current_max_y - datas.crossing_datas.crossing_y >= 0) on_first_segment = true;
+                    if(datas.crossing_datas.crossing_x - min_x >= 0 && max_x - datas.crossing_datas.crossing_x >= 0) on_second_segment = true;
                 }
-                else if(current_max_y - datas.crossing_y > tolerance && datas.crossing_y - current_min_y > tolerance) {
-                    // For others lines
-                    return true;
+                else {
+                    // No horizontal lines
+                    if(datas.crossing_datas.crossing_y - current_min_y >= 0 && current_max_y - datas.crossing_datas.crossing_y >= 0) on_first_segment = true;
+                    if(datas.crossing_datas.crossing_y - min_y >= 0 && max_y - datas.crossing_datas.crossing_y >= 0) on_second_segment = true;
                 }
             }
-            return false;
+
+            datas.crossed_in_segment = (on_first_segment || !check_third_and_fourth_point) && (on_second_segment || !check_first_and_second_point);
+            return datas;
+        };
+        static __Crossing_Datas_Segment __check_crossing_segment(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {
+            return __check_crossing_segment(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z(), check_first_and_second_point, check_third_and_fourth_point);
+        };
+        static __Crossing_Datas_Segment __check_crossing_segment(const std::shared_ptr<Point>& first_point, const std::shared_ptr<Point>& second_point, const std::shared_ptr<Point>& third_point, const std::shared_ptr<Point>& fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {
+            return __check_crossing_segment(first_point.get(), second_point.get(), third_point.get(), fourth_point.get(), check_first_and_second_point, check_third_and_fourth_point);
         };
         // Returns if a point is in a set of point
-        static bool __check_shape_content(const std::vector<std::shared_ptr<Point>>& points, double point_to_test_x, double point_to_test_y) {
+        static bool __check_shape_content(const std::vector<std::shared_ptr<Point>>& points, double point_to_test_x, double point_to_test_y, bool last_point_is_first_point = true) {
             // Check each sides
-            __Crossing_Datas datas;
+            __Crossing_Datas_Segment datas;
             unsigned int top_collision = 0;
             for(int i = 0;i<static_cast<int>(points.size() - 1);i++) {
-                if(__check_point_in_segment(datas, point_to_test_x, point_to_test_y, points.at(i).get()->x(), points.at(i).get()->z(), points.at(i + 1).get()->x(), points.at(i + 1).get()->z())) {
-                    if(datas.crossing_y >= point_to_test_y) top_collision++;
+                datas = __check_crossing_segment(point_to_test_x, point_to_test_y, point_to_test_x, point_to_test_y + 1.0, points.at(i).get()->x(), points.at(i).get()->z(), points.at(i + 1).get()->x(), points.at(i + 1).get()->z(), false, true);
+                if(datas.crossed_in_segment) {
+                    if(datas.crossing_datas.crossing_y >= point_to_test_y) top_collision++;
                 }
             }
             // Check the last border
-            if(static_cast<int>(points.size()) > 2) {
-                if(__check_point_in_segment(datas, point_to_test_x, point_to_test_y, points[points.size() - 1].get()->x(), points[points.size() - 1].get()->z(), points[0].get()->x(), points[0].get()->z())) {
-                    if(datas.crossing_y >= point_to_test_y) top_collision++;
+            if(last_point_is_first_point && static_cast<int>(points.size()) > 1) {
+                datas = __check_crossing_segment(point_to_test_x, point_to_test_y, point_to_test_x, point_to_test_y + 1.0, points[points.size() - 1].get()->x(), points[points.size() - 1].get()->z(), points[0].get()->x(), points[0].get()->z(), false, true);
+                if(datas.crossed_in_segment) {
+                    if(datas.crossing_datas.crossing_y >= point_to_test_y) top_collision++;
                 }
             }
             return top_collision % 2 == 1;
         };
         static bool __check_shape_content(const std::vector<std::shared_ptr<Point>>& points, Point* point_to_test) {return __check_shape_content(points, point_to_test->x(), point_to_test->z());};
         static bool __check_shape_content(const std::vector<std::shared_ptr<Point>>& points, std::shared_ptr<Point> point_to_test) {return __check_shape_content(points, point_to_test.get());};
+        // Check if two triangles are opposed to their sharing side or not
+        static bool __check_triangle_opposed(const Point* first_point, const Point* second_point, const Point* first_top, const Point* second_top) {
+            // Get the crossing datas
+            __Crossing_Datas_Segment datas = __check_crossing_segment(first_point, second_point, first_top, second_top, true, false);
+            return datas.crossed_in_segment;
+        };
+        static bool __check_triangle_opposed(const std::shared_ptr<Point>& first_point, const std::shared_ptr<Point>& second_point, const std::shared_ptr<Point>& third_point, const std::shared_ptr<Point>& fourth_point) {
+            return __check_triangle_opposed(first_point.get(), second_point.get(), third_point.get(), fourth_point.get());
+        };
 
         // Returns if a side of points cross the boundary of a set of points or not
-        static bool __cross_boundary(const std::vector<std::shared_ptr<Point>>& points, std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point) {
+        static bool __cross_boundary(const std::vector<std::shared_ptr<Point>>& points, std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point, bool last_point_is_first_point = true) {
             // Check each sides
             for(int i = 0;i<static_cast<int>(points.size() - 1);i++) {
-                // Check each sides with carthesian coordonates
-                __Crossing_Datas_Segment datas = __check_crossing_segment(first_point.get(), second_point.get(), points.at(i).get(), points.at(i + 1).get());
-                if(datas.crossed_in_segment) return true;
+                if(first_point.get() == points.at(i).get() && second_point.get() == points.at(i + 1).get()) { return true; }
+                else if(first_point.get() == points.at(i + 1).get() && second_point.get() == points.at(i).get()) { return true; }
+                else if(first_point.get() != points.at(i).get() && first_point.get() != points.at(i + 1).get() && second_point.get() != points.at(i).get() && second_point.get() != points.at(i + 1).get()) {
+                    // Check each sides with carthesian coordonates
+                    //print("Informations type 0", "Math", std::to_string(i));
+                    __Crossing_Datas_Segment datas = __check_crossing_segment(first_point.get(), second_point.get(), points.at(i).get(), points.at(i + 1).get());
+                    if(datas.crossed_in_segment) return true;
+                }
             }
-            if(static_cast<int>(points.size()) > 1 && __check_crossing_segment(first_point.get(), second_point.get(), points.at(points.size() - 1).get(), points.at(0).get()).crossed_in_segment) return true;
+            // Check the last points
+            if(last_point_is_first_point && static_cast<int>(points.size()) > 1) {
+                if(first_point.get() == points.at(points.size() - 1).get() && second_point.get() == points.at(0).get()) { return true; }
+                else if(first_point.get() == points.at(0).get() && second_point.get() == points.at(points.size() - 1).get()) { return true; }
+                else if(first_point.get() != points.at(0).get() && first_point.get() != points.at(points.size() - 1).get() && second_point.get() != points.at(0).get() && second_point.get() != points.at(points.size() - 1).get()) {
+                    //print("Informations type Final", "Math", "Final");
+                    if(__check_crossing_segment(first_point.get(), second_point.get(), points.at(points.size() - 1).get(), points.at(0).get()).crossed_in_segment) return true;
+                }
+            }
             return false;
         }
 
@@ -405,7 +447,7 @@ namespace scls {
             //*********
 
             // Face constructor
-            Face() : Transform_Object_3D() { a_id = a_faces_number; a_faces_number++; };
+            Face() : Transform_Object_3D() { a_id = a_faces_number; a_faces_number++; set_can_print(false); };
 
             // Returns the face as a binary
             std::shared_ptr<Bytes_Set> binary() {
@@ -464,7 +506,7 @@ namespace scls {
                         to_return.get()->add_float(normal_z());
                     }
 
-                    to_return.get()->add_datas(*(a_points.at(a_points_for_rendering.at(i))).get()->binary_stl().get());
+                    to_return.get()->add_datas(*a_points_for_rendering.at(i).get()->binary_stl().get());
                 }
 
                 if(static_cast<int>(a_points_for_rendering.size()) > 0) {
@@ -496,7 +538,7 @@ namespace scls {
                 // Add each points
                 __Face_Datas_By_Solid& datas = solid_datas(asker_id);
                 for(int i = 0;i<static_cast<int>(a_points_for_rendering.size());i++) {
-                    Point* current_point = a_points.at(a_points_for_rendering.at(i)).get();
+                    Point* current_point = a_points_for_rendering.at(i).get();
                     to_return.get()->add_datas(*current_point->binary_vbo(id(), datas.texture_rect_x, datas.texture_rect_y, datas.texture_rect_width, datas.texture_rect_height, vbo_type).get());
                     total_points++;
                 }
@@ -514,6 +556,20 @@ namespace scls {
                 new_face.get()->set_y(y());
                 new_face.get()->set_z(z());
 
+                // Create each exclusion points
+                for(int i = 0;i<static_cast<int>(a_exclusion_points.size());i++) {
+                    std::vector<std::shared_ptr<Point>> current_exclusion_part = std::vector<std::shared_ptr<Point>>();
+                    for(int j = 0;j<static_cast<int>(a_exclusion_points[i].size());j++) {
+                        std::shared_ptr<Point> new_point = std::make_shared<Point>();
+                        new_point.get()->set_x(a_exclusion_points[i][j].get()->x());
+                        new_point.get()->set_y(a_exclusion_points[i][j].get()->y());
+                        new_point.get()->set_z(a_exclusion_points[i][j].get()->z());
+                        new_point.get()->set_parent(new_face);
+                        current_exclusion_part.push_back(new_point);
+                    }
+                    new_face.get()->a_exclusion_points.push_back(current_exclusion_part);
+                }
+
                 // Create each points
                 for(int i = 0;i<static_cast<int>(points().size());i++) {
                     std::shared_ptr<Point> new_point = std::make_shared<Point>();
@@ -523,6 +579,7 @@ namespace scls {
                     new_point.get()->set_parent(new_face);
                     new_face.get()->points().push_back(new_point);
                 }
+                new_face.get()->triangulate();
 
                 return new_face;
             };
@@ -533,7 +590,7 @@ namespace scls {
             // Getters and setters
             inline std::vector<std::shared_ptr<Point>>& exclusion_points() {if(a_exclusion_points.size() <= 0) a_exclusion_points.push_back(std::vector<std::shared_ptr<Point>>()); return a_exclusion_points[0];};
             inline std::vector<std::shared_ptr<Point>>& points() {return a_points;};
-            inline std::vector<unsigned int>& points_for_rendering() {return a_points_for_rendering;};
+            inline std::vector<std::shared_ptr<Point>>& points_for_rendering() {return a_points_for_rendering;};
 
             //*********
             //
@@ -574,100 +631,253 @@ namespace scls {
 
             // Returns if a side of points cross the boundary or not
             bool cross_boundary(std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point) {return __cross_boundary(points(), first_point, second_point);}
-            // Do a triangulation of a face
-            void triangulate() {
-                points_for_rendering().clear();
-
-                // Trace each triangles
-                unsigned int current_i = 0;
-                unsigned int erase_offset = 0;
-                std::vector<std::vector<std::shared_ptr<Point>>> exclusion_points_copy = a_exclusion_points;
-                std::vector<std::shared_ptr<Point>> points_copy = points();
-                unsigned int total_point = 0;
-                for(int i = 0;i<static_cast<int>(points_copy.size());i++) {
-                    if(points_copy[i].get() == 0) {points_copy.erase((points_copy.begin() + i) - erase_offset);erase_offset++;}
-                    else points_copy[i].get()->set_attribute(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR, total_point);
-                    total_point++;
-                }
+            // Returns if a side of points cross the boundary of the exclusion part or not
+            bool __cross_exclusion_boundary(std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy, std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point) {
                 for(int i = 0;i<static_cast<int>(exclusion_points_copy.size());i++) {
-                    for(int j = 0;j<static_cast<int>(exclusion_points_copy[i].size());j++) {
-                        if(exclusion_points_copy[j][i].get() == 0) {exclusion_points_copy[j].erase((exclusion_points_copy[j].begin() + i) - erase_offset);erase_offset++;}
-                        else exclusion_points_copy[j][i].get()->set_attribute(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR, total_point);
-                        total_point++;
+                    if(__cross_boundary(exclusion_points_copy[i], first_point, second_point)) return true;
+                }
+                return false;
+            };
+            // Returns if a point is in the exclusion part
+            bool __in_exclusion_part(std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy, double x_to_check, double y_to_check) {
+                for(int i = 0;i<static_cast<int>(exclusion_points_copy.size());i++) {
+                    if(__check_shape_content(exclusion_points_copy[i], x_to_check, y_to_check)) {
+                        return true;
                     }
                 }
-                // Check each points
-                while(points_copy.size() > 3) {
+                return false;
+            };
+
+            //*********
+            //
+            // Triangulation handling
+            //
+            //*********
+
+            // Datas about a triangulation
+            struct __Triangulation_Datas {
+                // Created sides in the triangulation
+                std::vector<std::shared_ptr<Point>> created_sides = std::vector<std::shared_ptr<Point>>();
+                // Current position of the triangulation
+                unsigned int current_i = 0;
+                // Exclusion points in a triangulation
+                std::vector<std::vector<std::shared_ptr<model_maker::Point>>> exclusion_points_copy = std::vector<std::vector<std::shared_ptr<model_maker::Point>>>();
+                // If the triangulation is finished or not
+                bool finished = false;
+                // Copy of the points for a triangulation
+                std::vector<std::shared_ptr<model_maker::Point>> points_copy = std::vector<std::shared_ptr<model_maker::Point>>();
+            };
+
+            void __triangulation_arrange_exclusion_points(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy) {
+                for(int i = 0;i<static_cast<int>(exclusion_points_copy.size());i++) {
+                    // Find the index of the nearest point
+                    bool position_found = false;
+                    bool reverse_current_exclusion = false;
+                    unsigned int start_position = 0;
+                    while(!position_found) {
+                        // Check the current point
+                        for(int j = 0;j<static_cast<int>(points_copy.size() - 1);j++) {
+                            if(!__triangulation_check_line_wrong(points_copy, points_copy[j], exclusion_points_copy[i][0])) {
+                                set_can_print(true);
+                                if(!__triangulation_check_line_wrong(points_copy, points_copy[j], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1]) &&
+                                   !__triangulation_check_line_wrong(points_copy, points_copy[j + 1], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1]) &&
+                                   !__check_crossing_segment(points_copy[j], exclusion_points_copy[i][0], points_copy[j + 1], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1]).crossed_in_segment &&
+                                   __check_triangle_opposed(points_copy[j], exclusion_points_copy[i][0], points_copy[j + 1], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1])) {
+                                    reverse_current_exclusion = false;
+                                }
+                                else if(!__triangulation_check_line_wrong(points_copy, points_copy[j], exclusion_points_copy[i][1]) &&
+                                        !__triangulation_check_line_wrong(points_copy, points_copy[j + 1], exclusion_points_copy[i][1]) &&
+                                        !__check_crossing_segment(points_copy[j], exclusion_points_copy[i][0], points_copy[j + 1], exclusion_points_copy[i][1]).crossed_in_segment &&
+                                        __check_triangle_opposed(points_copy[j], exclusion_points_copy[i][0], points_copy[j + 1], exclusion_points_copy[i][1])) {
+                                    reverse_current_exclusion = true;
+                                }
+                                else continue;
+                                position_found = true;
+                                set_can_print(false);
+                                start_position = j;
+                                break;
+                            }
+                        }
+
+                        // Change the point if necessary
+                        if(!position_found) {
+                            exclusion_points_copy[i].push_back(exclusion_points_copy[i][0]);
+                            exclusion_points_copy[i].erase(exclusion_points_copy[i].begin());
+                        }
+                    }
+
+                    // Add the exclusion point
+                    std::shared_ptr<Point> base_point = points_copy[start_position];start_position++;
+                    if(reverse_current_exclusion) {
+                        points_copy.insert(points_copy.begin() + start_position, exclusion_points_copy[i][0]);
+                        start_position++;
+                    }
+                    for(int j = 0;j<static_cast<int>(exclusion_points_copy[i].size());j++) {
+                        int real_j = j;
+                        if(reverse_current_exclusion) real_j = exclusion_points_copy[i].size() - (j + 1);
+                        points_copy.insert(points_copy.begin() + start_position + j, exclusion_points_copy[i][real_j]);
+                    }
+                    if(!reverse_current_exclusion) {
+                        points_copy.insert(points_copy.begin() + exclusion_points_copy[i].size() + start_position, exclusion_points_copy[i][0]);
+                        start_position++;
+                    }
+                    points_copy.insert(points_copy.begin() + exclusion_points_copy[i].size() + start_position, base_point);
+                }
+                exclusion_points_copy.clear();
+            };
+            bool __triangulation_check_line_wrong(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point) {
+                bool on_boundary = __triangulation_cross_boundary(first_point, second_point);
+                if(on_boundary) return true;
+                bool in_shape = __triangulation_check_shape_content((second_point.get()->x() + first_point.get()->x()) / 2.0, (second_point.get()->z() + first_point.get()->z()) / 2.0);
+                if(!in_shape) return true;
+                return false;
+            };
+            bool __triangulation_check_shape_content(double point_to_test_x, double point_to_test_y) {
+                // Check the main shape
+                if(!__check_shape_content(points(), point_to_test_x, point_to_test_y)) return false;
+                // Check each out shape
+                for(int i = 0;i<static_cast<int>(a_exclusion_points.size());i++) {
+                    if(__check_shape_content(a_exclusion_points[i], point_to_test_x, point_to_test_y)) return false;
+                }
+                return true;
+            };
+            bool __triangulation_cross_boundary(std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point) {
+                // Check the main shape
+                if(__cross_boundary(points(), first_point, second_point)) return true;
+                // std::cout << "Passage 0" << std::endl;
+                // Check each out shape
+                for(int i = 0;i<static_cast<int>(a_exclusion_points.size());i++) {if(__cross_boundary(a_exclusion_points[i], first_point, second_point)) return true;}
+                // std::cout << "Passage 1" << std::endl;
+                return false;
+            };
+            // Do a triangulation of a face
+            void triangulate() {
+                // Get the start datas
+                std::shared_ptr<__Triangulation_Datas> datas = triangulate_start_datas();
+
+                // Do the triangulation
+                while(!datas.get()->finished) {
+                    triangulation_step(datas);
+                }
+            };
+            // Returns the needed datas to start a triangulation
+            std::shared_ptr<__Triangulation_Datas> triangulate_start_datas() {
+                std::shared_ptr<__Triangulation_Datas> to_return = std::make_shared<__Triangulation_Datas>();
+                to_return.get()->exclusion_points_copy = a_exclusion_points;
+                to_return.get()->points_copy = points();
+
+                // Do the triangulation
+                points_for_rendering().clear();
+                __triangulation_arrange_exclusion_points(to_return.get()->points_copy, to_return.get()->exclusion_points_copy);
+
+                // Remove the useless points
+                for(int i = 0;i<static_cast<int>(to_return.get()->points_copy.size());i++) {
+                    if(to_return.get()->points_copy[i].get() == 0) {to_return.get()->points_copy.erase(to_return.get()->points_copy.begin() + i);i--;}
+                }
+                for(int i = 0;i<static_cast<int>(to_return.get()->exclusion_points_copy.size());i++) {
+                    for(int j = 0;j<static_cast<int>(to_return.get()->exclusion_points_copy[i].size());j++) {
+                        if(to_return.get()->exclusion_points_copy[i][j].get() == 0) {to_return.get()->exclusion_points_copy[i].erase(to_return.get()->exclusion_points_copy[i].begin() + j);j--;}
+                    }
+                    if(to_return.get()->exclusion_points_copy[i].size() <= 0) {to_return.get()->exclusion_points_copy[i].erase(to_return.get()->exclusion_points_copy[i].begin() + i);i--;}
+                }
+
+                return to_return;
+            };
+            // Check a step of triangulation and returns if a step occurs
+            bool triangulation_step(std::shared_ptr<__Triangulation_Datas> triangulation_datas) {
+                std::vector<std::shared_ptr<Point>>& created_sides = triangulation_datas.get()->created_sides;
+                unsigned int& current_i = triangulation_datas.get()->current_i;
+                std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy = triangulation_datas.get()->exclusion_points_copy;
+                std::vector<std::shared_ptr<model_maker::Point>>& points_copy = triangulation_datas.get()->points_copy;
+                if(points_copy.size() > 3) {
                     // Get the point to test
-                    std::shared_ptr<model_maker::Point> current_point = points_copy[current_i];
+                    std::shared_ptr<model_maker::Point> current_point = points_copy[current_i];;
                     std::shared_ptr<model_maker::Point> current_point_1 = points_copy[current_i + 1];
                     std::shared_ptr<model_maker::Point> current_point_2 = points_copy[current_i + 2];
 
-                    // Check if the out points are in the triangle
-                    bool cross_shape_boundary = __cross_boundary(points_copy, current_point, current_point_2);
-                    bool in_shape = __check_shape_content(points_copy, (current_point_2.get()->x() + current_point.get()->x()) / 2.0, (current_point_2.get()->z() + current_point.get()->z()) / 2.0);
-                    if(cross_shape_boundary || !in_shape) {
-                        current_i++;
-                        continue;
+                    // Check if the points are the same
+                    if(current_point.get() == current_point_1.get() || current_point_1.get() == current_point_2.get()) {
+                        // std::cout << "OMG " << current_i << std::endl;
+                        points_copy.erase(points_copy.begin() + current_i + 1);
+                        return false;
                     }
-                    // Check if the exclusion points are in the triangle
+
+                    // Check if the out points are in the triangle
+                    if(__triangulation_check_line_wrong(points_copy, current_point, current_point_2)) {
+                        current_i++;
+                        return false;
+                    }
+                    // Check if the line is not already existing
+                    bool must_continue = false;
+                    for(int i = 0;i<static_cast<int>(created_sides.size() - 1);i+=2){
+                        if(current_point.get()==created_sides[i].get()&&current_point_2.get()==created_sides[i + 1].get()){must_continue=true;break;}
+                        else if(current_point.get()==created_sides[i + 1].get()&&current_point_2.get()==created_sides[i].get()){must_continue=true;break;}
+                    }
+                    if(must_continue){current_i++;return false;}
+                    // Add the point to the rendering
+                    created_sides.push_back(current_point); created_sides.push_back(current_point_2);
                     points_copy.erase(points_copy.begin() + current_i + 1);
-                    points_for_rendering().push_back(current_point.get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-                    points_for_rendering().push_back(current_point_1.get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-                    points_for_rendering().push_back(current_point_2.get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
+                    points_for_rendering().push_back(current_point);
+                    points_for_rendering().push_back(current_point_1);
+                    points_for_rendering().push_back(current_point_2);
                     current_i = 0;
                 }
-                // Trace the last triangle
-                points_for_rendering().push_back(points_copy[0].get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-                points_for_rendering().push_back(points_copy[1].get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-                points_for_rendering().push_back(points_copy[2].get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-            }
-            // Do a convex triangulation of the face
+                else {
+                    // Trace the last triangle
+                    points_for_rendering().push_back(points_copy[0]);
+                    points_for_rendering().push_back(points_copy[1]);
+                    points_for_rendering().push_back(points_copy[2]);
+
+                    triangulation_datas.get()->finished = true;
+                }
+                return true;
+            };
+            // Do a triangulation of a convex face
             void triangulate_convex() {
                 // Add each points for rendering
                 points_for_rendering().clear();
                 for(unsigned short i = 0;i<points().size() - 2;i++) {
-                    points_for_rendering().push_back(0);
-                    points_for_rendering().push_back(i + 1);
-                    points_for_rendering().push_back(i + 2);
+                    points_for_rendering().push_back(points()[0]);
+                    points_for_rendering().push_back(points()[i + 1]);
+                    points_for_rendering().push_back(points()[i + 2]);
                 }
-            }
+            };
             // Do a triangulation of a full face
-            void triangulate_full() {
+            void __triangulate_full(std::vector<std::shared_ptr<model_maker::Point>> points_copy, bool last_point_is_first_point = true) {
                 points_for_rendering().clear();
 
                 // Trace each triangles
                 unsigned int current_i = 0;
                 unsigned int erase_offset = 0;
-                std::vector<std::shared_ptr<model_maker::Point>> points_copy = points();
                 for(int i = 0;i<static_cast<int>(points_copy.size());i++) {
                     if(points_copy[i].get() == 0) {points_copy.erase((points_copy.begin() + i) - erase_offset);erase_offset++;}
-                    else points_copy[i].get()->set_attribute(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR, i);
                 }
                 // Check each points
-                while(points_copy.size() > 3) {
+                int limit = 3; if(!last_point_is_first_point) limit = 4;
+                while(points_copy.size() > limit) {
                     // Get the point to test
                     std::shared_ptr<model_maker::Point> current_point = points_copy[current_i];
                     std::shared_ptr<model_maker::Point> current_point_1 = points_copy[current_i + 1];
                     std::shared_ptr<model_maker::Point> current_point_2 = points_copy[current_i + 2];
 
                     // Check if the out points are in the triangle
-                    bool in_shape = __check_shape_content(points_copy, (current_point_2.get()->x() + current_point.get()->x()) / 2.0, (current_point_2.get()->z() + current_point.get()->z()) / 2.0);
-                    if(__cross_boundary(points_copy, current_point, current_point_2) || !in_shape) {
+                    bool in_shape = __check_shape_content(points_copy, (current_point_2.get()->x() + current_point.get()->x()) / 2.0, (current_point_2.get()->z() + current_point.get()->z()) / 2.0, last_point_is_first_point);
+                    if(__cross_boundary(points_copy, current_point, current_point_2, last_point_is_first_point) || !in_shape) {
                         current_i++;
                         continue;
                     }
                     points_copy.erase(points_copy.begin() + current_i + 1);
-                    points_for_rendering().push_back(current_point.get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-                    points_for_rendering().push_back(current_point_1.get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-                    points_for_rendering().push_back(current_point_2.get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
+                    points_for_rendering().push_back(current_point);
+                    points_for_rendering().push_back(current_point_1);
+                    points_for_rendering().push_back(current_point_2);
                     current_i = 0;
                 }
                 // Trace the last triangle
-                points_for_rendering().push_back(points_copy[0].get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-                points_for_rendering().push_back(points_copy[1].get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-                points_for_rendering().push_back(points_copy[2].get()->attributes().at(SCLS_3D_POINT_ATTRIBUTES_POSITION_IN_VECTOR));
-            }
+                points_for_rendering().push_back(points_copy[0]);
+                points_for_rendering().push_back(points_copy[1]);
+                points_for_rendering().push_back(points_copy[2]);
+            };
+            void triangulate_full() {__triangulate_full(points());};
 
             //*********
             //
@@ -727,7 +937,7 @@ namespace scls {
             // Each points in the face
             std::vector<std::shared_ptr<Point>> a_points = std::vector<std::shared_ptr<Point>>();
             // Each points position in the face for rendering
-            std::vector<unsigned int> a_points_for_rendering = std::vector<unsigned int>();
+            std::vector<std::shared_ptr<Point>> a_points_for_rendering = std::vector<std::shared_ptr<Point>>();
 
             //*********
             //
@@ -1043,9 +1253,9 @@ namespace scls {
 
             // Add each points for rendering
             for(unsigned short i = 0;i<to_return.get()->points().size() - 2;i++) {
-                to_return.get()->points_for_rendering().push_back(0);
-                to_return.get()->points_for_rendering().push_back(i + 1);
-                to_return.get()->points_for_rendering().push_back(i + 2);
+                to_return.get()->points_for_rendering().push_back(to_return.get()->points()[0]);
+                to_return.get()->points_for_rendering().push_back(to_return.get()->points()[i + 1]);
+                to_return.get()->points_for_rendering().push_back(to_return.get()->points()[i + 2]);
             }
 
             // Add the face to the loader
@@ -1165,12 +1375,12 @@ namespace scls {
                     face_center.get()->points().push_back(second_point);
                     face_center.get()->points().push_back(fourth_point);
                     face_center.get()->points().push_back(third_point);
-                    face_center.get()->points_for_rendering().push_back(0);
-                    face_center.get()->points_for_rendering().push_back(1);
-                    face_center.get()->points_for_rendering().push_back(3);
-                    face_center.get()->points_for_rendering().push_back(1);
-                    face_center.get()->points_for_rendering().push_back(2);
-                    face_center.get()->points_for_rendering().push_back(3);
+                    face_center.get()->points_for_rendering().push_back(first_point);
+                    face_center.get()->points_for_rendering().push_back(second_point);
+                    face_center.get()->points_for_rendering().push_back(third_point);
+                    face_center.get()->points_for_rendering().push_back(second_point);
+                    face_center.get()->points_for_rendering().push_back(fourth_point);
+                    face_center.get()->points_for_rendering().push_back(third_point);
                     face_center.get()->set_parent(face_parent);
                     faces().push_back(face_center);
                     faces_by_name()["face-" + std::to_string(i)] = face_center;
@@ -1196,12 +1406,12 @@ namespace scls {
                 face_center.get()->points().push_back(second_point);
                 face_center.get()->points().push_back(fourth_point);
                 face_center.get()->points().push_back(third_point);
-                face_center.get()->points_for_rendering().push_back(0);
-                face_center.get()->points_for_rendering().push_back(1);
-                face_center.get()->points_for_rendering().push_back(3);
-                face_center.get()->points_for_rendering().push_back(1);
-                face_center.get()->points_for_rendering().push_back(2);
-                face_center.get()->points_for_rendering().push_back(3);
+                face_center.get()->points_for_rendering().push_back(first_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(fourth_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
                 face_center.get()->set_parent(face_parent);
                 faces().push_back(face_center);
                 faces_by_name()["face-" + std::to_string(faces().size() - 3)] = face_center;
@@ -1828,7 +2038,7 @@ namespace scls {
         //*********
 
         // Returns a simple regular polygon
-        static std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number, double y = 0) {
+        static std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number, double y = 0, double scale = 1) {
             // Configurate the creation
             double angle_sum = static_cast<double>((side_number - 2) * SCLS_PI);
             double current_angle = 0;
@@ -1861,9 +2071,9 @@ namespace scls {
             to_return.get()->size_z = max_z - min_z;
 
             // Calculate the size for normalization
-            double multiplier = (1 / to_return.get()->size_x);
+            double multiplier = (scale / to_return.get()->size_x);
             double size_ratio = to_return.get()->size_z / to_return.get()->size_x;
-            to_return.get()->size_x = 1;
+            to_return.get()->size_x = scale;
             to_return.get()->size_z = size_ratio;
 
             // Normalize each positions
