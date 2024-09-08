@@ -1,0 +1,154 @@
+//******************
+//
+// scls_math_fraction.h
+//
+//******************
+// Presentation :
+//
+// SCLS is a project containing base functions for C++.
+// It can also be use in any projects.
+//
+// The Math "Carl" part represents the mathematical part of SCLS.
+// It is named after one one of the greatest mathematician of all times, Carl Freiderich Gauss.
+//
+// This file contains the "Complex" class.
+//
+//******************
+//
+// License (LGPL V3.0) :
+//
+// Copyright (C) 2024 by Aster System, Inc. <https://aster-system.github.io/aster-system/>
+// This file is part of SCLS.
+// SCLS is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// SCLS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with SCLS. If not, see <https://www.gnu.org/licenses/>.
+//
+
+#ifndef SCLS_MATH_COMPLEX
+#define SCLS_MATH_COMPLEX
+
+#include "scls_math_fraction.h"
+
+// The namespace "scls" is used to simplify the all.
+namespace scls {
+    //*********
+	//
+	// The Complex class
+	//
+	//*********
+
+	class Complex {
+	    // Class representating a fraction
+    public:
+        //*********
+        //
+        // Complex simple methods
+        //
+        //*********
+
+        // Dimple fraction constructor
+        Complex(Fraction real_part, Fraction imaginary) : a_real(real_part), a_imaginary(imaginary) {};
+        Complex(long long real_part, long long imaginary_part) : Complex(Fraction(real_part), Fraction(imaginary_part)) {};
+        Complex(long long real_part, Fraction imaginary_part) : Complex(Fraction(real_part), imaginary_part) {};
+        Complex(Fraction real_part, long long imaginary_part) : Complex(real_part, Fraction(imaginary_part)) {};
+        // Most simple fraction constructor
+        Complex(Fraction real_part) : Complex(real_part, Fraction(0)) {};
+        Complex(long long real_part) : Complex(Fraction(real_part)) {};
+        // Complex copy constructor
+        Complex(const Complex& to_copy) : Complex(to_copy.real(), to_copy.imaginary()) {};
+
+        // Getters and setter
+        inline Fraction imaginary() const {return a_imaginary;};
+        inline Fraction real() const {return a_real;};
+
+        //*********
+        //
+        // Operator methods
+        //
+        //*********
+
+        // Function to do operations with Complex
+        // Adds an another Complex to this Complex
+        void _add(Complex const& obj) {
+            a_imaginary += obj.imaginary();
+            a_real += obj.real();
+        };
+        // Returns the adding of this Complex and another Complex
+        Complex _add_without_modification(Complex const& obj) const {
+            Complex new_complex = Complex(real() + obj.real(), imaginary() + obj.imaginary());
+            return new_complex;
+        };
+        // Returns if this Complex is equal to another
+        bool _equal(Complex const& obj) const {return obj.real() == real() && obj.imaginary() == imaginary();};
+
+        // Multiplies the Complex with a double
+        Complex _multiply_without_modification(Fraction const& obj) const { return Complex(real() * obj, imaginary() * obj); };
+        // Multiplies the Complex with an unsigned int
+        Complex _multiply_without_modification(int const& obj) const { return Complex(real() * obj, imaginary() * obj); };
+        // Multiplies the Complex with an unsigned int
+        Complex _multiply_without_modification(unsigned int const& obj) const { return Complex(real() * obj, imaginary() * obj); };
+        // Substracts an another Complex to this Complex
+        void _substract(Complex const& obj) {
+            a_imaginary = imaginary() - obj.imaginary();
+            a_real = real() - obj.real();
+        };
+        // Returns the substracting of this Complex and another Complex
+        Complex _substract_without_modification(Complex const& obj) const {
+            Complex new_complex = Complex(real() - obj.real(), imaginary() - obj.imaginary());
+            return new_complex;
+        };
+
+        // Operator overloading with int
+        // Equality operator
+        bool operator==(const int& obj) { return _equal(obj); }
+        // Multiplication operator
+        Complex operator*(int const& obj) const { return _multiply_without_modification(obj); }
+        // Multiplication operator
+        Complex operator*(unsigned int const& obj) const { return _multiply_without_modification(obj); }
+
+        // Operator overloading with Fraction
+        // Minus operator
+        Complex operator-(Fraction const& obj) { return _substract_without_modification(Complex(obj)); }
+        // Minus operator assignment
+        Complex& operator-=(Fraction const& obj) { _substract(Complex(obj)); return *this; }
+        // Multiplication operator
+        Complex operator*(Fraction const& obj) const { return _multiply_without_modification(obj); }
+        // Plus operator
+        Complex operator+(Fraction const& obj) { return _add_without_modification(Complex(obj)); };
+        // Plus operator assignment
+        Complex& operator+=(Fraction const& obj) { _add(Complex(obj)); return *this; }
+
+        // Operator overloading with fractions
+        // Decrement operator
+        Complex& operator--(int) { _substract(Fraction(1)); return *this; }
+        // Equality operator
+        bool operator==(const Complex& obj) const { return _equal(obj); }
+        // Increment operator
+        Complex& operator++(int) { _add(Fraction(1)); return *this; }
+        // Minus operator
+        Complex operator-(Complex const& obj) const { return _substract_without_modification(obj); };
+        // Minus operator assignment
+        Complex& operator-=(const Complex& obj) { _substract(obj); return *this; }
+        // Plus operator
+        Complex operator+(Complex const& obj) const { return _add_without_modification(obj); };
+        // Plus operator assignment
+        Complex& operator+=(const Complex& obj) { _add(obj); return *this; }
+    private:
+        //*********
+        //
+        // Complex simple attributes
+        //
+        //*********
+
+        // Imaginary part of the complex
+        Fraction a_imaginary = Fraction(0);
+        // Real part of the complex
+        Fraction a_real = Fraction(0);
+
+	};
+
+	// Stream operator overloading
+    static std::ostream& operator<<(std::ostream& os, const Complex& obj) { os << "Complex : " << obj.real().to_double() << " + " << obj.imaginary().to_double() << "i" ; return os; }
+}
+
+#endif // SCLS_MATH_COMPLEX
