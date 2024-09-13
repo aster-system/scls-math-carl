@@ -102,6 +102,8 @@ namespace scls {
         };
         // Returns the fraction in double
         inline double to_double() const {if(a_denominator == 0) return 0; return static_cast<double>(a_numerator) / static_cast<double>(a_denominator);};
+        // Returns the fraction to std::string, in the fraction redaction
+        inline std::string to_std_string_fraction() const {if(denominator() == 1) return std::to_string(numerator()); return std::to_string(numerator()) + "/" + std::to_string(denominator());};
 
         // Getters and setter
         inline long long denominator() const {return a_denominator;};
@@ -168,6 +170,8 @@ namespace scls {
             Fraction new_fraction = Fraction(second_numerator - first_numerator, denominateur);
             return new_fraction;
         };
+        // Returns the square root of the fraction
+        Fraction sqrt() {return Fraction(std::sqrt(numerator()) * 100000, std::sqrt(denominator()) * 100000);};
 
         // Operator overloading with int
         // Greater operator

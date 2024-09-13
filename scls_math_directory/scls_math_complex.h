@@ -1,6 +1,6 @@
 //******************
 //
-// scls_math_fraction.h
+// scls_math_complex.h
 //
 //******************
 // Presentation :
@@ -61,11 +61,33 @@ namespace scls {
         inline Fraction imaginary() const {return a_imaginary;};
         inline Fraction real() const {return a_real;};
 
+        // Returns the Complex to a simple std::string
+        inline std::string to_std_string_simple() const {
+            std::string to_return = "";
+            if(real() != 0) {
+                to_return += real().to_std_string_fraction() + " ";
+            }
+            if(imaginary() != 0) {
+                if(imaginary() > 0) {
+                    to_return += "+ " + imaginary().to_std_string_fraction() + "i";
+                }
+                else {
+                    to_return += "- " + (imaginary() * -1).to_std_string_fraction() + "i";
+                }
+            }
+            while(to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
+            if(to_return == "") to_return = "0";
+            return to_return;
+        };
+
         //*********
         //
         // Operator methods
         //
         //*********
+
+        // Returns the conjugate of this Complex
+        Complex conjugate() const {return Complex(a_real, a_imaginary * -1);};
 
         // Function to do operations with Complex
         // Adds an another Complex to this Complex
@@ -78,8 +100,26 @@ namespace scls {
             Complex new_complex = Complex(real() + obj.real(), imaginary() + obj.imaginary());
             return new_complex;
         };
+        // DIvides the Complex with a Complex
+        Complex _divide(Complex const& obj) {
+            _multiply(obj.conjugate());
+            Complex real_denominateur = obj * obj.conjugate();
+            a_imaginary = a_imaginary / real_denominateur.imaginary();
+            a_real = a_real / real_denominateur.real();
+        };
         // Returns if this Complex is equal to another
         bool _equal(Complex const& obj) const {return obj.real() == real() && obj.imaginary() == imaginary();};
+        // Multiplies the Complex with a Complex
+        Complex _multiply(Complex const& obj) {
+            Fraction new_imaginary = real() * obj.imaginary() + imaginary() * obj.real();
+            Fraction new_real = real() * obj.real() - (imaginary() * obj.imaginary());
+            a_imaginary = new_imaginary;
+            a_real = new_real;
+        };
+        // Multiplies the Complex with a Complex
+        Complex _multiply_without_modification(Complex const& obj) const {
+            return Complex(real() * obj.real() - (imaginary() * obj.imaginary()), real() * obj.imaginary() + imaginary() * obj.real());
+        };
 
         // Multiplies the Complex with a double
         Complex _multiply_without_modification(Fraction const& obj) const { return Complex(real() * obj, imaginary() * obj); };
@@ -121,6 +161,8 @@ namespace scls {
         // Operator overloading with fractions
         // Decrement operator
         Complex& operator--(int) { _substract(Fraction(1)); return *this; }
+        // Divide operator
+        Complex operator/=(Complex const& obj) { return _divide(obj); };
         // Equality operator
         bool operator==(const Complex& obj) const { return _equal(obj); }
         // Increment operator
@@ -129,6 +171,10 @@ namespace scls {
         Complex operator-(Complex const& obj) const { return _substract_without_modification(obj); };
         // Minus operator assignment
         Complex& operator-=(const Complex& obj) { _substract(obj); return *this; }
+        // Multiply operator assignment
+        Complex operator*(Complex const& obj) const { return _multiply_without_modification(obj); };
+        // Multiply operator
+        Complex operator*=(Complex const& obj) { return _multiply(obj); };
         // Plus operator
         Complex operator+(Complex const& obj) const { return _add_without_modification(obj); };
         // Plus operator assignment

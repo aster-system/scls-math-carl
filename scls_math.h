@@ -48,6 +48,7 @@
 
 #include "scls_math_directory/scls_math_complex.h"
 #include "scls_math_directory/scls_math_fraction.h"
+#include "scls_math_directory/scls_math_polymonial.h"
 #include "scls_math_directory/scls_math_3d_core.h"
 #include "scls_math_directory/scls_math_3d_model.h"
 
