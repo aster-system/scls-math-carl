@@ -66,13 +66,16 @@ namespace scls {
 
         // Monomonial constructor
         Monomonial(Complex factor):a_factor(factor){};
+        // Monomonial complete constructor
+        Monomonial(Complex factor, std::vector<_Base_Unknown> unknowns):Monomonial(factor){a_unknowns=unknowns;};
         // Monomonial constructor
-        Monomonial(Complex factor, std::string unknow):Monomonial(factor){a_unknowns[0].set_name(unknow);};
+        Monomonial(Complex factor, std::string unknow):Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
 
         // Returns the factor of the monomonial
         inline Complex factor() const {return a_factor;};
         // Unknows of the monomonial
         inline std::vector<_Base_Unknown>& unknowns() {return a_unknowns;};
+        inline unsigned int unknowns_number() const {return a_unknowns.size();};
 
         // Returns the monomonial converted to std::string
         inline std::string to_std_string() const {
@@ -83,14 +86,24 @@ namespace scls {
             return "(" + a_factor.to_std_string_simple() + ")" + final_unknow;
         };
 
+        // Divide operator
+        Monomonial operator/(Monomonial const& obj) const { return Monomonial(a_factor / obj.a_factor, a_unknowns); };
+        // Minus operator assignment
+        Monomonial& operator-=(Monomonial const& obj) { a_factor -= obj.a_factor; return *this; }
+        // Plus operator assignment
+        Monomonial& operator+=(Monomonial const& obj) { a_factor += obj.a_factor; return *this; }
+
     private:
 
         // Factor of the monomonial
         Complex a_factor = Complex(Fraction(0), Fraction(0));
 
         // Unknows of the monomonial
-        std::vector<_Base_Unknown> a_unknowns = std::vector<_Base_Unknown>(1, _Base_Unknown("x"));
+        std::vector<_Base_Unknown> a_unknowns;
     };
+
+    // Stream operator overloading
+    static std::ostream& operator<<(std::ostream& os, const Monomonial& obj) { os << obj.to_std_string() ; return os; }
 
     //*********
 	//
@@ -109,13 +122,29 @@ namespace scls {
         void add_monomonial(Monomonial new_monomonial) {
             a_monomonials.push_back(new_monomonial);
         };
+        // Returns the knows monomonial
+        Monomonial known_monomonial() const {
+            for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                if(a_monomonials.at(i).unknowns_number() <= 0) return a_monomonials.at(i);
+            }
+            return Monomonial(Complex(0));
+        };
+        // Returns a list of unknowns monomonials
+        std::vector<Monomonial> unknown_monomonials() const {
+            std::vector<Monomonial> to_return;
+            for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                if(a_monomonials.at(i).unknowns_number() > 0) to_return.push_back(a_monomonials.at(i));
+            }
+            return to_return;
+        };
 
         // Returns the polymonial to std::string
         inline std::string to_std_string() const {
             std::string to_return = "";
             for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
-                to_return += a_monomonials.at(i).to_std_string();
+                to_return += a_monomonials.at(i).to_std_string() + " + ";
             }
+            while(to_return[to_return.size() - 1] == '+' || to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
             return to_return;
         };
 
@@ -127,12 +156,12 @@ namespace scls {
 
     //*********
 	//
-	// Redaction methods
+	// Redaction (or without redaction) methods
 	//
 	//*********
 
 	// Returns the redaction of a 2 degrees polymonial solving
-    std::string redaction_polymonial_solving_2_degrees(Fraction first_number, Fraction second_number, Fraction third_number) {
+    static std::string redaction_polymonial_solving_2_degrees(Fraction first_number, Fraction second_number, Fraction third_number) {
         std::string introduction = "Nous avons un polynôme de degré 2 tel que " + first_number.to_std_string_fraction() + "x^2 + " + second_number.to_std_string_fraction() + "x + " + third_number.to_std_string_fraction() + ".\n\n";
 
         // Search the "discriminant"
@@ -159,6 +188,36 @@ namespace scls {
         final_text += discriminant_research;
         final_text += root_research;
         return final_text;
+    };
+
+    // Solve an equation between 2 polymonial with 1 unknown
+    static Complex solve(Polymonial first_polymonial, Polymonial second_polymonial) {
+        // Get the unknown in a single monomonial
+        Monomonial unknown_monomonial(Complex(0));
+        // Add the first unknown monomonial
+        std::vector<Monomonial> unknowns_polymonials = first_polymonial.unknown_monomonials();
+        if(unknowns_polymonials.size() > 0) {
+            if(unknowns_polymonials.size() == 1) {
+                Monomonial current_unknown_monomonial = unknowns_polymonials[0];
+                unknown_monomonial -= current_unknown_monomonial;
+            }
+        }
+        // Add the second unknown monomonial
+        unknowns_polymonials = second_polymonial.unknown_monomonials();
+        if(unknowns_polymonials.size() > 0) {
+            if(unknowns_polymonials.size() == 1) {
+                Monomonial current_unknown_monomonial = unknowns_polymonials[0];
+                unknown_monomonial += current_unknown_monomonial;
+            }
+        }
+
+        // Get the known part in a single monomonial
+        Monomonial known_monomonial(Complex(0));
+        known_monomonial += first_polymonial.known_monomonial();
+        known_monomonial -= second_polymonial.known_monomonial();
+
+        // Return the final datas
+        return (known_monomonial / unknown_monomonial).factor();
     };
 }
 

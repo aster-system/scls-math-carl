@@ -100,17 +100,26 @@ namespace scls {
             Complex new_complex = Complex(real() + obj.real(), imaginary() + obj.imaginary());
             return new_complex;
         };
-        // DIvides the Complex with a Complex
-        Complex _divide(Complex const& obj) {
+        // Divides the Complex with a Complex
+        void _divide(Complex const& obj) {
             _multiply(obj.conjugate());
             Complex real_denominateur = obj * obj.conjugate();
             a_imaginary = a_imaginary / real_denominateur.imaginary();
             a_real = a_real / real_denominateur.real();
         };
+        // Divides the Complex with a Complex
+        Complex _divide_without_modification(Complex const& obj) const {
+            Complex new_complex = Complex(a_real, a_imaginary);
+            new_complex._multiply(obj.conjugate());
+            Complex real_denominateur = obj * obj.conjugate();
+            new_complex.a_imaginary = new_complex.a_imaginary / real_denominateur.real();
+            new_complex.a_real = new_complex.a_real / real_denominateur.real();
+            return new_complex;
+        };
         // Returns if this Complex is equal to another
         bool _equal(Complex const& obj) const {return obj.real() == real() && obj.imaginary() == imaginary();};
         // Multiplies the Complex with a Complex
-        Complex _multiply(Complex const& obj) {
+        void _multiply(Complex const& obj) {
             Fraction new_imaginary = real() * obj.imaginary() + imaginary() * obj.real();
             Fraction new_real = real() * obj.real() - (imaginary() * obj.imaginary());
             a_imaginary = new_imaginary;
@@ -162,7 +171,9 @@ namespace scls {
         // Decrement operator
         Complex& operator--(int) { _substract(Fraction(1)); return *this; }
         // Divide operator
-        Complex operator/=(Complex const& obj) { return _divide(obj); };
+        Complex operator/(Complex const& obj) const { return _divide_without_modification(obj); };
+        // Divide operator assignment
+        Complex& operator/=(Complex const& obj) { _divide(obj);return *this; };
         // Equality operator
         bool operator==(const Complex& obj) const { return _equal(obj); }
         // Increment operator
@@ -174,7 +185,7 @@ namespace scls {
         // Multiply operator assignment
         Complex operator*(Complex const& obj) const { return _multiply_without_modification(obj); };
         // Multiply operator
-        Complex operator*=(Complex const& obj) { return _multiply(obj); };
+        Complex& operator*=(Complex const& obj) { _multiply(obj);return *this; };
         // Plus operator
         Complex operator+(Complex const& obj) const { return _add_without_modification(obj); };
         // Plus operator assignment
