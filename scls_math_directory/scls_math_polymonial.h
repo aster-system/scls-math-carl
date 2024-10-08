@@ -41,19 +41,36 @@ namespace scls {
     class _Base_Unknown {
         // Class representating the base of an unknow in a monomonial
     public:
+        // Possible unknows comparaison
+        enum Unknown_Comparaison {UC_DIFFERENT, UC_EQUAL, UC_EQUAL_UNKNOWN};
 
         // Unknow constructor
         _Base_Unknown(std::string new_name):a_name(new_name){};
 
-        // Returnss the exponent of the unknown
+        // Returns the comparaison between two unknows
+        inline bool compare_unknown(_Base_Unknown other) const {
+            if(a_conjugate == other.a_conjugate && a_exponent == other.a_exponent && a_name == other.a_name) {
+                return Unknown_Comparaison::UC_EQUAL;
+            } return Unknown_Comparaison::UC_DIFFERENT;
+        };
+        // Returns if the unknow is a conjugate
+        inline bool conjugate() const {return a_conjugate;};
+        // Returns the exponent of the unknown
         inline Complex exponent() const {return a_exponent;};
         // Returns the name of the unknown
         inline std::string name() const {return a_name;};
         // Change the value of name
         inline void set_name(std::string new_name) {a_name = new_name;};
 
+        // Operator ==
+        inline bool operator==(_Base_Unknown other) const {
+            return compare_unknown(other) == Unknown_Comparaison::UC_EQUAL;
+        };
+
     private:
 
+        // If the unknown is a conjugate
+        bool a_conjugate = false;
         // Exponent of the unknow
         Complex a_exponent = Complex(1, 0);
         // Name of the unknow
@@ -71,6 +88,16 @@ namespace scls {
         // Monomonial constructor
         Monomonial(Complex factor, std::string unknow):Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
 
+        // Returns if a monomonial has the same unknows as this one
+        inline bool compare_unknown(Monomonial other) {
+            for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
+                bool contains_equal = false;
+                for(int j = 0;j<static_cast<int>(other.a_unknowns.size());j++) {
+                    if(a_unknowns[i] == other.a_unknowns[i]) {contains_equal = true;break;}
+                }
+                if(!contains_equal) return false;
+            } return true;
+        };
         // Returns the factor of the monomonial
         inline Complex factor() const {return a_factor;};
         // Unknows of the monomonial
@@ -86,12 +113,13 @@ namespace scls {
             return "(" + a_factor.to_std_string_simple() + ")" + final_unknow;
         };
 
-        // Divide operator
-        Monomonial operator/(Monomonial const& obj) const { return Monomonial(a_factor / obj.a_factor, a_unknowns); };
         // Minus operator assignment
         Monomonial& operator-=(Monomonial const& obj) { a_factor -= obj.a_factor; return *this; }
         // Plus operator assignment
         Monomonial& operator+=(Monomonial const& obj) { a_factor += obj.a_factor; return *this; }
+
+        // Getters and setters
+        inline void set_factor(Complex new_factor) {a_factor = new_factor;};
 
     private:
 
@@ -120,7 +148,17 @@ namespace scls {
 
         // Add a new monomonial to the polymonial
         void add_monomonial(Monomonial new_monomonial) {
-            a_monomonials.push_back(new_monomonial);
+            Monomonial* same_monomonial = contains_monomonial(new_monomonial);
+            if(same_monomonial == 0) a_monomonials.push_back(new_monomonial);
+            else same_monomonial->set_factor(same_monomonial->factor() + new_monomonial.factor());
+        };
+        // Returns if the polymonial contains a monomonial
+        Monomonial* contains_monomonial(Monomonial new_monomonial) {
+            for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                if(a_monomonials[i].compare_unknown(new_monomonial)) {
+                    return &a_monomonials[i];
+                }
+            } return 0;
         };
         // Returns the knows monomonial
         Monomonial known_monomonial() const {
@@ -154,6 +192,13 @@ namespace scls {
         std::vector<Monomonial> a_monomonials = std::vector<Monomonial>();
 	};
 
+	// Divide operator
+    Polymonial operator/(Monomonial& obj, Monomonial const& other) {
+        Polymonial to_return;
+        to_return.add_monomonial(Monomonial(other.factor() / obj.factor(), obj.unknowns()));
+        return to_return;
+    }
+
     //*********
 	//
 	// Redaction (or without redaction) methods
@@ -179,7 +224,7 @@ namespace scls {
             root_research += "x1 = (-b + sqrt(D)) / 2a = (" + (second_number * -1).to_std_string_fraction() + " + sqrt(" + discriminant.to_std_string_fraction() + ") / " + (first_number * 2).to_std_string_fraction() + " = " + root_1.to_std_string_fraction() + "\n";
             Fraction root_2 = (second_number * -1 - discriminant.sqrt()) / (first_number * 2);
             root_research += "x1 = (-b - sqrt(D)) / 2a = (" + (second_number * -1).to_std_string_fraction() + " - sqrt(" + discriminant.to_std_string_fraction() + ") / " + (first_number * 2).to_std_string_fraction() + " = " + root_2.to_std_string_fraction() + "\n";
-            root_research += "Les racines de f sont donc x1 = " + root_1.to_std_string_fraction() + " et x2 = " + root_2.to_std_string_fraction() + ".\n\n";
+            root_research += "Les racines de f sont donc x1 = " + root_1.to_std_string_fraction() + " = " + std::to_string(root_1.to_double()) + " et x2 = " + root_2.to_std_string_fraction() + " = " + std::to_string(root_2.to_double()) + ".\n\n";
         }
 
         // Create the final text
@@ -217,7 +262,8 @@ namespace scls {
         known_monomonial -= second_polymonial.known_monomonial();
 
         // Return the final datas
-        return (known_monomonial / unknown_monomonial).factor();
+        std::cout << "U " << known_monomonial << " . " << first_polymonial.known_monomonial() << " " << second_polymonial.known_monomonial() << " - " << unknown_monomonial << std::endl;
+        return (known_monomonial / unknown_monomonial).unknown_monomonials()[0].factor();
     };
 }
 

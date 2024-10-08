@@ -1,6 +1,6 @@
 //******************
 //
-// scls_math.h
+// scls_math_function.h
 //
 //******************
 // Presentation :
@@ -11,7 +11,7 @@
 // The Math "Carl" part represents the mathematical part of SCLS.
 // It is named after one one of the greatest mathematician of all times, Carl Freiderich Gauss.
 //
-// This file contains the includes to all the others SCLS Math files.
+// This file contains the needed class to use functions class.
 //
 //******************
 //
@@ -24,33 +24,57 @@
 // You should have received a copy of the GNU General Public License along with SCLS. If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef SCLS_MATH
-#define SCLS_MATH
+#ifndef SCLS_MATH_FUNCTION
+#define SCLS_MATH_FUNCTION
 
-// Include scls_foundation
-#ifdef __ASTER_DEV
-#include "../scls-foundation-leonhard/scls_foundation.h"
-#else
-#include <scls_foundation.h>
-#endif // __ASTER_DEV
-#include <algorithm>
+#include "scls_math_polymonial.h"
 
-#ifndef SCLS_MATH_INIT
-#define SCLS_MATH_INIT int scls::model_maker::Point::a_points_number = 0; int scls::model_maker::Face::a_faces_number = 0; int scls::model_maker::Solid::a_solids_number = 0; int __current_point_in_grid_x = 0; int __current_point_in_grid_y = 0;
-#endif // SCLS_MATH_INIT
+// The namespace "scls" is used to simplify the all.
+namespace scls {
+    //*********
+	//
+	// The Function class
+	//
+	//*********
 
-#ifndef SCLS_PI
-#define SCLS_PI 3.1415926535
-#endif // SCLS_PI
-#ifndef SCLS_HALP_PI
-#define SCLS_HALF_PI 1.5707963267948966
-#endif // SCLS_HALP_PI
+	class Function : public Polymonial {
+        // Class representating a function
+    public:
+        //*********
+        //
+        // Function simple methods
+        //
+        //*********
 
-#include "scls_math_directory/scls_math_complex.h"
-#include "scls_math_directory/scls_math_fraction.h"
-#include "scls_math_directory/scls_math_function.h"
-#include "scls_math_directory/scls_math_polymonial.h"
-#include "scls_math_directory/scls_math_3d_core.h"
-#include "scls_math_directory/scls_math_3d_model.h"
+        // "Function" constructor
+        Function(): Polymonial() {}
+	};
 
-#endif // SCLS_MATH
+	//*********
+	//
+	// The Sequence class
+	//
+	//*********
+
+	class Sequence : public Function {
+        // Class representating a sequence
+    public:
+        //*********
+        //
+        // Sequence simple methods
+        //
+        //*********
+
+        // "Sequence" constructor
+        Sequence(): Function() {}
+
+        // Returns a sum of numbers
+        Polymonial sum(unsigned int max_n) {
+            Polymonial total;
+
+            return total;
+        };
+	};
+}
+
+#endif // SCLS_MATH_FUNCTION
