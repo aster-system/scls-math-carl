@@ -452,7 +452,7 @@ namespace scls {
             //*********
 
             // Face constructor
-            Face() : Transform_Object_3D() { a_id = a_faces_number; a_faces_number++; set_can_print(false); };
+            Face() : Transform_Object_3D() { a_id = a_faces_number; a_faces_number++; };
 
             // Returns the face as a binary
             std::shared_ptr<Bytes_Set> binary() {
@@ -686,7 +686,6 @@ namespace scls {
                                 }
                                 else continue;
                                 position_found = true;
-                                set_can_print(false);
                                 start_position = j;
                                 break;
                             }

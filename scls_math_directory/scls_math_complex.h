@@ -60,6 +60,8 @@ namespace scls {
         // Getters and setter
         inline Fraction imaginary() const {return a_imaginary;};
         inline Fraction real() const {return a_real;};
+        inline void set_imaginary(Fraction new_imaginary) {a_imaginary=new_imaginary;};
+        inline void set_real(Fraction new_real) {a_real=new_real;};
 
         // Returns the Complex to a simple std::string
         inline std::string to_std_string_simple() const {
@@ -202,6 +204,31 @@ namespace scls {
         // Real part of the complex
         Fraction a_real = Fraction(0);
 
+	};
+
+	// Returns a complex from a std::string
+	static Complex string_to_complex(std::string source) {
+	    Complex to_return(Fraction(0));
+
+	    // Cut the number by + operator
+	    std::vector<std::string> cutted = cut_string(source, "+");
+	    for(int i = 0;i<static_cast<int>(cutted.size());i++){if(cutted[i] == ""){cutted.erase(cutted.begin()+i);i--;}}
+	    if(cutted.size() > 0) {
+            // First part of a complex number
+            bool is_imaginary = false;
+            std::string& current_string = cutted[0];
+            if(current_string[0] == 'i') {is_imaginary = true;current_string=current_string.substr(1,current_string.size()-1);}
+            else if(current_string[current_string.size()-1] == 'i') {is_imaginary = true;current_string=current_string.substr(0,current_string.size()-1);}
+            // Get the number
+            Fraction current_number = Fraction::from_std_string(current_string);
+            if(is_imaginary) {
+                to_return.set_imaginary(current_number);
+            } else {
+                to_return.set_real(current_number);
+            }
+	    }
+
+	    return to_return;
 	};
 
 	// Stream operator overloading

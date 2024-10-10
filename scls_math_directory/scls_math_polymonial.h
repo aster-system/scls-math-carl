@@ -117,6 +117,8 @@ namespace scls {
         Monomonial& operator-=(Monomonial const& obj) { a_factor -= obj.a_factor; return *this; }
         // Plus operator assignment
         Monomonial& operator+=(Monomonial const& obj) { a_factor += obj.a_factor; return *this; }
+        // Multiplication operator assignment
+        Monomonial& operator*=(Monomonial const& obj) { a_factor *= obj.a_factor; return *this; }
 
         // Getters and setters
         inline void set_factor(Complex new_factor) {a_factor = new_factor;};
@@ -186,18 +188,114 @@ namespace scls {
             return to_return;
         };
 
+        // Methods operators
+        // Add a polymonial to this one
+        void __add(Polymonial value) {
+            for(int i = 0;i<static_cast<int>(value.a_monomonials.size());i++) {
+                Monomonial& current_monomonial = value.a_monomonials[i];
+                Monomonial* contained_monomonial = contains_monomonial(current_monomonial);
+                if(contained_monomonial == 0) {
+                    add_monomonial(current_monomonial);
+                } else {
+                    (*contained_monomonial) += current_monomonial;
+                }
+            }
+        };
+        // Multiply a polymonial to this one
+        void __multiply(Polymonial value) {
+            std::vector<Polymonial> created_polymonial;
+            // Apply each addition
+            for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                Polymonial current_polymonial;
+                current_polymonial.add_monomonial(a_monomonials[i]);
+                // Apply each multiplication
+                for(int j = 0;j<static_cast<int>(value.a_monomonials.size());j++) {
+                    Monomonial& current_monomonial = value.a_monomonials[i];
+                    current_polymonial.a_monomonials[0] *= current_monomonial;
+                }
+                created_polymonial.push_back(current_polymonial);
+            }
+            // Apply the multiplication
+            a_monomonials.clear();
+            for(int i = 0;i<static_cast<int>(created_polymonial.size());i++) {
+                __add(created_polymonial[i]);
+            }
+        };
+
+        // Operators
+        Polymonial& operator+=(Polymonial value) {__add(value);return*this;};
+        Polymonial& operator*=(Polymonial value) {__multiply(value);return*this;};
+
+        // Getters and setters
+        inline std::vector<Monomonial>& monomonials() {return a_monomonials;};
+
     private:
 
         // Each monomonial in the polymonial
         std::vector<Monomonial> a_monomonials = std::vector<Monomonial>();
 	};
 
+	// Stream operator overloading
+    static std::ostream& operator<<(std::ostream& os, Polymonial& obj) {
+        std::string content = "";
+        for(int i = 0;i<static_cast<int>(obj.monomonials().size());i++) {
+            content += obj.monomonials()[i].to_std_string();
+            if(i < static_cast<int>(obj.monomonials().size()) - 1) {
+                content += " + ";
+            }
+        }; os << content; return os;
+    }
+
 	// Divide operator
-    Polymonial operator/(Monomonial& obj, Monomonial const& other) {
+    static Polymonial operator/(Monomonial& obj, Monomonial const& other) {
         Polymonial to_return;
         to_return.add_monomonial(Monomonial(other.factor() / obj.factor(), obj.unknowns()));
         return to_return;
     }
+
+    // Converts a std::string to a Polymonial
+    static Polymonial __string_to_polymonial_without_addition(std::string source) {
+        // Format the text as needed
+        source = remove_space(replace(source, "-", "+-"));
+        std::vector<std::string> cutted;
+
+        // Prepare the needed datas
+        Polymonial to_return; bool to_return_modified = false;
+
+        // Cut the text operator by * operator
+        cutted = cut_string_out_of(source, "*", "(", ")");
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            Polymonial current_polymonial;
+            current_polymonial.add_monomonial(Monomonial(string_to_complex(cutted[i])));
+            if(to_return_modified) {to_return *= current_polymonial;}
+            else{to_return = current_polymonial;to_return_modified = true;}
+            std::cout << "B " << cutted[i] << std::endl;
+        }
+
+        // Return the result
+        return to_return;
+    };
+    static Polymonial string_to_polymonial(std::string source) {
+        // Format the text as needed
+        source = remove_space(replace(source, "-", "+-"));
+        std::vector<std::string> cutted;
+
+        // Prepare the needed datas
+        Polymonial to_return; bool to_return_modified = false;
+
+        // Cut the text operator by + operator
+        source = remove_space(replace(source, "-", "+-"));
+        cutted = cut_string_out_of(source, "+", "(", ")");
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
+            if(to_return_modified) {to_return += current_polymonial;}
+            else{to_return = current_polymonial;to_return_modified = true;}
+            std::cout << "A " << cutted[i] << std::endl;
+        }
+
+        // Return the result
+        return to_return;
+    };
 
     //*********
 	//
