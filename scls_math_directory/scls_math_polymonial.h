@@ -253,48 +253,98 @@ namespace scls {
         return to_return;
     }
 
-    // Converts a std::string to a Polymonial
-    static Polymonial __string_to_polymonial_without_addition(std::string source) {
-        // Format the text as needed
-        source = remove_space(replace(source, "-", "+-"));
-        std::vector<std::string> cutted;
+    class __String_To_Polymonial_Parse {
+        // Class allowing to properly parse a std::string to a polymonial
+    public:
+        // __String_To_Polymonial_Parse constructor
+        __String_To_Polymonial_Parse(){};
 
-        // Prepare the needed datas
-        Polymonial to_return; bool to_return_modified = false;
-
-        // Cut the text operator by * operator
-        cutted = cut_string_out_of(source, "*", "(", ")");
-        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+        // Returns a given first base string to a polymonial
+        Polymonial __string_to_polymonial_base(std::string base) {
             Polymonial current_polymonial;
-            current_polymonial.add_monomonial(Monomonial(string_to_complex(cutted[i])));
-            if(to_return_modified) {to_return *= current_polymonial;}
-            else{to_return = current_polymonial;to_return_modified = true;}
-            std::cout << "B " << cutted[i] << std::endl;
-        }
 
-        // Return the result
-        return to_return;
+            if(base.size() < 2 || (base[0] != '(')) {
+                // Simple form
+                Monomonial to_add(string_to_complex(base));
+                current_polymonial.add_monomonial(to_add);
+            } else {
+                //
+                __String_To_Polymonial_Parse new_parser;
+                current_polymonial = new_parser.string_to_polymonial(base.substr(1, base.size() - 2));
+                std::cout << "C " << base << " " << base.substr(1, base.size() - 2) << std::endl;
+            }
+            return current_polymonial;
+        };
+
+        // Converts a std::string to a Polymonial
+        Polymonial __string_to_polymonial_without_addition(std::string source) {
+            // Format the text as needed
+            source = remove_space(replace(source, "-", "+-"));
+            std::vector<std::string> cutted;
+
+            // Prepare the needed datas
+            Polymonial to_return; bool to_return_modified = false;
+
+            // Cut the text operator by * operator
+            cutted = cut_string_out_of_2(source, "*", "(", ")");
+            std::cout << "B0 " << source << std::endl;
+            for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+                Polymonial current_polymonial = __string_to_polymonial_base(cutted[i]);
+                if(to_return_modified) {to_return *= current_polymonial;}
+                else{to_return = current_polymonial;to_return_modified = true;}
+                std::cout << "B " << cutted[i] << std::endl;
+            }
+
+            // Return the result
+            return to_return;
+        };
+        Polymonial __string_to_polymonial_without_parenthesis(std::string source) {
+            // Format the text as needed
+            source = remove_space(replace(source, "-", "+-"));
+            std::vector<std::string> cutted;
+
+            // Prepare the needed datas
+            Polymonial to_return; bool to_return_modified = false;
+
+            // Cut the text operator by + operator
+            source = remove_space(replace(source, "-", "+-"));
+            cutted = cut_string_out_of_2(source, "+", "(", ")");
+            for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+                Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
+                if(to_return_modified) {to_return += current_polymonial;}
+                else{to_return = current_polymonial;to_return_modified = true;}
+                std::cout << "A " << cutted[i] << std::endl;
+            }
+
+            // Return the result
+            return to_return;
+        };
+        Polymonial string_to_polymonial(std::string source) {
+            // Format the text as needed
+            source = remove_space(replace(source, "-", "+-"));
+            std::vector<std::string> cutted;
+
+            // Prepare the needed datas
+            Polymonial to_return; bool to_return_modified = false;
+
+            // Cut the text operator by + operator
+            source = remove_space(replace(source, "-", "+-"));
+            cutted = cut_string_out_of_2(source, "+", "(", ")");
+            for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+                Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
+                if(to_return_modified) {to_return += current_polymonial;}
+                else{to_return = current_polymonial;to_return_modified = true;}
+                std::cout << "A " << cutted[i] << std::endl;
+            }
+
+            // Return the result
+            return to_return;
+        };
     };
-    static Polymonial string_to_polymonial(std::string source) {
-        // Format the text as needed
-        source = remove_space(replace(source, "-", "+-"));
-        std::vector<std::string> cutted;
 
-        // Prepare the needed datas
-        Polymonial to_return; bool to_return_modified = false;
-
-        // Cut the text operator by + operator
-        source = remove_space(replace(source, "-", "+-"));
-        cutted = cut_string_out_of(source, "+", "(", ")");
-        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
-            if(to_return_modified) {to_return += current_polymonial;}
-            else{to_return = current_polymonial;to_return_modified = true;}
-            std::cout << "A " << cutted[i] << std::endl;
-        }
-
-        // Return the result
-        return to_return;
+    static Polymonial string_to_polymonial(std::string source){
+        __String_To_Polymonial_Parse parser;
+        return parser.string_to_polymonial(source);
     };
 
     //*********
