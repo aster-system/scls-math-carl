@@ -217,14 +217,19 @@ namespace scls {
             // First part of a complex number
             bool is_imaginary = false;
             std::string& current_string = cutted[0];
-            if(current_string[0] == 'i') {is_imaginary = true;current_string=current_string.substr(1,current_string.size()-1);}
-            else if(current_string[current_string.size()-1] == 'i') {is_imaginary = true;current_string=current_string.substr(0,current_string.size()-1);}
-            // Get the number
-            Fraction current_number = Fraction::from_std_string(current_string);
-            if(is_imaginary) {
-                to_return.set_imaginary(current_number);
-            } else {
-                to_return.set_real(current_number);
+            // Special cases
+            if(current_string == "i") to_return.set_imaginary(Fraction(1));
+            else {
+                // Analyse the part
+                if(current_string[0] == 'i') {is_imaginary = true;current_string=current_string.substr(1,current_string.size()-1);}
+                else if(current_string[current_string.size()-1] == 'i') {is_imaginary = true;current_string=current_string.substr(0,current_string.size()-1);}
+                // Get the number
+                Fraction current_number = Fraction::from_std_string(current_string);
+                if(is_imaginary) {
+                    to_return.set_imaginary(current_number);
+                } else {
+                    to_return.set_real(current_number);
+                }
             }
 	    }
 

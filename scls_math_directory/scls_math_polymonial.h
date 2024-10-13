@@ -53,13 +53,12 @@ namespace scls {
                 return Unknown_Comparaison::UC_EQUAL;
             } return Unknown_Comparaison::UC_DIFFERENT;
         };
-        // Returns if the unknow is a conjugate
+
+        // Getters and setters
         inline bool conjugate() const {return a_conjugate;};
-        // Returns the exponent of the unknown
         inline Complex exponent() const {return a_exponent;};
-        // Returns the name of the unknown
         inline std::string name() const {return a_name;};
-        // Change the value of name
+        inline void set_exponent(Complex new_exponent) {a_exponent = new_exponent;};
         inline void set_name(std::string new_name) {a_name = new_name;};
 
         // Operator ==
@@ -87,16 +86,26 @@ namespace scls {
         Monomonial(Complex factor, std::vector<_Base_Unknown> unknowns):Monomonial(factor){a_unknowns=unknowns;};
         // Monomonial constructor
         Monomonial(Complex factor, std::string unknow):Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
+        // Monomonial copy constructor
+        Monomonial(const Monomonial& monomonial_copy):Monomonial(monomonial_copy.a_factor,monomonial_copy.a_unknowns){};
 
         // Returns if a monomonial has the same unknows as this one
         inline bool compare_unknown(Monomonial other) {
             for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
                 bool contains_equal = false;
                 for(int j = 0;j<static_cast<int>(other.a_unknowns.size());j++) {
-                    if(a_unknowns[i] == other.a_unknowns[i]) {contains_equal = true;break;}
+                    if(a_unknowns[i] == other.a_unknowns[j]) {contains_equal = true;break;}
                 }
                 if(!contains_equal) return false;
             } return true;
+        };
+        // Returns if the monomonial contains an unkwnown
+        _Base_Unknown* contains_unknown(std::string unknown_name) {
+            for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
+                if(a_unknowns[i].name() == unknown_name) {
+                    return &a_unknowns[i];
+                }
+            } return 0;
         };
         // Returns the factor of the monomonial
         inline Complex factor() const {return a_factor;};
@@ -109,6 +118,7 @@ namespace scls {
             std::string final_unknow = "";
             for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
                 final_unknow += a_unknowns.at(i).name();
+                if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1) final_unknow += "^" + a_unknowns.at(i).exponent().to_std_string_simple();
             }
             return "(" + a_factor.to_std_string_simple() + ")" + final_unknow;
         };
@@ -118,7 +128,17 @@ namespace scls {
         // Plus operator assignment
         Monomonial& operator+=(Monomonial const& obj) { a_factor += obj.a_factor; return *this; }
         // Multiplication operator assignment
-        Monomonial& operator*=(Monomonial const& obj) { a_factor *= obj.a_factor; return *this; }
+        Monomonial& operator*=(Monomonial const& obj) {
+            a_factor *= obj.a_factor;
+            for(int i = 0;i<static_cast<int>(obj.a_unknowns.size());i++) {
+                _Base_Unknown* contained_unknown = contains_unknown(obj.a_unknowns[i].name());
+                if(contained_unknown == 0) {
+                    a_unknowns.push_back(obj.a_unknowns[i]);
+                }
+                else if(obj.a_unknowns[i].name() != "") {contained_unknown->set_exponent(contained_unknown->exponent() + obj.a_unknowns[i].exponent());}
+            }
+            return *this;
+        }
 
         // Getters and setters
         inline void set_factor(Complex new_factor) {a_factor = new_factor;};
@@ -182,7 +202,12 @@ namespace scls {
         inline std::string to_std_string() const {
             std::string to_return = "";
             for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
-                to_return += a_monomonials.at(i).to_std_string() + " + ";
+                if(a_monomonials.at(i).factor() != 0) {
+                    to_return += a_monomonials.at(i).to_std_string();
+                    if(i < static_cast<int>(a_monomonials.size()) - 1) {
+                        to_return += " + ";
+                    }
+                }
             }
             while(to_return[to_return.size() - 1] == '+' || to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
             return to_return;
@@ -208,16 +233,20 @@ namespace scls {
             for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
                 Polymonial current_polymonial;
                 current_polymonial.add_monomonial(a_monomonials[i]);
+                print("Matt's Current Monomonial", current_polymonial);
                 // Apply each multiplication
                 for(int j = 0;j<static_cast<int>(value.a_monomonials.size());j++) {
-                    Monomonial& current_monomonial = value.a_monomonials[i];
-                    current_polymonial.a_monomonials[0] *= current_monomonial;
+                    Monomonial& current_monomonial = value.a_monomonials[j];
+                    print("Matt's Monomonial " + std::to_string(j), current_monomonial);
+                    Polymonial needed_polymonial = current_polymonial;
+                    needed_polymonial.a_monomonials[0] *= current_monomonial;
+                    created_polymonial.push_back(needed_polymonial);
                 }
-                created_polymonial.push_back(current_polymonial);
             }
             // Apply the multiplication
             a_monomonials.clear();
             for(int i = 0;i<static_cast<int>(created_polymonial.size());i++) {
+                print("Matt", created_polymonial[i]);
                 __add(created_polymonial[i]);
             }
         };
@@ -236,15 +265,7 @@ namespace scls {
 	};
 
 	// Stream operator overloading
-    static std::ostream& operator<<(std::ostream& os, Polymonial& obj) {
-        std::string content = "";
-        for(int i = 0;i<static_cast<int>(obj.monomonials().size());i++) {
-            content += obj.monomonials()[i].to_std_string();
-            if(i < static_cast<int>(obj.monomonials().size()) - 1) {
-                content += " + ";
-            }
-        }; os << content; return os;
-    }
+    static std::ostream& operator<<(std::ostream& os, Polymonial& obj) {os << obj.to_std_string(); return os; }
 
 	// Divide operator
     static Polymonial operator/(Monomonial& obj, Monomonial const& other) {
@@ -259,19 +280,35 @@ namespace scls {
         // __String_To_Polymonial_Parse constructor
         __String_To_Polymonial_Parse(){};
 
+        // Returns if a std::string is a number or not
+        inline bool __string_is_number(char text) const {return (string_is_number(text) || text == '/' || text == 'i' || text == '-');};
+        inline bool __string_is_number(std::string text) const {
+            for(int i = 0;i<static_cast<int>(text.size());i++) {
+                if(!__string_is_number(text[i])) return false;
+            } return true;
+        };
+        // Returns if a std::string is an operator or not
+        inline bool __string_is_operator(char text) const {return (text == '+' || text == '-' || text == '*' || text == '/');};
         // Returns a given first base string to a polymonial
         Polymonial __string_to_polymonial_base(std::string base) {
             Polymonial current_polymonial;
 
             if(base.size() < 2 || (base[0] != '(')) {
                 // Simple form
-                Monomonial to_add(string_to_complex(base));
+                // Get the needed datas
+                unsigned int number_i = 0; std::string number_part_1 = ""; std::string number_part_2 = ""; std::string unknow_part = "";
+                while(number_i < base.size() && __string_is_number(base[number_i])){number_part_1+=base[number_i];number_i++;}
+                while(number_i < base.size() && !__string_is_number(base[number_i])){unknow_part+=base[number_i];number_i++;}
+                while(number_i < base.size() && __string_is_number(base[number_i])){number_part_2+=base[number_i];number_i++;}
+                // Add the monomonial
+                Complex number = string_to_complex(number_part_1);
+                if(number_part_2 != "") number *= string_to_complex(number_part_2);
+                Monomonial to_add(number, unknow_part);
                 current_polymonial.add_monomonial(to_add);
             } else {
-                //
+                // Parenthesis form
                 __String_To_Polymonial_Parse new_parser;
                 current_polymonial = new_parser.string_to_polymonial(base.substr(1, base.size() - 2));
-                std::cout << "C " << base << " " << base.substr(1, base.size() - 2) << std::endl;
             }
             return current_polymonial;
         };
@@ -279,7 +316,6 @@ namespace scls {
         // Converts a std::string to a Polymonial
         Polymonial __string_to_polymonial_without_addition(std::string source) {
             // Format the text as needed
-            source = remove_space(replace(source, "-", "+-"));
             std::vector<std::string> cutted;
 
             // Prepare the needed datas
@@ -300,14 +336,12 @@ namespace scls {
         };
         Polymonial __string_to_polymonial_without_parenthesis(std::string source) {
             // Format the text as needed
-            source = remove_space(replace(source, "-", "+-"));
             std::vector<std::string> cutted;
 
             // Prepare the needed datas
             Polymonial to_return; bool to_return_modified = false;
 
             // Cut the text operator by + operator
-            source = remove_space(replace(source, "-", "+-"));
             cutted = cut_string_out_of_2(source, "+", "(", ")");
             for(int i = 0;i<static_cast<int>(cutted.size());i++) {
                 Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
@@ -321,14 +355,32 @@ namespace scls {
         };
         Polymonial string_to_polymonial(std::string source) {
             // Format the text as needed
-            source = remove_space(replace(source, "-", "+-"));
+            source = remove_space(source);
+            for(int i = 0;i<static_cast<int>(source.size());i++) {
+                // Remove the useless "-"
+                if(i > 0 && source[i] == '-') {
+                    if(source[i - 1] != '+') {
+                        source.insert(i, "+");
+                        i++;
+                    }
+                }
+                // Remove the useless ")("
+                if(i > 0 && source[i] == '(') {
+                    if(source[i - 1] == ')') {
+                        source.insert(i, "*");
+                        i++;
+                    } else if(!__string_is_operator(source[i - 1])) {
+                        source.insert(i, "*");
+                        i++;
+                    }
+                }
+            }
             std::vector<std::string> cutted;
 
             // Prepare the needed datas
             Polymonial to_return; bool to_return_modified = false;
 
             // Cut the text operator by + operator
-            source = remove_space(replace(source, "-", "+-"));
             cutted = cut_string_out_of_2(source, "+", "(", ")");
             for(int i = 0;i<static_cast<int>(cutted.size());i++) {
                 Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
