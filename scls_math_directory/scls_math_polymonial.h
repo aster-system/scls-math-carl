@@ -91,12 +91,12 @@ namespace scls {
 
         // Returns if a monomonial has the same unknows as this one
         inline bool compare_unknown(Monomonial other) {
+            if(other.unknowns_number() != unknowns_number()) return false;
             for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
-                bool contains_equal = false;
+                if(a_unknowns[i].name() == "") continue; bool contains_equal = false;
                 for(int j = 0;j<static_cast<int>(other.a_unknowns.size());j++) {
                     if(a_unknowns[i] == other.a_unknowns[j]) {contains_equal = true;break;}
-                }
-                if(!contains_equal) return false;
+                } if(!contains_equal) return false;
             } return true;
         };
         // Returns if the monomonial contains an unkwnown
@@ -111,7 +111,11 @@ namespace scls {
         inline Complex factor() const {return a_factor;};
         // Unknows of the monomonial
         inline std::vector<_Base_Unknown>& unknowns() {return a_unknowns;};
-        inline unsigned int unknowns_number() const {return a_unknowns.size();};
+        inline unsigned int unknowns_number() const {
+            unsigned int to_return = 0;
+            for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns[i].name() != "")to_return++;}
+            return to_return;
+        };
 
         // Returns the monomonial converted to std::string
         inline std::string to_std_string() const {
@@ -347,7 +351,7 @@ namespace scls {
                 Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
                 if(to_return_modified) {to_return += current_polymonial;}
                 else{to_return = current_polymonial;to_return_modified = true;}
-                std::cout << "A " << cutted[i] << std::endl;
+                std::cout << "A " << cutted[i] << " " << current_polymonial.to_std_string() << std::endl;
             }
 
             // Return the result
@@ -386,7 +390,7 @@ namespace scls {
                 Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
                 if(to_return_modified) {to_return += current_polymonial;}
                 else{to_return = current_polymonial;to_return_modified = true;}
-                std::cout << "A " << cutted[i] << std::endl;
+                std::cout << "A " << cutted[i] << " " << current_polymonial << std::endl;
             }
 
             // Return the result
