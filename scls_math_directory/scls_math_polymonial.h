@@ -237,11 +237,9 @@ namespace scls {
             for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
                 Polymonial current_polymonial;
                 current_polymonial.add_monomonial(a_monomonials[i]);
-                print("Matt's Current Monomonial", current_polymonial);
                 // Apply each multiplication
                 for(int j = 0;j<static_cast<int>(value.a_monomonials.size());j++) {
                     Monomonial& current_monomonial = value.a_monomonials[j];
-                    print("Matt's Monomonial " + std::to_string(j), current_monomonial);
                     Polymonial needed_polymonial = current_polymonial;
                     needed_polymonial.a_monomonials[0] *= current_monomonial;
                     created_polymonial.push_back(needed_polymonial);
@@ -250,7 +248,6 @@ namespace scls {
             // Apply the multiplication
             a_monomonials.clear();
             for(int i = 0;i<static_cast<int>(created_polymonial.size());i++) {
-                print("Matt", created_polymonial[i]);
                 __add(created_polymonial[i]);
             }
         };
@@ -306,6 +303,7 @@ namespace scls {
                 while(number_i < base.size() && __string_is_number(base[number_i])){number_part_2+=base[number_i];number_i++;}
                 // Add the monomonial
                 Complex number = string_to_complex(number_part_1);
+                if(unknow_part != "" && number_part_1 == "") number = 1;
                 if(number_part_2 != "") number *= string_to_complex(number_part_2);
                 Monomonial to_add(number, unknow_part);
                 current_polymonial.add_monomonial(to_add);
@@ -327,12 +325,10 @@ namespace scls {
 
             // Cut the text operator by * operator
             cutted = cut_string_out_of_2(source, "*", "(", ")");
-            std::cout << "B0 " << source << std::endl;
             for(int i = 0;i<static_cast<int>(cutted.size());i++) {
                 Polymonial current_polymonial = __string_to_polymonial_base(cutted[i]);
                 if(to_return_modified) {to_return *= current_polymonial;}
                 else{to_return = current_polymonial;to_return_modified = true;}
-                std::cout << "B " << cutted[i] << std::endl;
             }
 
             // Return the result
@@ -351,7 +347,6 @@ namespace scls {
                 Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
                 if(to_return_modified) {to_return += current_polymonial;}
                 else{to_return = current_polymonial;to_return_modified = true;}
-                std::cout << "A " << cutted[i] << " " << current_polymonial.to_std_string() << std::endl;
             }
 
             // Return the result
@@ -363,7 +358,7 @@ namespace scls {
             for(int i = 0;i<static_cast<int>(source.size());i++) {
                 // Remove the useless "-"
                 if(i > 0 && source[i] == '-') {
-                    if(source[i - 1] != '+') {
+                    if(!__string_is_operator(source[i - 1]) && (i >= source.size() || (source[i + 1] != '('))) {
                         source.insert(i, "+");
                         i++;
                     }
@@ -372,6 +367,9 @@ namespace scls {
                 if(i > 0 && source[i] == '(') {
                     if(source[i - 1] == ')') {
                         source.insert(i, "*");
+                        i++;
+                    } else if(source[i - 1] == '-') {
+                        source.insert(i, "1*");
                         i++;
                     } else if(!__string_is_operator(source[i - 1])) {
                         source.insert(i, "*");
@@ -390,7 +388,6 @@ namespace scls {
                 Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
                 if(to_return_modified) {to_return += current_polymonial;}
                 else{to_return = current_polymonial;to_return_modified = true;}
-                std::cout << "A " << cutted[i] << " " << current_polymonial << std::endl;
             }
 
             // Return the result
