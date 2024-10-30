@@ -46,10 +46,14 @@
 #define SCLS_HALF_PI 1.5707963267948966
 #endif // SCLS_HALP_PI
 
-#include "scls_math_directory/scls_math_complex.h"
-#include "scls_math_directory/scls_math_fraction.h"
+// Root of SCLS Math
+#include "scls_math_directory/scls_math_numbers.h"
+
+// Function handling
 #include "scls_math_directory/scls_math_function.h"
 #include "scls_math_directory/scls_math_polymonial.h"
+
+// 3D Geometry handling
 #include "scls_math_directory/scls_math_3d_core.h"
 #include "scls_math_directory/scls_math_3d_model.h"
 

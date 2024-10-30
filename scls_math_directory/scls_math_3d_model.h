@@ -247,7 +247,7 @@ namespace scls {
             double current_base_y = (fourth_point_y - third_point_y);
             double current_line_ratio = current_base_x / current_base_y;
             // Check the value
-            if(current_base_y == 0) {
+            if(abs(current_base_y) < SCLS_MATH_TOLERANCE) {
                 if(base_y > 0) {
                     // Constant horizontal line
                     to_return.crossed = true;
@@ -261,7 +261,7 @@ namespace scls {
                     to_return.same_lines = true;
                 }
             }
-            else if(base_y == 0) {
+            else if(abs(base_y) < SCLS_MATH_TOLERANCE) {
                 // Constant horizontal line
                 to_return.crossed = true;
                 // Get the carthesian coordonates
@@ -271,7 +271,7 @@ namespace scls {
                 to_return.crossing_x = ((current_b_part * first_point_y) + current_c_part) / (-current_a_part);
                 to_return.crossing_y = first_point_y;
             }
-            else if(current_base_x == 0) {
+            else if(abs(current_base_x) < SCLS_MATH_TOLERANCE) {
                 if(base_x != 0) {
                     // Constant vertical
                     to_return.crossed = true;
@@ -285,7 +285,7 @@ namespace scls {
                     to_return.same_lines = true;
                 }
             }
-            else if(base_x == 0) {
+            else if(abs(base_x) < SCLS_MATH_TOLERANCE) {
                 // Constant vertical line
                 to_return.crossed = true;
                 // Get the carthesian coordonates
@@ -331,12 +331,16 @@ namespace scls {
             // Get the crossing datas
             __Crossing_Datas_Segment datas;
             datas.crossing_datas = __check_crossing(first_point_x, first_point_y, second_point_x, second_point_y, third_point_x, third_point_y, fourth_point_x, fourth_point_y);
-            //print("Informations type 1", "Math", std::to_string(current_min_y) + " < " + std::to_string(current_max_y) + " & " + std::to_string(min_y) + " < " + std::to_string(max_y) + " -> " + std::to_string(datas.crossing_datas.crossing_y));
             bool on_first_segment = false;
             bool on_second_segment = false;
             // Check the segments
             if(datas.crossing_datas.crossed) {
-                if(current_max_y - current_min_y < SCLS_MATH_TOLERANCE) {
+                if(current_max_y - current_min_y < SCLS_MATH_TOLERANCE && max_y - min_y < SCLS_MATH_TOLERANCE) {
+                    // Two horizontal lines
+                    if(datas.crossing_datas.crossing_x - current_min_x >= 0 && current_max_x - datas.crossing_datas.crossing_x >= 0) on_first_segment = true;
+                    if(datas.crossing_datas.crossing_x - min_x >= 0 && max_x - datas.crossing_datas.crossing_x >= 0) on_second_segment = true;
+                }
+                else if(current_max_y - current_min_y < SCLS_MATH_TOLERANCE) {
                     // Horizontal lines
                     if(datas.crossing_datas.crossing_x - current_min_x >= 0 && current_max_x - datas.crossing_datas.crossing_x >= 0) on_first_segment = true;
                     if(datas.crossing_datas.crossing_y - min_y >= 0 && max_y - datas.crossing_datas.crossing_y >= 0) on_second_segment = true;
@@ -400,9 +404,12 @@ namespace scls {
             for(int i = 0;i<static_cast<int>(points.size() - 1);i++) {
                 if(first_point.get() == points.at(i).get() && second_point.get() == points.at(i + 1).get()) { return true; }
                 else if(first_point.get() == points.at(i + 1).get() && second_point.get() == points.at(i).get()) { return true; }
-                else if(first_point.get() != points.at(i).get() && first_point.get() != points.at(i + 1).get() && second_point.get() != points.at(i).get() && second_point.get() != points.at(i + 1).get()) {
+                // A point is a part of the boundary
+                else if(first_point.get() == points.at(i).get() || first_point.get() == points.at(i + 1).get()) { continue; }
+                else if(second_point.get() == points.at(i).get() || second_point.get() == points.at(i + 1).get()) { continue; }
+                // The points does not belong to the boundary
+                else {
                     // Check each sides with carthesian coordonates
-                    //print("Informations type 0", "Math", std::to_string(i));
                     __Crossing_Datas_Segment datas = __check_crossing_segment(first_point.get(), second_point.get(), points.at(i).get(), points.at(i + 1).get());
                     if(datas.crossed_in_segment) return true;
                 }
@@ -411,8 +418,11 @@ namespace scls {
             if(last_point_is_first_point && static_cast<int>(points.size()) > 1) {
                 if(first_point.get() == points.at(points.size() - 1).get() && second_point.get() == points.at(0).get()) { return true; }
                 else if(first_point.get() == points.at(0).get() && second_point.get() == points.at(points.size() - 1).get()) { return true; }
+                // A point is a part of the boundary
+                else if(first_point.get() == points.at(0).get() || first_point.get() == points.at(points.size() - 1).get()) { return false; }
+                else if(second_point.get() == points.at(0).get() || second_point.get() == points.at(points.size() - 1).get()) { return false; }
+                // The points does not belong to the boundary
                 else if(first_point.get() != points.at(0).get() && first_point.get() != points.at(points.size() - 1).get() && second_point.get() != points.at(0).get() && second_point.get() != points.at(points.size() - 1).get()) {
-                    //print("Informations type Final", "Math", "Final");
                     if(__check_crossing_segment(first_point.get(), second_point.get(), points.at(points.size() - 1).get(), points.at(0).get()).crossed_in_segment) return true;
                 }
             }
@@ -718,10 +728,11 @@ namespace scls {
                 exclusion_points_copy.clear();
             };
             bool __triangulation_check_line_wrong(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point) {
-                bool on_boundary = __triangulation_cross_boundary(first_point, second_point);
-                if(on_boundary) return true;
+                // Normal Check
+                char on_boundary = __triangulation_cross_boundary(first_point, second_point);
+                if(on_boundary != 0) {return true; }
                 bool in_shape = __triangulation_check_shape_content((second_point.get()->x() + first_point.get()->x()) / 2.0, (second_point.get()->z() + first_point.get()->z()) / 2.0);
-                if(!in_shape) return true;
+                if(!in_shape) {return true; }
                 return false;
             };
             bool __triangulation_check_shape_content(double point_to_test_x, double point_to_test_y) {
@@ -733,14 +744,12 @@ namespace scls {
                 }
                 return true;
             };
-            bool __triangulation_cross_boundary(std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point) {
+            char __triangulation_cross_boundary(std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point) {
                 // Check the main shape
-                if(__cross_boundary(points(), first_point, second_point)) return true;
-                // std::cout << "Passage 0" << std::endl;
+                if(__cross_boundary(points(), first_point, second_point)) return 1;
                 // Check each out shape
-                for(int i = 0;i<static_cast<int>(a_exclusion_points.size());i++) {if(__cross_boundary(a_exclusion_points[i], first_point, second_point)) return true;}
-                // std::cout << "Passage 1" << std::endl;
-                return false;
+                for(int i = 0;i<static_cast<int>(a_exclusion_points.size());i++) {if(__cross_boundary(a_exclusion_points[i], first_point, second_point)) return 2;}
+                return 0;
             };
             // Do a triangulation of a face
             void triangulate() {
@@ -789,7 +798,6 @@ namespace scls {
 
                     // Check if the points are the same
                     if(current_point.get() == current_point_1.get() || current_point_1.get() == current_point_2.get()) {
-                        // std::cout << "OMG " << current_i << std::endl;
                         points_copy.erase(points_copy.begin() + current_i + 1);
                         return false;
                     }

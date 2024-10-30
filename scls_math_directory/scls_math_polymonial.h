@@ -27,7 +27,7 @@
 #ifndef SCLS_MATH_POLYMONIAL
 #define SCLS_MATH_POLYMONIAL
 
-#include "scls_math_fraction.h"
+#include "scls_math_numbers.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
@@ -109,6 +109,12 @@ namespace scls {
         };
         // Returns the factor of the monomonial
         inline Complex factor() const {return a_factor;};
+        // Deletes the monomonial unkwnown
+        void delete_unknown(std::string unknown_name) {
+            for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
+                if(a_unknowns[i].name() == unknown_name) {a_unknowns.erase(a_unknowns.begin() + i); return;}
+            }
+        };
         // Unknows of the monomonial
         inline std::vector<_Base_Unknown>& unknowns() {return a_unknowns;};
         inline unsigned int unknowns_number() const {
@@ -171,6 +177,8 @@ namespace scls {
 
         // Polymonial constructor
         Polymonial(){};
+        // Polymonial copy constructor
+        Polymonial(const Polymonial& polymonial_copy):a_monomonials(polymonial_copy.a_monomonials){};
 
         // Add a new monomonial to the polymonial
         void add_monomonial(Monomonial new_monomonial) {
@@ -251,10 +259,53 @@ namespace scls {
                 __add(created_polymonial[i]);
             }
         };
+        void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(Monomonial(value));__multiply(temp);};
+
+        // Returns a polymonial from a monomonial where the unknows has been replaced
+        static Polymonial polymonial_from_modified_monomonial_unknows(Monomonial used_monomonial, std::string unknown, Polymonial new_value) {
+            Polymonial final_polymonial = Polymonial();
+
+            _Base_Unknown* unknown_ptr = used_monomonial.contains_unknown(unknown);
+            if(unknown_ptr!= 0) {
+                // The monomonial is a multiplication between the unknown and the base value
+                Complex exponent = unknown_ptr->exponent();
+                used_monomonial.delete_unknown(unknown);
+                final_polymonial += used_monomonial;
+                // Create the good value
+                Polymonial final_to_add = new_value;
+                int needed_exponent = static_cast<int>(exponent.real().to_double());
+                for(int i = 1;i<needed_exponent;i++) {final_to_add *= new_value;}
+                final_polymonial *= final_to_add;
+            } else {
+                // The unknown is not a multiplication of the base value
+                final_polymonial += used_monomonial;
+            }
+
+            return final_polymonial;
+        };
+        // Returns a monomonial where an unkown is replaced by an another unknown
+        Polymonial replace_unknown(std::string unknown, Polymonial new_value) const {
+            Polymonial final_polymonial = Polymonial();
+
+            // Analyse each monomonial
+            for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                Polymonial current_polymonial = polymonial_from_modified_monomonial_unknows(a_monomonials.at(i), unknown, new_value);
+                final_polymonial += current_polymonial;
+            }
+
+            return final_polymonial;
+        };
 
         // Operators
+        // With fractions
+        Polymonial& operator*=(Fraction value) {__multiply(value);return*this;};
+        // With polymonials
+        Polymonial operator-(Polymonial value) const {Polymonial to_return(*this);to_return-=value;return to_return;};
+        Polymonial& operator-=(Polymonial value) {value*=Fraction(-1);__add(value);return*this;};
         Polymonial& operator+=(Polymonial value) {__add(value);return*this;};
         Polymonial& operator*=(Polymonial value) {__multiply(value);return*this;};
+        // With monomonials
+        Polymonial& operator+=(Monomonial value) {add_monomonial(value);return*this;};
 
         // Getters and setters
         inline std::vector<Monomonial>& monomonials() {return a_monomonials;};
@@ -399,6 +450,9 @@ namespace scls {
         __String_To_Polymonial_Parse parser;
         return parser.string_to_polymonial(source);
     };
+
+    // Reimplementation of "Polymonial::replace_unknown" with string
+    static Polymonial replace_unknown(Polymonial used_polymonial, std::string unknown, std::string new_value) { return used_polymonial.replace_unknown(unknown, string_to_polymonial(new_value));};
 
     //*********
 	//
