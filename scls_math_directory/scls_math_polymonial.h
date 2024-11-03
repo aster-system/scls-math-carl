@@ -130,6 +130,7 @@ namespace scls {
                 final_unknow += a_unknowns.at(i).name();
                 if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1) final_unknow += "^" + a_unknowns.at(i).exponent().to_std_string_simple();
             }
+            if(a_factor.real() == 0 || a_factor.imaginary() == 0) return a_factor.to_std_string_simple() + final_unknow;
             return "(" + a_factor.to_std_string_simple() + ")" + final_unknow;
         };
 
@@ -177,6 +178,7 @@ namespace scls {
 
         // Polymonial constructor
         Polymonial(){};
+        Polymonial(int number){a_monomonials.push_back(Monomonial(Complex(number)));};
         // Polymonial copy constructor
         Polymonial(const Polymonial& polymonial_copy):a_monomonials(polymonial_copy.a_monomonials){};
 
@@ -297,6 +299,9 @@ namespace scls {
         };
 
         // Operators
+        // With Complex
+        bool operator!=(Complex value) const {return !(*this == value);};
+        bool operator==(Complex value) const {return (a_monomonials.size() == 0 && value == 0) || (a_monomonials.size() == 1 && a_monomonials.at(0).factor().real() == value);};
         // With fractions
         Polymonial& operator*=(Fraction value) {__multiply(value);return*this;};
         // With polymonials
@@ -317,8 +322,7 @@ namespace scls {
 	};
 
 	// Stream operator overloading
-    static std::ostream& operator<<(std::ostream& os, Polymonial& obj) {os << obj.to_std_string(); return os; }
-
+	static std::ostream& operator<<(std::ostream& os, Polymonial& obj) {os << obj.to_std_string(); return os; }
 	// Divide operator
     static Polymonial operator/(Monomonial& obj, Monomonial const& other) {
         Polymonial to_return;
@@ -326,11 +330,186 @@ namespace scls {
         return to_return;
     }
 
-    class __String_To_Polymonial_Parse {
+    //*********
+	//
+	// The "Formula" class
+	//
+	//*********
+
+	class __Formula_Base {
+        // Class representating the base of a mathematical formula
+    public:
+
+        // __Formula_Base constructor
+        __Formula_Base(){};
+        __Formula_Base(Polymonial polymonial):a_polymonial_add(polymonial){};
+        // __Formula_Base copy constructor
+        __Formula_Base(const __Formula_Base& formula):a_formulas_add(formula.a_formulas_add),a_formulas_factor(formula.a_formulas_factor),a_polymonial_add(formula.a_polymonial_add),a_polymonial_factor(formula.a_polymonial_factor),a_applied_function(formula.a_applied_function){};
+
+        // Clear the formula
+        inline void clear() {a_formulas_add.clear();a_formulas_factor.clear();a_polymonial_add=0;a_polymonial_factor=1;};
+        // Returns the polymonial to std::string
+        inline std::string to_std_string() const {
+            std::string current_str = "";
+            std::string to_return = "";
+            // Add the polymonial add
+            if(a_polymonial_add != 0) {
+                current_str = a_polymonial_add.to_std_string();
+                if(current_str != "") {to_return += "(" + current_str + ") + ";}
+            }
+            // Add the polymonial factor
+            if(static_cast<int>(a_formulas_factor.size()) > 0 && a_polymonial_factor != 0 && a_polymonial_factor != 1) {
+                current_str = a_polymonial_factor.to_std_string();
+                if(current_str != "") {to_return += "(" + current_str + ") * ";}
+            }
+
+            // Add the factors formulas
+            for(int i = 0;i<static_cast<int>(a_formulas_factor.size());i++) {
+                current_str = a_formulas_factor.at(i).to_std_string();
+                if(current_str != "") {
+                    to_return += "(" + current_str + ")";
+                    if(i < static_cast<int>(a_formulas_factor.size() - 1)) {to_return += " * ";}
+                }
+            }
+            while(to_return[to_return.size() - 1] == '+' || to_return[to_return.size() - 1] == '*' || to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
+            to_return += " + ";
+
+            // Add the add formulas
+            for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
+                to_return += "(" + a_formulas_add.at(i).to_std_string() + ") + ";
+            }
+            // Format the text
+            while(to_return[0] == '+' || to_return[0] == '*' || to_return[0] == ' ') to_return = to_return.substr(1, to_return.size() - 1);
+            while(to_return[to_return.size() - 1] == '+' || to_return[to_return.size() - 1] == '*' || to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
+            // Apply the function
+            if(applied_function() != "") to_return = applied_function() + "(" + to_return + ")";
+            return to_return;
+        };
+
+        // Methods operators
+        // Add a formula to this one
+        void __add(Polymonial value) {a_polymonial_add += value;};
+        void __add(__Formula_Base value) {
+            if(value.applied_function() == "") {
+                // Added formulas
+                __add(value.a_polymonial_add);
+                int formula_size = static_cast<int>(value.a_formulas_add.size());
+                for(int i = 0;i<formula_size;i++) {
+                    a_formulas_add.push_back(value.a_formulas_add[0]);
+                    value.a_formulas_add.erase(value.a_formulas_add.begin());
+                }
+                // Factors
+                if(static_cast<int>(value.a_formulas_factor.size()) > 0) {a_formulas_add.push_back(value);}
+            } else {a_formulas_add.push_back(value);}
+        };
+        // Multiply a polymonial to this one
+        void __multiply(Polymonial value) {
+            a_polymonial_add *= value;
+            a_polymonial_factor *= value;
+            for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;
+        };
+        void __multiply(__Formula_Base value) {
+            if(value.applied_function() == "") {
+                // The formula can be directly multiplied
+                __Formula_Base first_formula = *this;
+                __Formula_Base second_formula = *this;
+                std::vector<__Formula_Base> other_formulas;
+                first_formula.__multiply(value.a_polymonial_add);
+                if(value.a_formulas_factor.size() > 0) {
+                    second_formula.__multiply(value.a_polymonial_factor);
+                    for(int i = 0;i<static_cast<int>(value.a_formulas_factor.size());i++){second_formula.__multiply(value.a_formulas_factor.at(i));}
+                } else {second_formula.clear();}
+                for(int i = 0;i<static_cast<int>(value.a_formulas_add.size());i++) {
+                    __Formula_Base current_formula = *this;
+                    current_formula *= value.a_formulas_add.at(i);
+                    other_formulas.push_back(current_formula);
+                }
+
+                // Add the needed formulas
+                clear();
+                __add(first_formula);
+                __add(second_formula);
+                for(int i = 0;i<static_cast<int>(other_formulas.size());i++) {__add(other_formulas[i]);}
+            } else {
+                // The formula can't be directly multiplied
+                // Change the polymonials
+                a_polymonial_factor = a_polymonial_add;
+                a_polymonial_add = 0;
+                // Update the formulas
+                for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){value.a_formulas_add[i].__multiply(value);}
+                for(int i = 0;i<static_cast<int>(a_formulas_factor.size());i++){value.a_formulas_factor[i].__multiply(value);}
+                a_formulas_factor.push_back(value);
+            }
+        };
+        void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(Monomonial(value));__multiply(temp);};
+
+        // Operators
+        // With fractions
+        __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
+        // With polymonials
+        __Formula_Base& operator+=(Polymonial value) {__add(value);return*this;};
+        // With formulas
+        __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);to_return-=value;return to_return;};
+        __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
+        __Formula_Base& operator+=(__Formula_Base value) {__add(value);return*this;};
+        __Formula_Base& operator*=(__Formula_Base value) {__multiply(value);return*this;};
+        // Converts the formula to a polymonial
+        operator Polymonial() const {return a_polymonial_add;};
+
+        // Getters and setters
+        inline std::string applied_function() const {return a_applied_function;};
+        inline void set_applied_function(std::string new_applied_function) {a_applied_function = new_applied_function;};
+
+    private:
+        // Attached add polymonials
+        std::vector<__Formula_Base> a_formulas_add;
+        // Attached factors polymonials
+        std::vector<__Formula_Base> a_formulas_factor;
+        // Attached add polymonial
+        Polymonial a_polymonial_add;
+        // Attached factor polymonial
+        Polymonial a_polymonial_factor = 1;
+
+        // Applied function to the formula
+        std::string a_applied_function = "";
+    };
+
+    class Formula : public __Formula_Base {
+        // Class representating a full mathematical formula
+    public:
+
+        // Formula constructor
+        Formula():__Formula_Base(){};
+        Formula(Polymonial polymonial):__Formula_Base(polymonial){};
+
+        // Operators
+        // With fractions
+        Formula& operator*=(Fraction value) {__multiply(value);return*this;};
+        // With polymonials
+        Formula& operator+=(Polymonial value) {__Formula_Base::operator+=(value);return*this;};
+        // With formulas
+        Formula operator-(__Formula_Base value) const {Formula to_return(*this);to_return-=value;return to_return;};
+        Formula& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
+        Formula& operator+=(__Formula_Base value) {__Formula_Base::operator+=(value);return*this;};
+        Formula& operator*=(__Formula_Base value) {__multiply(value);return*this;};
+
+    private:
+        // Exponent of the formula
+        __Formula_Base a_exponent;
+    };
+
+    //*********
+	//
+	// The parsers class
+	//
+	//*********
+
+	class String_To_Formula_Parse {
         // Class allowing to properly parse a std::string to a polymonial
     public:
-        // __String_To_Polymonial_Parse constructor
-        __String_To_Polymonial_Parse(){};
+        // String_To_Formula_Parse constructor
+        String_To_Formula_Parse(unsigned int level):a_level(level){};
+        String_To_Formula_Parse():String_To_Formula_Parse(0){};
 
         // Returns if a std::string is a number or not
         inline bool __string_is_number(char text) const {return (string_is_number(text) || text == '/' || text == 'i' || text == '-');};
@@ -340,10 +519,10 @@ namespace scls {
             } return true;
         };
         // Returns if a std::string is an operator or not
-        inline bool __string_is_operator(char text) const {return (text == '+' || text == '-' || text == '*' || text == '/');};
-        // Returns a given first base string to a polymonial
-        Polymonial __string_to_polymonial_base(std::string base) {
-            Polymonial current_polymonial;
+        inline bool __string_is_operator(char text) const {return (text == '+' || text == '-' || text == '*' || text == '/' || text == '>');};
+        // Returns a given first base string to a formula
+        Formula __string_to_formula_base(std::string base, std::string used_function = "") {
+            Formula formula;
 
             if(base.size() < 2 || (base[0] != '(')) {
                 // Simple form
@@ -357,56 +536,75 @@ namespace scls {
                 if(unknow_part != "" && number_part_1 == "") number = 1;
                 if(number_part_2 != "") number *= string_to_complex(number_part_2);
                 Monomonial to_add(number, unknow_part);
+                Polymonial current_polymonial;
                 current_polymonial.add_monomonial(to_add);
+                formula = current_polymonial;
             } else {
                 // Parenthesis form
-                __String_To_Polymonial_Parse new_parser;
-                current_polymonial = new_parser.string_to_polymonial(base.substr(1, base.size() - 2));
+                String_To_Formula_Parse new_parser(level() + 1);
+                formula = new_parser.string_to_formula(base.substr(1, base.size() - 2));
             }
-            return current_polymonial;
+
+            // Create the formula
+            formula.set_applied_function(used_function);
+            return formula;
         };
 
-        // Converts a std::string to a Polymonial
-        Polymonial __string_to_polymonial_without_addition(std::string source) {
+        // Converts a std::string to a Formula
+        Formula __string_to_formula_without_multiplication(std::string source) {
             // Format the text as needed
             std::vector<std::string> cutted;
 
             // Prepare the needed datas
-            Polymonial to_return; bool to_return_modified = false;
+            Formula to_return; bool to_return_modified = false;
+
+            // Cut the text operator by * operator
+            cutted = cut_string_out_of_2(source, ">", "(", ")");
+            if(cutted.size() > 1) {
+                // At least one function applied
+                for(int i = 1;i<static_cast<int>(cutted.size());i+=2) {
+                    Formula current_polymonial = __string_to_formula_base(cutted[i], cutted[i - 1]);
+                    to_return += current_polymonial;
+                }
+            } else {
+                // No function applied
+                to_return = __string_to_formula_base(cutted[0]);
+            }
+
+            // Return the result
+            return to_return;
+        };
+        Formula __string_to_formula_without_addition(std::string source) {
+            // Format the text as needed
+            std::vector<std::string> cutted;
+
+            // Prepare the needed datas
+            Formula to_return; bool to_return_modified = false;
 
             // Cut the text operator by * operator
             cutted = cut_string_out_of_2(source, "*", "(", ")");
             for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-                Polymonial current_polymonial = __string_to_polymonial_base(cutted[i]);
+                Formula current_polymonial = __string_to_formula_without_multiplication(cutted[i]);
+                std::cout << "T " << level_indentation() << source << " " << cutted[i] << " " << current_polymonial.to_std_string() << std::endl;
                 if(to_return_modified) {to_return *= current_polymonial;}
-                else{to_return = current_polymonial;to_return_modified = true;}
+                else {to_return += current_polymonial;to_return_modified=true;}
             }
 
             // Return the result
             return to_return;
         };
-        Polymonial __string_to_polymonial_without_parenthesis(std::string source) {
-            // Format the text as needed
-            std::vector<std::string> cutted;
-
-            // Prepare the needed datas
-            Polymonial to_return; bool to_return_modified = false;
-
-            // Cut the text operator by + operator
-            cutted = cut_string_out_of_2(source, "+", "(", ")");
-            for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-                Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
-                if(to_return_modified) {to_return += current_polymonial;}
-                else{to_return = current_polymonial;to_return_modified = true;}
-            }
-
-            // Return the result
-            return to_return;
-        };
-        Polymonial string_to_polymonial(std::string source) {
+        Formula string_to_formula(std::string source) {
             // Format the text as needed
             source = remove_space(source);
             for(int i = 0;i<static_cast<int>(source.size());i++) {
+                // Handle functions
+                if(i > 0 && contains_function(source[i])) {
+                    if(!__string_is_operator(source[i - 1])) {
+                        // The part is a simple variable
+                        source.insert(i, "*");
+                        i++;
+                    }
+                }
                 // Remove the useless "-"
                 if(i > 0 && source[i] == '-') {
                     if(!__string_is_operator(source[i - 1]) && (i >= source.size() || (source[i + 1] != '('))) {
@@ -423,35 +621,55 @@ namespace scls {
                         source.insert(i, "1*");
                         i++;
                     } else if(!__string_is_operator(source[i - 1])) {
-                        source.insert(i, "*");
-                        i++;
+                        if(contains_function(source[i - 1])) {
+                            // The part is a function
+                            source.insert(i, ">");
+                            i++;
+                        } else {
+                            // The part is a simple variable
+                            source.insert(i, "*");
+                            i++;
+                        }
                     }
                 }
             }
-            std::vector<std::string> cutted;
 
             // Prepare the needed datas
-            Polymonial to_return; bool to_return_modified = false;
+            std::vector<std::string> cutted;
+            Formula to_return; bool to_return_modified = false;
 
             // Cut the text operator by + operator
             cutted = cut_string_out_of_2(source, "+", "(", ")");
             for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-                Polymonial current_polymonial = __string_to_polymonial_without_addition(cutted[i]);
-                if(to_return_modified) {to_return += current_polymonial;}
-                else{to_return = current_polymonial;to_return_modified = true;}
+                Formula current_polymonial = __string_to_formula_without_addition(cutted[i]);
+                to_return += current_polymonial;
             }
 
             // Return the result
             return to_return;
         };
+
+        // Add a function to the defined functions
+        inline void add_function(std::string function_name) {if(!contains_function(function_name)) a_functions.push_back(function_name); };
+        // Returns if a function is defined or not
+        inline bool contains_function(std::string function_name) const {for(int i = 0;i<static_cast<int>(a_functions.size());i++) {if(a_functions.at(i) == function_name) return true; } return false;};
+        inline bool contains_function(char function_name) const {std::string str;str+=function_name;return contains_function(str);};
+        // Returns the indentation for this level
+        inline std::string level_indentation() const {std::string to_return = "";for(int i = 0;i<static_cast<int>(level()*4);i++)to_return+=" ";return to_return;};
+
+        // Getters and setters
+        inline std::vector<std::string>& functions() {return a_functions;};
+        inline unsigned int level() const {return a_level;};
+    private:
+
+        // Every defined functions in the parser
+        std::vector<std::string> a_functions;
+        // Level of the parser
+        unsigned int a_level = 0;
     };
 
-    static Polymonial string_to_polymonial(std::string source){
-        __String_To_Polymonial_Parse parser;
-        return parser.string_to_polymonial(source);
-    };
-
-    // Reimplementation of "Polymonial::replace_unknown" with string
+    // Use parsers methods outside the class
+    static Polymonial string_to_polymonial(std::string source){String_To_Formula_Parse parser;return parser.string_to_formula(source);};
     static Polymonial replace_unknown(Polymonial used_polymonial, std::string unknown, std::string new_value) { return used_polymonial.replace_unknown(unknown, string_to_polymonial(new_value));};
 
     //*********

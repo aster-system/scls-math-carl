@@ -29,7 +29,7 @@
 
 //*********
 //
-// The Rationnal part
+// The Rational part
 //
 //*********
 
@@ -259,8 +259,8 @@ namespace scls {
 
 	};
 
-	// Stream operator overloading
-	static std::ostream& operator<<(std::ostream& os, const Fraction& obj) { os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; }
+	// Stream operator overloading (indev)
+	extern std::ostream& operator<<(std::ostream& os, const Fraction& obj);
 }
 
 //*********
@@ -282,7 +282,7 @@ namespace scls {
         //*********
 
         // Dimple fraction constructor
-        Complex(Fraction real_part, Fraction imaginary) : a_real(real_part), a_imaginary(imaginary) {};
+        Complex(Fraction real_part, Fraction imaginary) : a_imaginary(imaginary), a_real(real_part) {};
         Complex(long long real_part, long long imaginary_part) : Complex(Fraction(real_part), Fraction(imaginary_part)) {};
         Complex(long long real_part, Fraction imaginary_part) : Complex(Fraction(real_part), imaginary_part) {};
         Complex(Fraction real_part, long long imaginary_part) : Complex(real_part, Fraction(imaginary_part)) {};
@@ -441,8 +441,8 @@ namespace scls {
 
 	};
 
-	// Returns a complex from a std::string
-	static Complex string_to_complex(std::string source) {
+	// Returns a complex from a std::string (indev)
+	inline Complex string_to_complex(std::string source) {
 	    Complex to_return(Fraction(0));
 
 	    // Cut the number by + operator
@@ -471,8 +471,8 @@ namespace scls {
 	    return to_return;
 	};
 
-	// Stream operator overloading
-    static std::ostream& operator<<(std::ostream& os, const Complex& obj) { os << "Complex : " << obj.real().to_double() << " + " << obj.imaginary().to_double() << "i" ; return os; }
+	// Stream operator overloading (indev)
+    extern std::ostream& operator<<(std::ostream& os, const Complex& obj);
 }
 
 #endif // SCLS_MATH_NUMBERS
