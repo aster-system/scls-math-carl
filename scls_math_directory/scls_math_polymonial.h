@@ -599,16 +599,9 @@ namespace scls {
             for(int i = 0;i<static_cast<int>(source.size());i++) {
                 // Handle functions
                 if(i > 0 && contains_function(source[i])) {
-                    if(!__string_is_operator(source[i - 1])) {
+                    if(!__string_is_operator(source[i - 1]) && source[i - 1] != '(') {
                         // The part is a simple variable
                         source.insert(i, "*");
-                        i++;
-                    }
-                }
-                // Remove the useless "-"
-                if(i > 0 && source[i] == '-') {
-                    if(!__string_is_operator(source[i - 1]) && (i >= source.size() || (source[i + 1] != '('))) {
-                        source.insert(i, "+");
                         i++;
                     }
                 }
@@ -630,6 +623,16 @@ namespace scls {
                             source.insert(i, "*");
                             i++;
                         }
+                    }
+                }
+            }
+            // Handle the "-"
+            for(int i = 0;i<static_cast<int>(source.size());i++) {
+                // Remove the useless "-"
+                if(i > 0 && source[i] == '-') {
+                    if(!__string_is_operator(source[i - 1]) && (i >= source.size() || (source[i + 1] != '('))) {
+                        source.insert(i, "+");
+                        i++;
                     }
                 }
             }
