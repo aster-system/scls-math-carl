@@ -115,6 +115,8 @@ namespace scls {
                 if(a_unknowns[i].name() == unknown_name) {a_unknowns.erase(a_unknowns.begin() + i); return;}
             }
         };
+        // Returns if the monomonial is known
+        inline bool is_known() const {return a_unknowns.size() <= 0 || (a_unknowns.size() == 1 && (a_unknowns.at(0).name() == "" || a_unknowns.at(0).exponent() == 1));};
         // Unknows of the monomonial
         inline std::vector<_Base_Unknown>& unknowns() {return a_unknowns;};
         inline unsigned int unknowns_number() const {
@@ -150,6 +152,8 @@ namespace scls {
             }
             return *this;
         }
+        // Convert the monomonial to a complex
+        operator Complex() const {return a_factor;};
 
         // Getters and setters
         inline void set_factor(Complex new_factor) {a_factor = new_factor;};
@@ -196,6 +200,12 @@ namespace scls {
                     return &a_monomonials[i];
                 }
             } return 0;
+        };
+        // Returns if the polymonial is known
+        inline bool is_known() const {
+            for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                if(!a_monomonials[i].is_known() && a_monomonials[i].factor() != 0) return false;
+            } return true;
         };
         // Returns the knows monomonial
         Monomonial known_monomonial() const {
@@ -399,6 +409,8 @@ namespace scls {
             to_return.set_applied_function("");
             return to_return;
         };
+        // Returns if the formula is a simple polymonial or not
+        bool is_simple_polymonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0);};
 
         // Returns a formula from a monomonial where the unknows has been replaced
         static __Formula_Base formula_from_modified_monomonial_unknows(Monomonial used_monomonial, std::string unknown, __Formula_Base new_value) {
@@ -544,7 +556,8 @@ namespace scls {
         __Formula_Base& operator+=(__Formula_Base value) {__add(value);return*this;};
         __Formula_Base& operator*=(__Formula_Base value) {__multiply(value);return*this;};
         // Converts the formula to a polymonial
-        operator Polymonial() const {return a_polymonial_add;};
+        inline Polymonial to_polymonial() const {return a_polymonial_add;};
+        operator Polymonial() const {return to_polymonial();};
 
         // Getters and setters
         inline std::string applied_function() const {return a_applied_function;};
@@ -583,11 +596,37 @@ namespace scls {
         Formula& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
         Formula& operator+=(__Formula_Base value) {__Formula_Base::operator+=(value);return*this;};
         Formula& operator*=(__Formula_Base value) {__multiply(value);return*this;};
+        // Converts the formula to a polymonial
+        operator Polymonial() const {return to_polymonial();};
 
     private:
         // Exponent of the formula
         __Formula_Base a_exponent;
     };
+
+    //*********
+	//
+	// The sets class
+	//
+	//*********
+
+	class Interval {
+	    // Class representating an interval of real numbers
+    public:
+
+        // Interval constructor
+        Interval(Fraction start, Fraction end):a_end(end),a_start(start){};
+
+        // Getters and setters
+        inline Fraction end() const {return a_end;};
+        inline Fraction start() const {return a_start;};
+
+    private:
+        // End of the interval
+        Fraction a_end;
+        // Start of the interval
+        Fraction a_start;
+	};
 
     //*********
 	//
