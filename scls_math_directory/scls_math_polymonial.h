@@ -274,6 +274,16 @@ namespace scls {
         };
         void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(Monomonial(value));__multiply(temp);};
 
+        // Returns the maximum degree in the polymonial
+        inline Complex degree(std::string unknown_name) {
+            Complex max_degree = 0;
+            for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                if(a_monomonials[i].contains_unknown(unknown_name) && a_monomonials[i].unknowns_number() == 1) {
+                    Complex current_factor = a_monomonials[i].unknowns()[0].exponent();
+                    if(current_factor.real() > max_degree.real()) max_degree = current_factor;
+                }
+            } return max_degree;
+        };
         // Returns a polymonial from a monomonial where the unknows has been replaced
         static Polymonial polymonial_from_modified_monomonial_unknows(Monomonial used_monomonial, std::string unknown, Polymonial new_value) {
             Polymonial final_polymonial = Polymonial();
@@ -307,6 +317,16 @@ namespace scls {
             }
 
             return final_polymonial;
+        };
+        // Simplify the polymonial
+        Polymonial simplify() const {
+            Polymonial poly(*this);
+            for(int i = 0;i<static_cast<int>(poly.a_monomonials.size());i++) {
+                if(poly.a_monomonials[i].factor() == 0) {
+                    poly.a_monomonials.erase(poly.a_monomonials.begin() + i);
+                    i--;
+                }
+            } return poly;
         };
 
         // Operators
@@ -556,7 +576,7 @@ namespace scls {
         __Formula_Base& operator+=(__Formula_Base value) {__add(value);return*this;};
         __Formula_Base& operator*=(__Formula_Base value) {__multiply(value);return*this;};
         // Converts the formula to a polymonial
-        inline Polymonial to_polymonial() const {return a_polymonial_add;};
+        inline Polymonial to_polymonial() const {return a_polymonial_add.simplify();};
         operator Polymonial() const {return to_polymonial();};
 
         // Getters and setters
