@@ -56,8 +56,10 @@
 
     // Numbers stream operators
     #ifndef SCLS_MATH_NUMBERS_INIT
-        #define SCLS_MATH_NUMBERS_INIT std::ostream& scls::operator<<(std::ostream& os, const Fraction& obj) { os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; } \
-                                       std::ostream& scls::operator<<(std::ostream& os, const Complex& obj) { os << "Complex : " << obj.real().to_double() << " + " << obj.imaginary().to_double() << "i" ; return os; }
+        #define SCLS_MATH_NUMBERS_INIT std::ostream& scls::operator<<(std::ostream& os, const scls::Fraction& obj) { os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; } \
+                                       std::ostream& scls::operator<<(std::ostream& os, const scls::Complex& obj) { os << "Complex : " << obj.real().to_double() << " + " << obj.imaginary().to_double() << "i" ; return os; } \
+                                       scls::Complex scls::operator*(int obj_1, scls::Complex obj) { return obj._multiply_without_modification(obj_1); }; \
+                                       scls::Fraction scls::operator*(int obj_1, scls::Fraction obj) { return obj._multiply_without_modification(obj_1); };
     #endif // SCLS_MATH_NUMBERS_INIT
 
     #define SCLS_MATH_INIT SCLS_MATH_3D_INIT SCLS_MATH_NUMBERS_INIT

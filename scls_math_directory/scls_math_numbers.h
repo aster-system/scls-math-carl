@@ -27,6 +27,10 @@
 #ifndef SCLS_MATH_NUMBERS
 #define SCLS_MATH_NUMBERS
 
+#ifndef SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION
+#define SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION 10000000000
+#endif // SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION
+
 //*********
 //
 // The Rational part
@@ -52,9 +56,9 @@ namespace scls {
         //*********
 
         // Most simple fraction constructor
-        Fraction(long long numerator) : a_denominator(1), a_numerator(numerator) {};
+        Fraction(double real){if(real == static_cast<long long>(real)){a_numerator=real;}else{a_numerator=real*SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;a_denominator=SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;} normalize();};
         // Simple fraction constructor
-        Fraction(long long numerator, long long denominator) : a_denominator(denominator), a_numerator(numerator) {normalize();};
+        Fraction(long long numerator, long long denominator) : a_denominator(denominator), a_numerator(numerator) {normalize();}
         // Fraction copy constructor
         Fraction(const Fraction& to_copy) : a_denominator(to_copy.a_denominator), a_numerator(to_copy.a_numerator) {a_normalized = true;};
 
@@ -111,7 +115,12 @@ namespace scls {
         inline double to_double() const {if(a_denominator == 0) return 0; return static_cast<double>(a_numerator) / static_cast<double>(a_denominator);};
         // Returns the fraction to std::string, in the fraction redaction
         inline std::string to_std_string_fraction() const {if(denominator() == 1) return std::to_string(numerator()); return std::to_string(numerator()) + "/" + std::to_string(denominator());};
-        inline std::string to_std_string() const {return to_std_string_fraction();};
+        inline std::string to_std_string(unsigned int max_number_size) const {
+            std::string from_fraction = to_std_string_fraction();
+            if(from_fraction.size() <= max_number_size) return from_fraction;
+            return format_number_to_text(to_double());
+        };
+        inline std::string to_std_string() const {return to_std_string(-1);};
 
         // Getters and setter
         inline long long denominator() const {return a_denominator;};
@@ -155,11 +164,11 @@ namespace scls {
         // Multiplies the fraction with an another Fraction
         Fraction _multiply_without_modification(Fraction const& obj) const { return Fraction(a_numerator * obj.a_numerator, a_denominator * obj.a_denominator); };
         // Multiplies the fraction with a double
-        Fraction _multiply_without_modification(double const& obj) const { return Fraction(a_numerator * obj, a_denominator); };
+        Fraction _multiply_without_modification(double obj) const { return Fraction(a_numerator * obj, a_denominator); };
         // Multiplies the fraction with an unsigned int
-        Fraction _multiply_without_modification(int const& obj) const { return Fraction(a_numerator * obj, a_denominator); };
+        Fraction _multiply_without_modification(int obj) const { return Fraction(a_numerator * obj, a_denominator); };
         // Multiplies the fraction with an unsigned int
-        Fraction _multiply_without_modification(unsigned int const& obj) const { return Fraction(a_numerator * obj, a_denominator); };
+        Fraction _multiply_without_modification(unsigned int obj) const { return Fraction(a_numerator * obj, a_denominator); };
         // Substracts an another Fraction to this fraction
         void _substract(Fraction const& obj) {
             long long first_numerator = obj.a_numerator * a_denominator;
@@ -179,7 +188,7 @@ namespace scls {
             return new_fraction;
         };
         // Returns the square root of the fraction
-        Fraction sqrt() {return Fraction(std::sqrt(numerator()) * 100000, std::sqrt(denominator()) * 100000);};
+        Fraction sqrt() {return Fraction(std::sqrt(numerator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION, std::sqrt(denominator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION);};
 
         // Operator overloading with int
         // Greater operator
@@ -244,6 +253,10 @@ namespace scls {
         Fraction operator+(Fraction const& obj) const { return _add_without_modification(obj); };
         // Plus operator assignment
         Fraction& operator+=(const Fraction& obj) { _add(obj); return *this; }
+
+        // Conversion operator
+        // Convert to int
+        operator int() const {return std::ceil(to_double());};
     private:
         //*********
         //
@@ -260,6 +273,8 @@ namespace scls {
 
 	};
 
+	// Multiplciation operator
+    extern Fraction operator*(int obj_1, Fraction obj);
 	// Stream operator overloading (indev)
 	extern std::ostream& operator<<(std::ostream& os, const Fraction& obj);
 }
@@ -300,23 +315,24 @@ namespace scls {
         inline void set_real(Fraction new_real) {a_real=new_real;};
 
         // Returns the Complex to a simple std::string
-        inline std::string to_std_string_simple() const {
+        inline std::string to_std_string_simple(unsigned int max_number_size) const {
             std::string to_return = "";
             if(real() != 0) {
-                to_return += real().to_std_string_fraction() + " ";
+                to_return += real().to_std_string(max_number_size) + " ";
             }
             if(imaginary() != 0) {
                 if(imaginary() > 0) {
-                    to_return += "+ " + imaginary().to_std_string_fraction() + "i";
+                    to_return += "+ " + imaginary().to_std_string(max_number_size) + "i";
                 }
                 else {
-                    to_return += "- " + (imaginary() * -1).to_std_string_fraction() + "i";
+                    to_return += "- " + (imaginary() * -1).to_std_string(max_number_size) + "i";
                 }
             }
             while(to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
             if(to_return == "") to_return = "0";
             return to_return;
         };
+        inline std::string to_std_string_simple() const {return to_std_string_simple(-1);};
 
         //*********
         //
@@ -387,11 +403,11 @@ namespace scls {
 
         // Operator overloading with int
         // Equality operator
-        bool operator==(const int& obj) { return _equal(obj); }
+        bool operator==(int obj) { return _equal(obj); }
         // Multiplication operator
-        Complex operator*(int const& obj) const { return _multiply_without_modification(obj); }
+        Complex operator*(int obj) const { return _multiply_without_modification(obj); }
         // Multiplication operator
-        Complex operator*(unsigned int const& obj) const { return _multiply_without_modification(obj); }
+        Complex operator*(unsigned int obj) const { return _multiply_without_modification(obj); }
 
         // Operator overloading with Fraction
         // Minus operator
@@ -472,6 +488,8 @@ namespace scls {
 	    return to_return;
 	};
 
+	// Multiplciation operator
+    extern Complex operator*(int obj_1, Complex obj);
 	// Stream operator overloading (indev)
     extern std::ostream& operator<<(std::ostream& os, const Complex& obj);
 }

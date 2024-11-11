@@ -89,6 +89,8 @@ namespace scls {
         // Monomonial copy constructor
         Monomonial(const Monomonial& monomonial_copy):Monomonial(monomonial_copy.a_factor,monomonial_copy.a_unknowns){};
 
+        // Add an unknown to the monomonial
+        inline void add_unknown(std::string name, Complex exponent) {_Base_Unknown unknown(name); unknown.set_exponent(exponent); a_unknowns.push_back(unknown);};
         // Returns if a monomonial has the same unknows as this one
         inline bool compare_unknown(Monomonial other) {
             if(other.unknowns_number() != unknowns_number()) return false;
@@ -116,7 +118,16 @@ namespace scls {
             }
         };
         // Returns if the monomonial is known
-        inline bool is_known() const {return a_unknowns.size() <= 0 || (a_unknowns.size() == 1 && (a_unknowns.at(0).name() == "" || a_unknowns.at(0).exponent() == 1));};
+        inline bool is_known() const {return a_unknowns.size() <= 0 || (a_unknowns.size() == 1 && (a_unknowns.at(0).name() == "" || a_unknowns.at(0).exponent() == 0));};
+        // Returns if the monomonial only contains an unkwnown
+        _Base_Unknown* only_contains_unknown(std::string unknown_name, Complex exponent) {
+            _Base_Unknown* to_return = 0; unsigned int number = unknowns_number();
+            for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
+                if((a_unknowns[i].name() == unknown_name && a_unknowns[i].exponent() == exponent)) {
+                    to_return = &a_unknowns[i];
+                } else if(!(number > 0 && a_unknowns[i].name() == "")) {to_return = 0; break;}
+            } return to_return;
+        };
         // Unknows of the monomonial
         inline std::vector<_Base_Unknown>& unknowns() {return a_unknowns;};
         inline unsigned int unknowns_number() const {
@@ -214,6 +225,16 @@ namespace scls {
             }
             return Monomonial(Complex(0));
         };
+        // Returns a monomonial by its unknown
+        inline Monomonial monomonial(std::string unknown, Complex exponent) {
+            for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                _Base_Unknown* result = a_monomonials.at(i).only_contains_unknown(unknown, exponent);
+                if(result != 0) {
+                    return a_monomonials.at(i);
+                }
+            } Monomonial to_return(0); to_return.add_unknown(unknown, exponent); return to_return;
+        };
+        inline Monomonial monomonial(std::string unknown) {return monomonial(unknown, Complex(1, 0));};
         // Returns a list of unknowns monomonials
         std::vector<Monomonial> unknown_monomonials() const {
             std::vector<Monomonial> to_return;
@@ -636,16 +657,71 @@ namespace scls {
 
         // Interval constructor
         Interval(Fraction start, Fraction end):a_end(end),a_start(start){};
+        Interval():Interval(Fraction(0), Fraction(0)){};
 
         // Getters and setters
         inline Fraction end() const {return a_end;};
+        inline bool end_infinite() const {return a_end_infinite;};
+        inline void set_end(Fraction new_end) {a_end=new_end;};
+        inline void set_start(Fraction new_start) {a_start=new_start;};
         inline Fraction start() const {return a_start;};
+        inline void set_end_infinite(bool new_end_infinite) {a_end_infinite=new_end_infinite;};
+        inline void set_start_infinite(bool new_start_infinite) {a_start_infinite=new_start_infinite;};
+        inline bool start_infinite() const {return a_start_infinite;};
 
     private:
         // End of the interval
         Fraction a_end;
+        // If the end is + infinite or not
+        bool a_end_infinite = false;
         // Start of the interval
         Fraction a_start;
+        // If the start is + infinite or not
+        bool a_start_infinite = false;
+	};
+
+	// Comparaison function for the interval sorting
+	static bool __sort_interval_function(const Interval& i_1, const Interval& i_2) {return i_1.start() > i_2.start();};
+	// Comparaison function for the numbers sorting
+	static bool __sort_numbers_function(const Complex& i_1, const Complex& i_2) {return i_1.real() < i_2.real();};
+	class Set_Number {
+        // Class representating a set of numbers
+    public:
+
+        // Set_Number constructor
+        Set_Number(){};
+        // Set_Number constructor convertors
+        Set_Number(Interval interval){a_intervals.push_back(interval);};
+
+        // Add an interval to the set
+        inline void add_interval(Interval to_add) {
+            a_intervals.push_back(to_add);
+            __sort_interval();
+        };
+        // Add a number to the set
+        inline void add_number(Complex to_add) {
+            a_numbers.push_back(to_add);
+            __sort_numbers();
+        };
+        void add_number(Fraction to_add) {add_number(Complex(to_add));};
+        // Returns if the set is empty or not
+        inline bool is_empty() const {return a_intervals.size()<=0;};
+        // Returns if the set is infinite or not
+        inline bool is_infinite() const {return a_intervals.size() > 0 && a_intervals.at(0).start_infinite() && a_intervals.at(0).end_infinite();};
+        // Sort the intervals in the set
+        inline void __sort_interval() {std::sort(a_intervals.begin(), a_intervals.end(), __sort_interval_function);};
+        // Sort the numbers in the set
+        inline void __sort_numbers() {std::sort(a_numbers.begin(), a_numbers.end(), __sort_numbers_function);};
+
+        // Getters and setters
+        const std::vector<Interval>& intervals() const {return a_intervals;};
+        const std::vector<Complex>& numbers() const {return a_numbers;};
+
+    private:
+        // Intervals of fractions in this set
+        std::vector<Interval> a_intervals;
+        // Numbers of fractions in this set
+        std::vector<Complex> a_numbers;
 	};
 
     //*********
