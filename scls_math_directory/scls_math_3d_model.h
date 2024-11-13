@@ -308,9 +308,7 @@ namespace scls {
 
             return to_return;
         };
-        static __Crossing_Datas __check_crossing(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point) {
-            return __check_crossing(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z());
-        };
+        static __Crossing_Datas __check_crossing(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point) {return __check_crossing(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z());};
         // Returns the datas point of two crossing segments
         struct __Crossing_Datas_Segment {bool crossed_in_segment = false;__Crossing_Datas crossing_datas;};
         static __Crossing_Datas_Segment __check_crossing_segment(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {
@@ -360,12 +358,8 @@ namespace scls {
             datas.crossed_in_segment = (on_first_segment || !check_third_and_fourth_point) && (on_second_segment || !check_first_and_second_point);
             return datas;
         };
-        static __Crossing_Datas_Segment __check_crossing_segment(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {
-            return __check_crossing_segment(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z(), check_first_and_second_point, check_third_and_fourth_point);
-        };
-        static __Crossing_Datas_Segment __check_crossing_segment(const std::shared_ptr<Point>& first_point, const std::shared_ptr<Point>& second_point, const std::shared_ptr<Point>& third_point, const std::shared_ptr<Point>& fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {
-            return __check_crossing_segment(first_point.get(), second_point.get(), third_point.get(), fourth_point.get(), check_first_and_second_point, check_third_and_fourth_point);
-        };
+        static __Crossing_Datas_Segment __check_crossing_segment(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {return __check_crossing_segment(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z(), check_first_and_second_point, check_third_and_fourth_point);};
+        static __Crossing_Datas_Segment __check_crossing_segment(const std::shared_ptr<Point>& first_point, const std::shared_ptr<Point>& second_point, const std::shared_ptr<Point>& third_point, const std::shared_ptr<Point>& fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {return __check_crossing_segment(first_point.get(), second_point.get(), third_point.get(), fourth_point.get(), check_first_and_second_point, check_third_and_fourth_point);};
         // Returns if a point is in a set of point
         static bool __check_shape_content(const std::vector<std::shared_ptr<Point>>& points, double point_to_test_x, double point_to_test_y, bool last_point_is_first_point = true) {
             // Check each sides
@@ -394,9 +388,7 @@ namespace scls {
             __Crossing_Datas_Segment datas = __check_crossing_segment(first_point, second_point, first_top, second_top, true, false);
             return datas.crossed_in_segment;
         };
-        static bool __check_triangle_opposed(const std::shared_ptr<Point>& first_point, const std::shared_ptr<Point>& second_point, const std::shared_ptr<Point>& third_point, const std::shared_ptr<Point>& fourth_point) {
-            return __check_triangle_opposed(first_point.get(), second_point.get(), third_point.get(), fourth_point.get());
-        };
+        static bool __check_triangle_opposed(const std::shared_ptr<Point>& first_point, const std::shared_ptr<Point>& second_point, const std::shared_ptr<Point>& third_point, const std::shared_ptr<Point>& fourth_point) {return __check_triangle_opposed(first_point.get(), second_point.get(), third_point.get(), fourth_point.get());};
 
         // Returns if a side of points cross the boundary of a set of points or not
         static bool __cross_boundary(const std::vector<std::shared_ptr<Point>>& points, std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point, bool last_point_is_first_point = true) {
@@ -731,13 +723,13 @@ namespace scls {
                 // Normal Check
                 char on_boundary = __triangulation_cross_boundary(first_point, second_point);
                 if(on_boundary != 0) {return true; }
-                bool in_shape = __triangulation_check_shape_content((second_point.get()->x() + first_point.get()->x()) / 2.0, (second_point.get()->z() + first_point.get()->z()) / 2.0);
+                bool in_shape = __triangulation_check_shape_content(points_copy, (second_point.get()->x() + first_point.get()->x()) / 2.0, (second_point.get()->z() + first_point.get()->z()) / 2.0);
                 if(!in_shape) {return true; }
                 return false;
             };
-            bool __triangulation_check_shape_content(double point_to_test_x, double point_to_test_y) {
+            bool __triangulation_check_shape_content(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, double point_to_test_x, double point_to_test_y) {
                 // Check the main shape
-                if(!__check_shape_content(points(), point_to_test_x, point_to_test_y)) return false;
+                if(!__check_shape_content(points_copy, point_to_test_x, point_to_test_y)) return false;
                 // Check each out shape
                 for(int i = 0;i<static_cast<int>(a_exclusion_points.size());i++) {
                     if(__check_shape_content(a_exclusion_points[i], point_to_test_x, point_to_test_y)) return false;

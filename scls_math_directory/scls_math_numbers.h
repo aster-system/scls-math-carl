@@ -190,73 +190,35 @@ namespace scls {
         // Returns the square root of the fraction
         Fraction sqrt() {return Fraction(std::sqrt(numerator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION, std::sqrt(denominator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION);};
 
-        // Operator overloading with int
-        // Greater operator
-        bool operator>(const int& obj) { return to_double() > obj; }
-        // Less operator
-        bool operator<(const int& obj) { return to_double() < obj; }
-        // Less or equal operator
-        bool operator<=(const int& obj) { return to_double() < obj || _equal(obj); }
-        // Equality operator
-        bool operator==(const int& obj) { return _equal(obj); }
-        // Multiplication operator
-        Fraction operator*(int const& obj) const { return _multiply_without_modification(obj); }
-        // Multiplication operator
-        Fraction operator*(unsigned int const& obj) const { return _multiply_without_modification(obj); }
-
-        // Operator overloading with double
-        // Assignment operator assignment
-        Fraction& operator=(double const& obj) { set_from_double(obj); return *this; }
-        // Divisor operator
-        Fraction operator/(double const& obj) { return _divide_without_modification(from_double(obj)); };
-        // Greater than than operator
-        bool operator>(const double& r) { return to_double() > r; }
-        // Less than operator
-        bool operator<(const double& r) { return to_double() < r; }
-        // Minus operator
-        Fraction operator-(double const& obj) { return _substract_without_modification(from_double(obj)); }
-        // Minus operator assignment
-        Fraction& operator-=(double const& obj) { _substract(from_double(obj)); return *this; }
-        // Multiplication operator
-        Fraction operator*(double const& obj) const { return _multiply_without_modification(obj); }
-        // Plus operator
-        Fraction operator+(double const& obj) { return _add_without_modification(from_double(obj)); };
-        // Plus operator assignment
-        Fraction& operator+=(double const& obj) { _add(from_double(obj)); return *this; }
-
         // Operator overloading with fractions
         // Decrement operator
         Fraction& operator--(int) { _substract(Fraction(1, 1)); return *this; }
         // Divisor operator
-        Fraction operator/(Fraction const& obj) const { return _divide_without_modification(obj); };
+        Fraction operator/(Fraction obj) const { return _divide_without_modification(obj); };
         // Divisor operator assignment
-        Fraction& operator/=(Fraction const& obj) { _divide(obj); return *this; };
+        Fraction& operator/=(Fraction obj) { _divide(obj); return *this; };
         // Equality operator
-        bool operator==(const Fraction& obj) const { return _equal(obj); }
+        bool operator==(Fraction obj) const { return _equal(obj); }
         // Greater or equal than than operator
-        bool operator>=(const Fraction& r) const { return _equal(r) || to_double() > r.to_double(); }
+        bool operator>=(Fraction r) const { return _equal(r) || to_double() > r.to_double(); }
         // Greater than than operator
-        bool operator>(const Fraction& r) const { return to_double() > r.to_double(); }
+        bool operator>(Fraction r) const { return to_double() > r.to_double(); }
         // Increment operator
         Fraction& operator++(int) { _add(Fraction(1, 1)); return *this; }
         // Lesser than than operator
-        bool operator<(const Fraction& r) const { return to_double() < r.to_double(); }
+        bool operator<(Fraction r) const { return to_double() < r.to_double(); }
         // Minus operator
-        Fraction operator-(Fraction const& obj) const { return _substract_without_modification(obj); };
+        Fraction operator-(Fraction obj) const { return _substract_without_modification(obj); };
         // Minus operator assignment
-        Fraction& operator-=(const Fraction& obj) { _substract(obj); return *this; }
+        Fraction& operator-=(Fraction obj) { _substract(obj); return *this; }
         // Multiplciation operator
-        Fraction operator*(Fraction const& obj) const { return _multiply_without_modification(obj); };
+        Fraction operator*(Fraction obj) const { return _multiply_without_modification(obj); };
         // Multiplication operator assignment
-        Fraction& operator*=(Fraction const& obj) { _multiply(obj); return *this; };
+        Fraction& operator*=(Fraction obj) { _multiply(obj); return *this; };
         // Plus operator
-        Fraction operator+(Fraction const& obj) const { return _add_without_modification(obj); };
+        Fraction operator+(Fraction obj) const { return _add_without_modification(obj); };
         // Plus operator assignment
-        Fraction& operator+=(const Fraction& obj) { _add(obj); return *this; }
-
-        // Conversion operator
-        // Convert to int
-        operator int() const {return std::ceil(to_double());};
+        Fraction& operator+=(Fraction obj) { _add(obj); return *this; }
     private:
         //*********
         //
@@ -275,6 +237,8 @@ namespace scls {
 
 	// Multiplciation operator
     extern Fraction operator*(int obj_1, Fraction obj);
+    // Minus operator
+    extern Fraction operator-(int obj_1, Fraction obj);
 	// Stream operator overloading (indev)
 	extern std::ostream& operator<<(std::ostream& os, const Fraction& obj);
 }
