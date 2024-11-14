@@ -111,6 +111,8 @@ namespace scls {
             a_denominator = new_value.a_denominator;
             a_numerator = new_value.a_numerator;
         };
+        // Returns the fraction in int
+        inline long long to_int() const {if(a_denominator == 0) return 0; return a_numerator / a_denominator;};
         // Returns the fraction in double
         inline double to_double() const {if(a_denominator == 0) return 0; return static_cast<double>(a_numerator) / static_cast<double>(a_denominator);};
         // Returns the fraction to std::string, in the fraction redaction
