@@ -95,7 +95,7 @@ namespace scls {
         inline bool compare_unknown(Monomonial other) {
             if(other.unknowns_number() != unknowns_number()) return false;
             for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
-                if(a_unknowns[i].name() == "") continue; bool contains_equal = false;
+                if(a_unknowns[i].name() == "") {continue;} bool contains_equal = false;
                 for(int j = 0;j<static_cast<int>(other.a_unknowns.size());j++) {
                     if(a_unknowns[i] == other.a_unknowns[j]) {contains_equal = true;break;}
                 } if(!contains_equal) return false;
@@ -782,7 +782,7 @@ namespace scls {
             std::vector<std::string> cutted;
 
             // Prepare the needed datas
-            Formula to_return; bool to_return_modified = false;
+            Formula to_return;
 
             // Cut the text operator by * operator
             cutted = cut_string_out_of_2(source, ">", "(", ")");
@@ -855,8 +855,8 @@ namespace scls {
             // Handle the "-"
             for(int i = 0;i<static_cast<int>(source.size());i++) {
                 // Remove the useless "-"
-                if(i > 0 && source[i] == '-') {
-                    if(!__string_is_operator(source[i - 1]) && (i >= source.size() || (source[i + 1] != '('))) {
+                if(i > 0 && static_cast<int>(source[i]) == static_cast<int>('-')) {
+                    if(!__string_is_operator(source[i - 1]) && (i >= static_cast<int>(source.size()) || (static_cast<int>(source[i + 1]) != static_cast<int>('(')))) {
                         source.insert(i, "+");
                         i++;
                     }
@@ -865,7 +865,7 @@ namespace scls {
 
             // Prepare the needed datas
             std::vector<std::string> cutted;
-            Formula to_return; bool to_return_modified = false;
+            Formula to_return;
 
             // Cut the text operator by + operator
             cutted = cut_string_out_of_2(source, "+", "(", ")");

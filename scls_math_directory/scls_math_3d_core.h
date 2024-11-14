@@ -288,8 +288,8 @@ namespace scls {
         void update_real_local_position() {
             // Calculate the real local parent position
             if(parent() != 0) {
-                double total_xz_length_with_scale = sqrt(x() * x() * parent()->absolute_scale_x() * parent()->absolute_scale_x() + z() * z() * parent()->absolute_scale_z() * parent()->absolute_scale_z());
-                double total_length_with_scale = sqrt(total_xz_length_with_scale * total_xz_length_with_scale + y() * y() * parent()->absolute_scale_y() * parent()->absolute_scale_y());
+                // double total_xz_length_with_scale = sqrt(x() * x() * parent()->absolute_scale_x() * parent()->absolute_scale_x() + z() * z() * parent()->absolute_scale_z() * parent()->absolute_scale_z());
+                // double total_length_with_scale = sqrt(total_xz_length_with_scale * total_xz_length_with_scale + y() * y() * parent()->absolute_scale_y() * parent()->absolute_scale_y());
 
                 // Rotate the vector
                 double* rotated = __rotate_vector_3d(x() * parent()->absolute_scale_x(), y() * parent()->absolute_scale_y(), z() * parent()->absolute_scale_z(), parent()->absolute_rotation_x(), parent()->absolute_rotation_y(), parent()->absolute_rotation_z());
@@ -310,8 +310,8 @@ namespace scls {
         // Update the rotation of the object
         void update_rotation() {
             // Calculate the real local Y anchored position
-            double total_xz_length_with_scale = anchored_x() * absolute_scale_x() * anchored_x() * absolute_scale_x() + anchored_z() * absolute_scale_z() * anchored_z() * absolute_scale_z();
-            double total_length_with_scale = std::sqrt(total_xz_length_with_scale + anchored_y() * absolute_scale_y() * anchored_y() * absolute_scale_y());
+            // double total_xz_length_with_scale = anchored_x() * absolute_scale_x() * anchored_x() * absolute_scale_x() + anchored_z() * absolute_scale_z() * anchored_z() * absolute_scale_z();
+            // double total_length_with_scale = std::sqrt(total_xz_length_with_scale + anchored_y() * absolute_scale_y() * anchored_y() * absolute_scale_y());
 
             // Rotate the vector
             double* rotated = __rotate_vector_3d(-anchored_x() * absolute_scale_x(), -anchored_y() * absolute_scale_y(), -anchored_z() * absolute_scale_z(), absolute_rotation_x(), absolute_rotation_y(), absolute_rotation_z());
@@ -352,7 +352,7 @@ namespace scls {
         inline void move_forward(double force) {move_xyz(forward_vector_x() * force, forward_vector_y() * force, forward_vector_z() * force);};
         // Move on the forward XZ axis
         inline void move_forward_xz(double force) {
-            double multiplier = std::sqrt(forward_vector_x() * forward_vector_x() + forward_vector_z() * forward_vector_z());
+            // double multiplier = std::sqrt(forward_vector_x() * forward_vector_x() + forward_vector_z() * forward_vector_z());
             double final_x = forward_vector_x();
             double final_y = 0;
             double final_z = forward_vector_z();

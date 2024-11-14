@@ -780,7 +780,7 @@ namespace scls {
             bool triangulation_step(std::shared_ptr<__Triangulation_Datas> triangulation_datas) {
                 std::vector<std::shared_ptr<Point>>& created_sides = triangulation_datas.get()->created_sides;
                 unsigned int& current_i = triangulation_datas.get()->current_i;
-                std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy = triangulation_datas.get()->exclusion_points_copy;
+                // std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy = triangulation_datas.get()->exclusion_points_copy;
                 std::vector<std::shared_ptr<model_maker::Point>>& points_copy = triangulation_datas.get()->points_copy;
                 if(points_copy.size() > 3) {
                     // Get the point to test
@@ -848,7 +848,7 @@ namespace scls {
                 }
                 // Check each points
                 int limit = 3; if(!last_point_is_first_point) limit = 4;
-                while(points_copy.size() > limit) {
+                while(static_cast<int>(points_copy.size()) > limit) {
                     // Get the point to test
                     std::shared_ptr<model_maker::Point> current_point = points_copy[current_i];
                     std::shared_ptr<model_maker::Point> current_point_1 = points_copy[current_i + 1];
@@ -2002,12 +2002,12 @@ namespace scls {
             for(unsigned int i = 0;i<point_number;i++) {
                 // Get the data of the point
                 Point point_to_add = Point();
-                unsigned int current_id = binary.get()->extract_uint(current_position, true); current_position += 4;
+                // unsigned int current_id = binary.get()->extract_uint(current_position, true); current_position += 4;
                 // Get the position of the point
                 point_to_add.set_x(binary.get()->extract_double(current_position, true)); current_position += 8;
                 point_to_add.set_y(binary.get()->extract_double(current_position, true)); current_position += 8;
                 point_to_add.set_z(binary.get()->extract_double(current_position, true)); current_position += 8;
-                unsigned int parent_id = binary.get()->extract_uint(current_position, true); current_position += 4;
+                // unsigned int parent_id = binary.get()->extract_uint(current_position, true); current_position += 4;
                 // Get each datas of the face
                 unsigned int attribute_size = binary.get()->extract_uint(current_position, true); current_position += 4;
                 for(unsigned int j = 0;j<attribute_size;j++) {
@@ -2068,8 +2068,8 @@ namespace scls {
                 double y_texture = to_add.get()->z();
                 x_texture -= polygon.get()->min_x;
                 y_texture -= polygon.get()->min_z;
-                if(!reverse_texture_x) x_texture *= -1; x_texture++;
-                if(!reverse_texture_z) y_texture *= -1; y_texture++;
+                if(!reverse_texture_x) {x_texture *= -1;} x_texture++;
+                if(!reverse_texture_z) {y_texture *= -1;} y_texture++;
                 to_add.get()->set_texture_x(to_return.get()->id(), x_texture);
                 to_add.get()->set_texture_y(to_return.get()->id(), y_texture);
                 to_add.get()->set_texture_multiplier_x(1, to_return.get()->id());
@@ -2144,8 +2144,8 @@ namespace scls {
                 // Calculate the position of the point
                 double x = std::cos(current_angle + angle_offset);
                 double z = std::sin(current_angle + angle_offset);
-                if(x > max_x) max_x = x; if(x < min_x) min_x = x;
-                if(z > max_z) max_z = z; if(z < min_z) min_z = z;
+                if(x > max_x) {max_x = x;} if(x < min_x) {min_x = x;}
+                if(z > max_z) {max_z = z;} if(z < min_z) {min_z = z;}
 
                 // Create the point
                 Point point = Point();
