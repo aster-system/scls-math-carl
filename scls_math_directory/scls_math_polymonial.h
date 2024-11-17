@@ -89,6 +89,17 @@ namespace scls {
         // Monomonial copy constructor
         Monomonial(const Monomonial& monomonial_copy):Monomonial(monomonial_copy.a_factor,monomonial_copy.a_unknowns){};
 
+        // Returns the inverse the monomonial
+        Monomonial inverse() const {
+            Monomonial new_monomonial(*this);
+            new_monomonial.set_factor(Complex(1) / new_monomonial.factor());
+            // Reverse each unknowns
+            for(int i = 0;i<static_cast<int>(new_monomonial.a_unknowns.size());i++) {
+                new_monomonial.a_unknowns[i].set_exponent(new_monomonial.a_unknowns[i].exponent() * -1);
+            }
+            return new_monomonial;
+        };
+
         // Add an unknown to the monomonial
         inline void add_unknown(std::string name, Complex exponent) {_Base_Unknown unknown(name); unknown.set_exponent(exponent); a_unknowns.push_back(unknown);};
         // Returns if a monomonial has the same unknows as this one
@@ -117,6 +128,7 @@ namespace scls {
                 if(a_unknowns[i].name() == unknown_name) {a_unknowns.erase(a_unknowns.begin() + i); return;}
             }
         };
+        inline void delete_unknown(_Base_Unknown* unknown_to_delete) {delete_unknown(unknown_to_delete->name());};
         // Returns if the monomonial is known
         inline bool is_known() const {return a_unknowns.size() <= 0 || (a_unknowns.size() == 1 && (a_unknowns.at(0).name() == "" || a_unknowns.at(0).exponent() == 0));};
         // Returns if the monomonial only contains an unkwnown
@@ -159,7 +171,12 @@ namespace scls {
                 if(contained_unknown == 0) {
                     a_unknowns.push_back(obj.a_unknowns[i]);
                 }
-                else if(obj.a_unknowns[i].name() != "") {contained_unknown->set_exponent(contained_unknown->exponent() + obj.a_unknowns[i].exponent());}
+                else if(obj.a_unknowns[i].name() != "") {
+                    scls::Complex new_exponent = contained_unknown->exponent() + obj.a_unknowns[i].exponent();
+                    if(new_exponent == 0) {
+                        delete_unknown(contained_unknown);
+                    } else {contained_unknown->set_exponent(new_exponent);}
+                }
             }
             return *this;
         }
@@ -402,7 +419,11 @@ namespace scls {
         __Formula_Base(Monomonial monomonial):a_polymonial_add(monomonial){};
         __Formula_Base(Polymonial polymonial):a_polymonial_add(polymonial){};
         // __Formula_Base copy constructor
-        __Formula_Base(const __Formula_Base& formula):a_formulas_add(formula.a_formulas_add),a_formulas_factor(formula.a_formulas_factor),a_polymonial_add(formula.a_polymonial_add),a_polymonial_factor(formula.a_polymonial_factor),a_applied_function(formula.a_applied_function){};
+        __Formula_Base(const __Formula_Base& formula):a_formulas_add(formula.a_formulas_add),a_formulas_factor(formula.a_formulas_factor),a_polymonial_add(formula.a_polymonial_add),a_polymonial_factor(formula.a_polymonial_factor),a_applied_function(formula.a_applied_function){
+            if(formula.a_denominator.get() != 0) {
+                a_denominator = std::make_shared<__Formula_Base>(*formula.a_denominator.get());
+            }
+        };
 
         // Clear the formula
         inline void clear() {a_formulas_add.clear();a_formulas_factor.clear();a_polymonial_add=0;a_polymonial_factor=1;};
@@ -441,6 +462,12 @@ namespace scls {
             while(to_return[to_return.size() - 1] == '+' || to_return[to_return.size() - 1] == '*' || to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
             // Apply the function
             if(applied_function() != "") to_return = applied_function() + "(" + to_return + ")";
+
+            // Add the denominator if needed
+            if(a_denominator.get() != 0) {
+                to_return = "(" + to_return + ")/(" + a_denominator.get()->to_std_string() + ")";
+            }
+
             return to_return;
         };
 
@@ -450,6 +477,8 @@ namespace scls {
             to_return.set_applied_function("");
             return to_return;
         };
+        // Returns if the formula is a basic formula or not
+        bool is_basic() const {return a_applied_function == "" && a_denominator.get() == 0;};
         // Returns if the formula is a simple polymonial or not
         bool is_simple_polymonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0);};
 
@@ -518,7 +547,14 @@ namespace scls {
         void __add(__Formula_Base value) {
             if(value == 0) {return;}
 
-            if(value.applied_function() == "") {
+            // Check if this formula is basic or not
+            if(!is_basic()) {
+                __Formula_Base temp(*this);
+                clear(); a_applied_function = ""; a_denominator.reset();
+                a_formulas_add.push_back(temp);
+            }
+
+            if(value.is_basic()) {
                 // Added formulas
                 __add(value.a_polymonial_add);
                 int formula_size = static_cast<int>(value.a_formulas_add.size());
@@ -531,11 +567,7 @@ namespace scls {
             } else {a_formulas_add.push_back(value);}
         };
         // Multiply a polymonial to this one
-        void __multiply(Polymonial value) {
-            a_polymonial_add *= value;
-            a_polymonial_factor *= value;
-            for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;
-        };
+        void __multiply(Polymonial value) {a_polymonial_add *= value;a_polymonial_factor *= value;for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;};
         void __multiply(__Formula_Base value) {
             if(value.applied_function() == "") {
                 // The formula can be directly multiplied
@@ -596,6 +628,7 @@ namespace scls {
         __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
         __Formula_Base& operator+=(__Formula_Base value) {__add(value);return*this;};
         __Formula_Base& operator*=(__Formula_Base value) {__multiply(value);return*this;};
+        __Formula_Base& operator/=(__Formula_Base value) {a_denominator=std::make_shared<__Formula_Base>(value);return*this;};
         // Converts the formula to a polymonial
         inline Polymonial to_polymonial() const {return a_polymonial_add.simplify();};
         operator Polymonial() const {return to_polymonial();};
@@ -616,34 +649,12 @@ namespace scls {
 
         // Applied function to the formula
         std::string a_applied_function = "";
-    };
 
-    class Formula : public __Formula_Base {
-        // Class representating a full mathematical formula
-    public:
-
-        // Formula constructor
-        Formula():__Formula_Base(){};
-        Formula(__Formula_Base formula):__Formula_Base(formula){};
-        Formula(Polymonial polymonial):__Formula_Base(polymonial){};
-
-        // Operators
-        // With fractions
-        Formula& operator*=(Fraction value) {__multiply(value);return*this;};
-        // With polymonials
-        Formula& operator+=(Polymonial value) {__Formula_Base::operator+=(value);return*this;};
-        // With formulas
-        Formula operator-(__Formula_Base value) const {Formula to_return(*this);to_return-=value;return to_return;};
-        Formula& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
-        Formula& operator+=(__Formula_Base value) {__Formula_Base::operator+=(value);return*this;};
-        Formula& operator*=(__Formula_Base value) {__multiply(value);return*this;};
-        // Converts the formula to a polymonial
-        operator Polymonial() const {return to_polymonial();};
-
-    private:
+        // Division of the formula
+        std::shared_ptr<__Formula_Base> a_denominator;
         // Exponent of the formula
-        __Formula_Base a_exponent;
-    };
+        std::shared_ptr<__Formula_Base> a_exponent;
+    }; typedef __Formula_Base Formula;
 
     //*********
 	//
@@ -777,14 +788,14 @@ namespace scls {
         };
 
         // Converts a std::string to a Formula
-        Formula __string_to_formula_without_multiplication(std::string source) {
+        Formula __string_to_formula_without_division(std::string source) {
             // Format the text as needed
             std::vector<std::string> cutted;
 
             // Prepare the needed datas
             Formula to_return;
 
-            // Cut the text operator by * operator
+            // Cut the text operator by > operator
             cutted = cut_string_out_of_2(source, ">", "(", ")");
             if(cutted.size() > 1) {
                 // At least one function applied
@@ -795,6 +806,24 @@ namespace scls {
             } else {
                 // No function applied
                 to_return = __string_to_formula_base(cutted[0]);
+            }
+
+            // Return the result
+            return to_return;
+        };
+        Formula __string_to_formula_without_multiplication(std::string source) {
+            // Format the text as needed
+            std::vector<std::string> cutted;
+
+            // Prepare the needed datas
+            Formula to_return; bool to_return_modified = false;
+
+            // Cut the text operator by / operator
+            cutted = cut_string_out_of_2(source, "/", "(", ")");
+            for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+                Formula current_polymonial = __string_to_formula_without_division(cutted[i]);
+                if(to_return_modified) {to_return /= current_polymonial;}
+                else {to_return += current_polymonial;to_return_modified=true;}
             }
 
             // Return the result
