@@ -209,6 +209,8 @@ namespace scls {
         Fraction& operator++(int) { _add(Fraction(1, 1)); return *this; }
         // Lesser than than operator
         bool operator<(Fraction r) const { return to_double() < r.to_double(); }
+        // Lesser or equal than than operator
+        bool operator<=(Fraction r) const { return _equal(r) || to_double() < r.to_double(); }
         // Minus operator
         Fraction operator-(Fraction obj) const { return _substract_without_modification(obj); };
         // Minus operator assignment
@@ -458,6 +460,37 @@ namespace scls {
     extern Complex operator*(int obj_1, Complex obj);
 	// Stream operator overloading (indev)
     extern std::ostream& operator<<(std::ostream& os, const Complex& obj);
+}
+
+//*********
+//
+// The specific numbers part
+//
+//*********
+
+// The namespace "scls" is used to simplify the all.
+namespace scls {
+    //*********
+    //
+    // The Limit part
+    //
+    //*********
+
+    class Limit {
+        // Class representating the limit of a formula
+    public:
+
+        // Limit constructor
+        Limit(Fraction value):a_value(value){};
+        Limit():Limit(Fraction(1)){};
+
+        // Getters and setters
+        inline Fraction value() const {return a_value;};
+
+    private:
+        // Finite value of the limite
+        Fraction a_value;
+    };
 }
 
 #endif // SCLS_MATH_NUMBERS

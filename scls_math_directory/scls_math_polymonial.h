@@ -45,7 +45,8 @@ namespace scls {
         enum Unknown_Comparaison {UC_DIFFERENT, UC_EQUAL, UC_EQUAL_UNKNOWN};
 
         // Unknow constructor
-        _Base_Unknown(std::string new_name):a_name(new_name){};
+        _Base_Unknown(std::string new_name, Complex exponent):a_exponent(exponent),a_name(new_name){};
+        _Base_Unknown(std::string new_name):_Base_Unknown(new_name, Complex(1)){};
 
         // Returns the comparaison between two unknows
         inline bool compare_unknown(_Base_Unknown other) const {
@@ -82,10 +83,9 @@ namespace scls {
 
         // Monomonial constructor
         Monomonial(Complex factor):a_factor(factor){};
-        // Monomonial complete constructor
         Monomonial(Complex factor, std::vector<_Base_Unknown> unknowns):Monomonial(factor){a_unknowns=unknowns;};
-        // Monomonial constructor
         Monomonial(Complex factor, std::string unknow):Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
+        Monomonial(Complex factor, std::string unknow, Complex exponent):Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
         // Monomonial copy constructor
         Monomonial(const Monomonial& monomonial_copy):Monomonial(monomonial_copy.a_factor,monomonial_copy.a_unknowns){};
 
@@ -98,16 +98,28 @@ namespace scls {
                 new_monomonial.a_unknowns[i].set_exponent(new_monomonial.a_unknowns[i].exponent() * -1);
             } return new_monomonial;
         };
-        // Returns if the limit of the monomonial for an unknown going to + infinity is +/- infinity
+        // Returns if the limit of the monomonial for an unknown going to + infinity is +/- infinity / +/- 0
+        bool limit_pi_is_mi(std::string unknown_name) {
+            _Base_Unknown* unknown = contains_unknown(unknown_name);
+            if(unknown != 0 && unknown->exponent().real() >= 1 && factor().real() < 0) {
+                return true;
+            } return false;
+        };
+        bool limit_pi_is_mz(std::string unknown_name) {
+            _Base_Unknown* unknown = contains_unknown(unknown_name);
+            if(unknown != 0 && unknown->exponent().real() <= 0 && factor().real() < 0) {
+                return true;
+            } return false;
+        };
         bool limit_pi_is_pi(std::string unknown_name) {
             _Base_Unknown* unknown = contains_unknown(unknown_name);
             if(unknown != 0 && unknown->exponent().real() >= 1 && factor().real() > 0) {
                 return true;
             } return false;
         };
-        bool limit_pi_is_mi(std::string unknown_name) {
+        bool limit_pi_is_pz(std::string unknown_name) {
             _Base_Unknown* unknown = contains_unknown(unknown_name);
-            if(unknown != 0 && unknown->exponent().real() >= 1 && factor().real() < 0) {
+            if(unknown != 0 && unknown->exponent().real() <= 0 && factor().real() > 0) {
                 return true;
             } return false;
         };
@@ -264,6 +276,8 @@ namespace scls {
             } Monomonial to_return(0); to_return.add_unknown(unknown, exponent); return to_return;
         };
         inline Monomonial monomonial(std::string unknown) {return monomonial(unknown, Complex(1, 0));};
+        // Returns the number of monomonials in the polymonial
+        inline int monomonials_number() const {return a_monomonials.size();};
         // Returns a list of unknowns monomonials
         std::vector<Monomonial> unknown_monomonials() const {
             std::vector<Monomonial> to_return;
@@ -299,6 +313,14 @@ namespace scls {
                 } else {
                     (*contained_monomonial) += current_monomonial;
                 }
+            }
+        };
+        // Divide a monomonial to this void
+        void __divide(Monomonial value) {
+            // Apply each division
+            Monomonial used_inverse = value.inverse();
+            for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                a_monomonials[i] *= used_inverse;
             }
         };
         // Multiply a polymonial to this one
@@ -396,6 +418,7 @@ namespace scls {
         Polymonial& operator*=(Polymonial value) {__multiply(value);return*this;};
         // With monomonials
         Polymonial& operator+=(Monomonial value) {add_monomonial(value);return*this;};
+        Polymonial& operator/=(Monomonial value) {__divide(value);return*this;};
 
         // Getters and setters
         inline std::vector<Monomonial>& monomonials() {return a_monomonials;};
@@ -491,7 +514,8 @@ namespace scls {
         };
         // Returns if the formula is a basic formula or not
         bool is_basic() const {return a_applied_function == "" && a_denominator.get() == 0;};
-        // Returns if the formula is a simple polymonial or not
+        // Returns if the formula is a simple monomonial / polymonial or not
+        bool is_simple_monomonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_polymonial_add.monomonials_number() <= 0;};
         bool is_simple_polymonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0);};
 
         // Returns a formula from a monomonial where the unknows has been replaced
@@ -579,11 +603,24 @@ namespace scls {
             } else {a_formulas_add.push_back(value);}
         };
         // Divide a formula to this one
+        void __divide(Monomonial value) {
+            a_polymonial_add /= value;
+            a_polymonial_factor /= value;
+            for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
+                a_formulas_add[i] /= value;
+            }
+        };
         void __divide(__Formula_Base value) {
             if(!value.is_basic()) {
                 a_denominator=std::make_shared<__Formula_Base>(value);
             } else {
-                a_denominator=std::make_shared<__Formula_Base>(value);
+                if(value.is_simple_monomonial()) {
+                    // Apply a division of a simple monomonial
+                    Monomonial used_monomonial = value.a_polymonial_add.monomonials()[0];
+                    __divide(used_monomonial);
+                } else {
+                    a_denominator=std::make_shared<__Formula_Base>(value);
+                }
             }
         };
         // Multiply a polymonial to this one
@@ -641,6 +678,8 @@ namespace scls {
         bool operator==(Fraction value) {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_polymonial_add == value;};
         // With monomonials
         __Formula_Base& operator+=(Monomonial value) {__add(value);return*this;};
+        __Formula_Base operator/(Monomonial value) {__divide(value);return*this;};
+        __Formula_Base& operator/=(Monomonial value) const {__Formula_Base other(*this);other.__divide(value);return other;};
         // With polymonials
         __Formula_Base& operator+=(Polymonial value) {__add(value);return*this;};
         // With formulas
