@@ -96,8 +96,20 @@ namespace scls {
             // Reverse each unknowns
             for(int i = 0;i<static_cast<int>(new_monomonial.a_unknowns.size());i++) {
                 new_monomonial.a_unknowns[i].set_exponent(new_monomonial.a_unknowns[i].exponent() * -1);
-            }
-            return new_monomonial;
+            } return new_monomonial;
+        };
+        // Returns if the limit of the monomonial for an unknown going to + infinity is +/- infinity
+        bool limit_pi_is_pi(std::string unknown_name) {
+            _Base_Unknown* unknown = contains_unknown(unknown_name);
+            if(unknown != 0 && unknown->exponent().real() >= 1 && factor().real() > 0) {
+                return true;
+            } return false;
+        };
+        bool limit_pi_is_mi(std::string unknown_name) {
+            _Base_Unknown* unknown = contains_unknown(unknown_name);
+            if(unknown != 0 && unknown->exponent().real() >= 1 && factor().real() < 0) {
+                return true;
+            } return false;
         };
 
         // Add an unknown to the monomonial
@@ -566,6 +578,14 @@ namespace scls {
                 if(static_cast<int>(value.a_formulas_factor.size()) > 0) {a_formulas_add.push_back(value);}
             } else {a_formulas_add.push_back(value);}
         };
+        // Divide a formula to this one
+        void __divide(__Formula_Base value) {
+            if(!value.is_basic()) {
+                a_denominator=std::make_shared<__Formula_Base>(value);
+            } else {
+                a_denominator=std::make_shared<__Formula_Base>(value);
+            }
+        };
         // Multiply a polymonial to this one
         void __multiply(Polymonial value) {a_polymonial_add *= value;a_polymonial_factor *= value;for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;};
         void __multiply(__Formula_Base value) {
@@ -628,7 +648,7 @@ namespace scls {
         __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
         __Formula_Base& operator+=(__Formula_Base value) {__add(value);return*this;};
         __Formula_Base& operator*=(__Formula_Base value) {__multiply(value);return*this;};
-        __Formula_Base& operator/=(__Formula_Base value) {a_denominator=std::make_shared<__Formula_Base>(value);return*this;};
+        __Formula_Base& operator/=(__Formula_Base value) {__divide(value);return*this;};
         // Converts the formula to a polymonial
         inline Polymonial to_polymonial() const {return a_polymonial_add.simplify();};
         operator Polymonial() const {return to_polymonial();};
