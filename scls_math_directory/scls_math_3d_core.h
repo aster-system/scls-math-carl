@@ -415,6 +415,7 @@ namespace scls {
 
         // Getters
         inline void set_scale(double new_scale_x, double new_scale_y, double new_scale_z) {set_scale_x(new_scale_x);set_scale_y(new_scale_y);set_scale_z(new_scale_z);};
+        inline void set_scale(double new_scale) {set_scale_x(new_scale);set_scale_y(new_scale);set_scale_z(new_scale);};
         inline void set_scale_x(double new_scale_x) {a_scale_x = new_scale_x;};
         inline void set_scale_y(double new_scale_y) {a_scale_y = new_scale_y;};
         inline void set_scale_z(double new_scale_z) {a_scale_z = new_scale_z;};

@@ -27,6 +27,21 @@
 #ifndef SCLS_MATH_NUMBERS
 #define SCLS_MATH_NUMBERS
 
+#ifndef SCLS_MATH_NUMBER_LIMIT_ERROR_IPI
+#define SCLS_MATH_NUMBER_LIMIT_ERROR_IPI 120
+#endif // SCLS_MATH_NUMBER_LIMIT_ERROR_IPI
+#ifndef SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI
+#define SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI -1
+#endif // SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI
+#ifndef SCLS_MATH_NUMBER_LIMIT_SPECIAL_MZ
+#define SCLS_MATH_NUMBER_LIMIT_SPECIAL_MZ -2
+#endif // SCLS_MATH_NUMBER_LIMIT_SPECIAL_MZ
+#ifndef SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI
+#define SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI 1
+#endif // SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI
+#ifndef SCLS_MATH_NUMBER_LIMIT_SPECIAL_PZ
+#define SCLS_MATH_NUMBER_LIMIT_SPECIAL_PZ 2
+#endif // SCLS_MATH_NUMBER_LIMIT_SPECIAL_PZ
 #ifndef SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION
 #define SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION 10000000000
 #endif // SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION
@@ -485,10 +500,22 @@ namespace scls {
         Limit():Limit(Fraction(1)){};
 
         // Getters and setters
+        inline bool is_mi() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI;};
+        inline bool is_mz() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_SPECIAL_MZ;};
+        inline bool is_pi() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI;};
+        inline bool is_pz() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_SPECIAL_PZ;};
+        inline bool is_special() const {return a_special_value != 0;};
+        inline void set_mi() {a_special_value = SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI;};
+        inline void set_mz() {a_special_value = SCLS_MATH_NUMBER_LIMIT_SPECIAL_MZ;};
+        inline void set_pi() {a_special_value = SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI;};
+        inline void set_pz() {a_special_value = SCLS_MATH_NUMBER_LIMIT_SPECIAL_PZ;};
+        inline char special_value() const {return a_special_value;};
         inline Fraction value() const {return a_value;};
 
     private:
-        // Finite value of the limite
+        // Special value of the limit
+        char a_special_value = 0;
+        // Finite value of the limit
         Fraction a_value;
     };
 }

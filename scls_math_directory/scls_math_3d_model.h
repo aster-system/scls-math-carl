@@ -113,13 +113,13 @@ namespace scls {
                 return to_return;
             };
             // Returns the point as a binary STL
-            std::shared_ptr<Bytes_Set> binary_stl() {
+            std::shared_ptr<Bytes_Set> binary_stl(double multiplication) {
                 std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
 
                 // Add the positions
-                to_return.get()->add_float(absolute_x());
-                to_return.get()->add_float(absolute_y());
-                to_return.get()->add_float(absolute_z());
+                to_return.get()->add_float(absolute_x() * multiplication);
+                to_return.get()->add_float(absolute_y() * multiplication);
+                to_return.get()->add_float(absolute_z() * multiplication);
 
                 return to_return;
             };
@@ -499,7 +499,7 @@ namespace scls {
                 return to_return;
             };
             // Returns the face as a binary STL format
-            std::shared_ptr<Bytes_Set> binary_stl(unsigned int& triangle_count) {
+            std::shared_ptr<Bytes_Set> binary_stl(double multiplication, unsigned int& triangle_count) {
                 std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
 
                 // Add each points
@@ -516,7 +516,7 @@ namespace scls {
                         to_return.get()->add_float(normal_z());
                     }
 
-                    to_return.get()->add_datas(*a_points_for_rendering.at(i).get()->binary_stl().get());
+                    to_return.get()->add_datas(*a_points_for_rendering.at(i).get()->binary_stl(multiplication).get());
                 }
 
                 if(static_cast<int>(a_points_for_rendering.size()) > 0) {
@@ -1668,13 +1668,13 @@ namespace scls {
                 return to_return;
             };
             // Returns the solid as binary STL format
-            std::shared_ptr<Bytes_Set> binary_stl(unsigned int& total_triangle) {
+            std::shared_ptr<Bytes_Set> binary_stl(double multiplication, unsigned int& total_triangle) {
                 // Get the size of the binary
                 std::vector<std::shared_ptr<Bytes_Set>> binaries = std::vector<std::shared_ptr<Bytes_Set>>();
                 unsigned int current_position = 0;
                 unsigned int total_size = 8;
                 for(int i = 0;i<static_cast<int>(a_faces.size());i++) {
-                    std::shared_ptr<Bytes_Set> current_binary = a_faces[i].get()->binary_stl(total_triangle);
+                    std::shared_ptr<Bytes_Set> current_binary = a_faces[i].get()->binary_stl(multiplication, total_triangle);
                     binaries.push_back(current_binary);
                     total_size += current_binary.get()->datas_size();
                 }
@@ -1689,7 +1689,7 @@ namespace scls {
                 return to_return;
             };
             // Returns the solid as complete binary STL format
-            std::shared_ptr<Bytes_Set> binary_stl_complete() {
+            std::shared_ptr<Bytes_Set> binary_stl_complete(double multiplication) {
                 std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
 
                 // Add the header of the file
@@ -1700,11 +1700,12 @@ namespace scls {
 
                 // Add each points
                 unsigned int total_triangle = 0;
-                to_return.get()->add_datas(*binary_stl(total_triangle).get());
+                to_return.get()->add_datas(*binary_stl(multiplication, total_triangle).get());
                 to_return.get()->put_uint(total_triangle, 80);
 
                 return to_return;
             };
+            inline std::shared_ptr<Bytes_Set> binary_stl_complete() {return binary_stl_complete(1);};
 
             // Number of solids created
             static int a_solids_number;
@@ -1881,7 +1882,7 @@ namespace scls {
                 return to_return;
             };
             // Returns the solid group as binary STL format
-            std::shared_ptr<Bytes_Set> binary_stl() {
+            std::shared_ptr<Bytes_Set> binary_stl(double multiplication) {
                 std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
 
                 // Add the header of the file
@@ -1896,7 +1897,7 @@ namespace scls {
                 unsigned int total_size = 8;
                 unsigned int total_triangle = 0;
                 for(int i = 0;i<static_cast<int>(a_solid.size());i++) {
-                    std::shared_ptr<Bytes_Set> current_binary = a_solid[i].get()->binary_stl(total_triangle);
+                    std::shared_ptr<Bytes_Set> current_binary = a_solid[i].get()->binary_stl(multiplication, total_triangle);
                     binaries.push_back(current_binary);
                     total_size += current_binary.get()->datas_size();
                 }
@@ -1911,6 +1912,7 @@ namespace scls {
 
                 return to_return;
             };
+            inline std::shared_ptr<Bytes_Set> binary_stl() {return binary_stl(1);};
             // Returns the solid as binary VBO
             std::shared_ptr<Bytes_Set> binary_vbo(Point::_VBO_Types vbo_type = Point::_VT_Normal) {
                 std::shared_ptr<Bytes_Set> to_return = Solid::__shader_arguments(vbo_type);
