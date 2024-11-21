@@ -451,6 +451,7 @@ namespace scls {
         // __Formula_Base constructor
         __Formula_Base(){};
         __Formula_Base(int number):a_polymonial_add(number){};
+        __Formula_Base(Fraction fraction):__Formula_Base(Monomonial(scls::Complex(fraction))){};
         __Formula_Base(Monomonial monomonial):a_polymonial_add(monomonial){};
         __Formula_Base(Polymonial polymonial):a_polymonial_add(polymonial){};
         // __Formula_Base copy constructor
@@ -603,13 +604,6 @@ namespace scls {
             } else {a_formulas_add.push_back(value);}
         };
         // Divide a formula to this one
-        void __divide(Monomonial value) {
-            a_polymonial_add /= value;
-            a_polymonial_factor /= value;
-            for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
-                a_formulas_add[i] /= value;
-            }
-        };
         void __divide(__Formula_Base value) {
             if(!value.is_basic()) {
                 a_denominator=std::make_shared<__Formula_Base>(value);
@@ -617,7 +611,11 @@ namespace scls {
                 if(value.is_simple_monomonial()) {
                     // Apply a division of a simple monomonial
                     Monomonial used_monomonial = value.a_polymonial_add.monomonials()[0];
-                    __divide(used_monomonial);
+                    a_polymonial_add /= used_monomonial;
+                    a_polymonial_factor /= used_monomonial;
+                    for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
+                        a_formulas_add[i] /= used_monomonial;
+                    }
                 } else {
                     a_denominator=std::make_shared<__Formula_Base>(value);
                 }
@@ -676,17 +674,12 @@ namespace scls {
         // With fractions
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
         bool operator==(Fraction value) {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_polymonial_add == value;};
-        // With monomonials
-        __Formula_Base& operator+=(Monomonial value) {__add(value);return*this;};
-        __Formula_Base operator/(Monomonial value) {__divide(value);return*this;};
-        __Formula_Base& operator/=(Monomonial value) const {__Formula_Base other(*this);other.__divide(value);return other;};
-        // With polymonials
-        __Formula_Base& operator+=(Polymonial value) {__add(value);return*this;};
         // With formulas
         __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);to_return-=value;return to_return;};
         __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
         __Formula_Base& operator+=(__Formula_Base value) {__add(value);return*this;};
         __Formula_Base& operator*=(__Formula_Base value) {__multiply(value);return*this;};
+        __Formula_Base operator/(__Formula_Base value) const {__Formula_Base other(*this);other.__divide(value);return other;};
         __Formula_Base& operator/=(__Formula_Base value) {__divide(value);return*this;};
         // Converts the formula to a polymonial
         inline Polymonial to_polymonial() const {return a_polymonial_add.simplify();};

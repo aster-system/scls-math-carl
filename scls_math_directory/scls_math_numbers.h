@@ -89,8 +89,8 @@ namespace scls {
         static Fraction from_std_string(std::string content) {
             std::vector<std::string> cutted = cut_string(content, "/");
             if(cutted.size() <= 0) return Fraction(0);
-            else if(cutted.size() == 1) return Fraction(std::stoi(cutted[0]));
-            else return Fraction(std::stoi(cutted[0]), std::stoi(cutted[1]));
+            else if(cutted.size() == 1) {if(cutted[0]=="-")return Fraction(-1);return Fraction(std::stoi(cutted[0]));}
+            else{return Fraction(std::stoi(cutted[0]), std::stoi(cutted[1]));}
         };
         // Normalize the fraction
         void normalize() {
@@ -498,6 +498,15 @@ namespace scls {
         // Limit constructor
         Limit(Fraction value):a_value(value){};
         Limit():Limit(Fraction(1)){};
+
+        // Returns the limit in a std::string
+        inline std::string to_std_string() const {
+            if(is_pi()) {return std::string("+infini");}
+            else if(is_mi()) {return std::string("-infini");}
+            else if(is_pz()) {return std::string("0+");}
+            else if(is_mz()) {return std::string("0-");}
+            return std::to_string(static_cast<int>(special_value()));
+        };
 
         // Getters and setters
         inline bool is_mi() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI;};
