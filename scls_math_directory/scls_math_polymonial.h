@@ -98,30 +98,38 @@ namespace scls {
                 new_monomonial.a_unknowns[i].set_exponent(new_monomonial.a_unknowns[i].exponent() * -1);
             } return new_monomonial;
         };
-        // Returns if the limit of the monomonial for an unknown going to + infinity is +/- infinity / +/- 0
-        bool limit_pi_is_mi(std::string unknown_name) {
+        // Returns the limit of the monomonial for an unknown
+        scls::Limit limit(Limit needed_limit, std::string unknown_name) {
+            scls::Limit to_return;
             _Base_Unknown* unknown = contains_unknown(unknown_name);
-            if(unknown != 0 && unknown->exponent().real() >= 1 && factor().real() < 0) {
-                return true;
-            } return false;
-        };
-        bool limit_pi_is_mz(std::string unknown_name) {
-            _Base_Unknown* unknown = contains_unknown(unknown_name);
-            if(unknown != 0 && unknown->exponent().real() <= 0 && factor().real() < 0) {
-                return true;
-            } return false;
-        };
-        bool limit_pi_is_pi(std::string unknown_name) {
-            _Base_Unknown* unknown = contains_unknown(unknown_name);
-            if(unknown != 0 && unknown->exponent().real() >= 1 && factor().real() > 0) {
-                return true;
-            } return false;
-        };
-        bool limit_pi_is_pz(std::string unknown_name) {
-            _Base_Unknown* unknown = contains_unknown(unknown_name);
-            if(unknown != 0 && unknown->exponent().real() <= 0 && factor().real() > 0) {
-                return true;
-            } return false;
+            if(unknown != 0) {
+                if(needed_limit.is_pi()) {
+                    // PI limits
+                    if(factor().real() < 0) {to_return.set_mi();}
+                    else {to_return.set_pi();}
+                    // Handle zeros
+                    if(unknown->exponent().real() < 0){
+                        if(to_return.is_mi()) {
+                            to_return.set_mz();
+                        } else {
+                            to_return.set_pz();
+                        }
+                    }
+                } else if(needed_limit.is_mi()) {
+                    // MI limits
+                    if(factor().real() < 0) {to_return.set_pi();}
+                    else {to_return.set_mi();}
+                    // Handle zeros
+                    if(unknown->exponent().real() < 0){
+                        if(to_return.is_mi()) {
+                            to_return.set_mz();
+                        } else {
+                            to_return.set_pz();
+                        }
+                    }
+                }
+            } else {to_return = factor().real();}
+            return to_return;
         };
 
         // Add an unknown to the monomonial
@@ -516,7 +524,7 @@ namespace scls {
         // Returns if the formula is a basic formula or not
         bool is_basic() const {return a_applied_function == "" && a_denominator.get() == 0;};
         // Returns if the formula is a simple monomonial / polymonial or not
-        bool is_simple_monomonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_polymonial_add.monomonials_number() <= 0;};
+        bool is_simple_monomonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_polymonial_add.monomonials_number() <= 1;};
         bool is_simple_polymonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0);};
 
         // Returns a formula from a monomonial where the unknows has been replaced

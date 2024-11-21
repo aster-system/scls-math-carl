@@ -505,7 +505,7 @@ namespace scls {
             else if(is_mi()) {return std::string("-infini");}
             else if(is_pz()) {return std::string("0+");}
             else if(is_mz()) {return std::string("0-");}
-            return std::to_string(static_cast<int>(special_value()));
+            return value().to_std_string();
         };
 
         // Getters and setters
