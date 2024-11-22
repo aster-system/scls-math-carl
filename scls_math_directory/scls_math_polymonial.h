@@ -103,7 +103,7 @@ namespace scls {
             scls::Limit to_return;
             _Base_Unknown* unknown = contains_unknown(unknown_name);
             if(unknown != 0) {
-                if(needed_limit.is_pi()) {
+                if(needed_limit.is_pi() ||(needed_limit.is_mi() && (unknown->exponent().real().to_double() == round(unknown->exponent().real().to_double()) && static_cast<int>(unknown->exponent().real().to_double()) % 2 == 0))) {
                     // PI limits
                     if(factor().real() < 0) {to_return.set_mi();}
                     else {to_return.set_pi();}
