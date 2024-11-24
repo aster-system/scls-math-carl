@@ -509,6 +509,7 @@ namespace scls {
         };
 
         // Getters and setters
+        inline bool is_error_ipi() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_ERROR_IPI;};
         inline bool is_mi() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI;};
         inline bool is_mz() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_SPECIAL_MZ;};
         inline bool is_pi() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI;};
@@ -518,6 +519,7 @@ namespace scls {
         inline void set_mz() {a_special_value = SCLS_MATH_NUMBER_LIMIT_SPECIAL_MZ;};
         inline void set_pi() {a_special_value = SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI;};
         inline void set_pz() {a_special_value = SCLS_MATH_NUMBER_LIMIT_SPECIAL_PZ;};
+        inline void set_special_value(char new_special_value) {a_special_value = new_special_value;};
         inline char special_value() const {return a_special_value;};
         inline Fraction value() const {return a_value;};
 
