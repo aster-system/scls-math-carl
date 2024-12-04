@@ -2062,6 +2062,7 @@ namespace scls {
             std::vector<Point>& points = polygon.get()->points;
             for(int i = 0;i<static_cast<int>(points.size());i++) {
                 std::shared_ptr<Point> to_add = std::make_shared<Point>(points.at(i));
+                to_add.get()->set_this_object(to_add);
                 to_add.get()->reset();
                 to_add.get()->set_parent(to_return); to_return.get()->add_child(to_add);
 
@@ -2193,6 +2194,7 @@ namespace scls {
             std::shared_ptr<Polygon> points = regular_polygon_points(side_number, 0);
             for(int i = 0;i<static_cast<int>(points.get()->points.size());i++) {
                 std::shared_ptr<Point> to_add = std::make_shared<Point>(points.get()->points.at(i));
+                to_add.get()->set_this_object(to_add);
                 to_add.get()->reset();
                 to_add.get()->set_parent(to_return);
 

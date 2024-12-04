@@ -61,7 +61,8 @@ namespace scls {
         //*********
 
         // Simplest Point_3D constructor
-        Point_3D(){};
+        Point_3D(double x, double y, double z):a_x(x),a_y(y),a_z(z){};
+        Point_3D():Point_3D(0,0,0){};
 
         //*********
         //
@@ -76,13 +77,41 @@ namespace scls {
         inline void move_z(double movement) {set_z(z() + movement);};
 
         // Getters
-        virtual void set_x(double new_x) {a_x = new_x;};
-        virtual void set_y(double new_y) {a_y = new_y;};
-        virtual void set_z(double new_z) {a_z = new_z;};
+        inline void set_x(double new_x) {a_x = new_x;};
+        inline void set_y(double new_y) {a_y = new_y;};
+        inline void set_z(double new_z) {a_z = new_z;};
         inline double x() const {return a_x;};
         inline double y() const {return a_y;};
         inline double z() const {return a_z;};
 
+        //*********
+        //
+        // Point_3D vectorial manipulation
+        //
+        //*********
+
+        // Returns the norm of the vector
+        inline double norm() const {return std::sqrt(std::pow(a_x, 2) + std::pow(a_y, 2) + std::pow(a_z, 2));};
+        // Normalizes the vector
+        inline void normalize() {double divisor = sqrt(1.0/norm());a_x *= divisor;a_y *= divisor;a_z *= divisor;};
+
+        // Adds a vector to this vector with another
+        inline void __add(Point_3D object) {set_x(x()+object.x());set_y(y()+object.y());set_z(z()+object.z());};
+        inline Point_3D __add_without_modification(Point_3D object) const {Point_3D to_return=*this;to_return.set_x(to_return.x()+object.x());to_return.set_y(to_return.y()+object.y());to_return.set_z(to_return.z()+object.z());return to_return;};
+        // Divides a vector to this vector with another
+        inline void __divide(double value) {set_x(x()/value);set_y(y()/value);set_z(z()/value);};
+        // Multiplies a vector to this vector with another
+        inline void __multiply(double value) {set_x(x()*value);set_y(y()*value);set_z(z()*value);};
+        // Returns a substraction of this vector with another
+        inline Point_3D __substract_without_modification(Point_3D object) const {Point_3D to_return=*this;to_return.set_x(x()-object.x());to_return.set_y(y()-object.y());to_return.set_z(z()-object.z());return to_return;};
+
+        // Built-in operators
+        // With Point_3D
+        inline Point_3D operator+(Point_3D object)const{return __add_without_modification(object);};
+        inline Point_3D& operator+=(Point_3D object){__add(object);return *this;};
+        // With double
+        inline Point_3D operator/(double object)const{Point_3D to_return=*this;to_return.__divide(object);return to_return;};
+        inline Point_3D operator*(double object)const{Point_3D to_return=*this;to_return.__multiply(object);return to_return;};
     private:
         //*********
         //
@@ -96,7 +125,7 @@ namespace scls {
         double a_y = 0;
         // Z position of the point
         double a_z = 0;
-    };
+    }; typedef Point_3D Vector_3D;
 
     //*********
     //
@@ -116,6 +145,22 @@ namespace scls {
         vector_y *= divisor;
         vector_z *= divisor;
     };
+
+    // Returns the angle in radians for a vector 3D
+    static double vector_2d_angle(double vector_x, double vector_y) {
+        // Calculate the first XZ angle
+        double total_length = std::sqrt(vector_x * vector_x + vector_y * vector_y);
+        double to_add = 0;
+        if(total_length > 0) to_add = std::acos(std::abs(vector_y) / total_length);
+        // Get the current angle
+        double current_angle = 0;
+        if(vector_y >= 0 && vector_x >= 0) {current_angle = to_add;}
+        else if (vector_y < 0 && vector_x >= 0) {current_angle = 3.1415 - to_add;}
+        else if(vector_y < 0 && vector_x < 0) {current_angle = 3.1415 + to_add;}
+        else {current_angle = 3.1415 * 2.0 - to_add;}
+
+        return current_angle;
+    }
 
     // Rotates a 3D vector and returns it normalized
     static double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z) {
@@ -176,7 +221,7 @@ namespace scls {
         return to_return;
     }
 
-    class Transform_Object_3D : public Point_3D {
+    class Transform_Object_3D {
         // Class representing a 3D object transform
     public:
 
@@ -188,24 +233,25 @@ namespace scls {
 
         // Transform_Object_3D constructor
         Transform_Object_3D(){};
+        // Copy constructor
+        Transform_Object_3D(Point_3D point_3d):a_position(point_3d){};
         // Transform_Object_3D destructor
         ~Transform_Object_3D(){if(a_parent.get() != 0) a_parent.get()->remove_child(this);};
 
         // Adds a children
-        void add_child(Transform_Object_3D* children_to_add) {a_children.push_back(children_to_add);};
-        void add_child(const std::shared_ptr<Transform_Object_3D>& children_to_add) {a_children.push_back(children_to_add.get());};
+        void add_child(std::shared_ptr<Transform_Object_3D> children_to_add) {a_children.push_back(children_to_add);};
         // Removes a children
-        void remove_child(Transform_Object_3D* children_to_remove){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i]==children_to_remove)a_children.erase(a_children.begin()+i,a_children.begin()+i+1);}};
-        void remove_child(const std::shared_ptr<Transform_Object_3D>& children_to_remove){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i]==children_to_remove.get())a_children.erase(a_children.begin()+i,a_children.begin()+i+1);}};
+        void remove_child(Transform_Object_3D* children_to_remove){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i].lock().get() ==children_to_remove)a_children.erase(a_children.begin()+i,a_children.begin()+i+1);}};
+        void remove_child(std::shared_ptr<Transform_Object_3D> children_to_remove){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i].lock().get()==children_to_remove.get())a_children.erase(a_children.begin()+i,a_children.begin()+i+1);}};
 
         // Getters and setters
-        inline std::vector<Transform_Object_3D*>& children() {return a_children;};
+        inline std::vector<std::weak_ptr<Transform_Object_3D>>& children() {return a_children;};
         inline unsigned int id() const {return a_id;};
         inline Transform_Object_3D* parent() const {return a_parent.get();};
         inline void set_parent(const std::shared_ptr<Transform_Object_3D>& new_parent) {
             if(a_parent.get() != 0) a_parent.get()->remove_child(this);
             a_parent = new_parent;
-            a_parent.get()->add_child(this);
+            a_parent.get()->add_child(a_this_object.lock());
             update_vectors();
         };
         inline void set_parent(std::shared_ptr<Transform_Object_3D>* new_parent) {
@@ -216,6 +262,7 @@ namespace scls {
             }
             else set_parent(*new_parent);
         };
+        inline void set_this_object(std::weak_ptr<Transform_Object_3D> this_object){a_this_object=this_object;};
 
         //*********
         //
@@ -228,20 +275,9 @@ namespace scls {
 
         // Absolute position handling
         // Returns the absolute X position
-        inline double absolute_x() const {
-            if(parent() == 0)return a_real_local_parent_x;
-            return parent()->absolute_x() + a_real_local_parent_x ;
-        };
-        // Returns the absolute Y position
-        inline double absolute_y() const {
-            if(parent() == 0)return a_real_local_parent_y;
-            return parent()->absolute_y() + a_real_local_parent_y;
-        };
-        // Returns the absolute Z position
-        inline double absolute_z() const {
-            if(parent() == 0)return a_real_local_parent_z;
-            return parent()->absolute_z() + a_real_local_parent_z;
-        }
+        inline double absolute_x() const {if(parent() == 0)return a_real_local_parent_x;return parent()->absolute_x() + a_real_local_parent_x;};
+        inline double absolute_y() const {if(parent() == 0)return a_real_local_parent_y;return parent()->absolute_y() + a_real_local_parent_y;};
+        inline double absolute_z() const {if(parent() == 0)return a_real_local_parent_z;return parent()->absolute_z() + a_real_local_parent_z;};
         // Returns the real local parent position
         inline double __real_local_parent_x() const {return a_real_local_parent_x;};
         inline double __real_local_parent_y() const {return a_real_local_parent_y;};
@@ -264,26 +300,26 @@ namespace scls {
         inline double anchored_z() const {return a_anchored_z;};
 
         // Returns the X of the forward vector of the object
+        inline scls::Point_3D forward_vector() const {return Point_3D(a_forward_vector_x, a_forward_vector_y, a_forward_vector_z);};
         inline double forward_vector_x() const {return a_forward_vector_x;};
-        // Returns the Y of the forward vector of the object
         inline double forward_vector_y() const {return a_forward_vector_y;};
-        // Returns the Z of the forward vector of the object
         inline double forward_vector_z() const {return a_forward_vector_z;};
         // Returns the X of the right vector of the object
         inline double right_vector_x() const {return a_right_vector_x;};
-        // Returns the Y of the right vector of the object
         inline double right_vector_y() const {return a_right_vector_y;};
-        // Returns the Z of the right vector of the object
         inline double right_vector_z() const {return a_right_vector_z;};
         // Returns the X of the top vector of the object
         inline double top_vector_x() const {return a_top_vector_x;};
-        // Returns the Y of the top vector of the object
         inline double top_vector_y() const {return a_top_vector_y;};
-        // Returns the Z of the top vector of the object
         inline double top_vector_z() const {return a_top_vector_z;};
 
         // Update the real local position of the children
-        void update_children_real_local_position() {for(int i = 0;i<static_cast<int>(children().size());i++) children()[i]->update_real_local_position();};
+        void update_children_real_local_position() {
+            for(int i = 0;i<static_cast<int>(children().size());i++){
+                Transform_Object_3D* current_child = children()[i].lock().get();
+                if(current_child != 0) {current_child->update_real_local_position();}
+            }
+        };
         // Update the real local position of the object
         void update_real_local_position() {
             // Calculate the real local parent position
@@ -344,7 +380,8 @@ namespace scls {
 
             // Update children
             for(int i = 0;i<static_cast<int>(children().size());i++) {
-                children()[i]->update_vectors();
+                Transform_Object_3D* current_child = children()[i].lock().get();
+                if(current_child != 0){current_child->update_vectors();}
             }
         }
 
@@ -363,14 +400,24 @@ namespace scls {
         inline void move_right(double force) {move_xyz(right_vector_x() * force, right_vector_y() * force, right_vector_z() * force);};
         // Move on the top axis
         inline void move_top(double force) {move_xyz(top_vector_x() * force, top_vector_y() * force, top_vector_z() * force);};
+        // Move easily the object
+        inline void move_xyz(double movement_x, double movement_y, double movement_z) {move_x(movement_x);move_y(movement_y);move_z(movement_z);};
+        inline void move_xyz(Point_3D movement) {move_x(movement.x());move_y(movement.y());move_z(movement.z());};
+        inline void move_x(double movement) {set_x(x() + movement);};
+        inline void move_y(double movement) {set_y(y() + movement);};
+        inline void move_z(double movement) {set_z(z() + movement);};
 
         // Getters and setters
+        inline Point_3D position() const {return a_position;};
         inline void set_anchored_x(double new_anchored_x) {a_anchored_x = new_anchored_x;};
         inline void set_anchored_y(double new_anchored_y) {a_anchored_y = new_anchored_y;};
         inline void set_anchored_z(double new_anchored_z) {a_anchored_z = new_anchored_z;};
-        virtual void set_x(double new_x) {Point_3D::set_x(new_x);update_real_local_position();};
-        virtual void set_y(double new_y) {Point_3D::set_y(new_y);update_real_local_position();};
-        virtual void set_z(double new_z) {Point_3D::set_z(new_z);update_real_local_position();};
+        virtual void set_x(double new_x) {a_position.set_x(new_x);update_real_local_position();};
+        virtual void set_y(double new_y) {a_position.set_y(new_y);update_real_local_position();};
+        virtual void set_z(double new_z) {a_position.set_z(new_z);update_real_local_position();};
+        inline double x() const {return a_position.x();};
+        inline double y() const {return a_position.y();};
+        inline double z() const {return a_position.z();};
 
         //*********
         //
@@ -380,17 +427,17 @@ namespace scls {
 
         // Returns the absolute X rotation of the object
         inline double absolute_rotation_x() const {if(parent() == 0)return a_rotation_x;return parent()->absolute_rotation_x() + a_rotation_x;};
-        // Returns the absolute Y rotation of the object
         inline double absolute_rotation_y() const {if(parent() == 0)return a_rotation_y;return parent()->absolute_rotation_y() + a_rotation_y;};
-        // Returns the absolute Z rotation of the object
         inline double absolute_rotation_z() const {if(parent() == 0)return a_rotation_z;return parent()->absolute_rotation_z() + a_rotation_z;};
 
         // Rotate easily the object
         inline void rotate_x(double movement) {set_rotation_x(rotation_x() + movement);};
-        // Rotate easily the object
         inline void rotate_y(double movement) {set_rotation_y(rotation_y() + movement);};
-        // Rotate easily the object
         inline void rotate_z(double movement) {set_rotation_z(rotation_z() + movement);};
+
+        // Returns a vector to an object
+        inline Point_3D vector_to(Point_3D object) {Point_3D to_return = a_position.__substract_without_modification(object);to_return.normalize();return to_return;};
+        inline Point_3D vector_to(Transform_Object_3D object) {return vector_to(object.a_position);};
 
         // Getters
         inline void set_rotation_x(double new_rotation_x) {a_rotation_x = new_rotation_x;update_vectors();};
@@ -408,9 +455,7 @@ namespace scls {
 
         // Returns the absolute X scale
         inline double absolute_scale_x() const {if(parent() == 0)return scale_x();else return parent()->absolute_scale_x() * scale_x();};
-        // Returns the absolute Y scale
         inline double absolute_scale_y() const {if(parent() == 0)return scale_y();else return parent()->absolute_scale_y() * scale_y();};
-        // Returns the absolute Z scale
         inline double absolute_scale_z() const {if(parent() == 0)return scale_z();else return parent()->absolute_scale_z() * scale_z();};
 
         // Getters
@@ -422,6 +467,18 @@ namespace scls {
         inline double scale_x() const {return a_scale_x;};
         inline double scale_y() const {return a_scale_y;};
         inline double scale_z() const {return a_scale_z;};
+
+        //*********
+        //
+        // Transform_Object_3D operators
+        //
+        //*********
+
+        // Adds a vector to this vector with another
+        inline void __add(Point_3D object) {a_position.__add(object);};
+
+        // Built-in operator
+        inline Transform_Object_3D& operator+=(Point_3D object){__add(object);return *this;};
 
     protected:
 
@@ -443,15 +500,20 @@ namespace scls {
         //*********
 
         // Children of the object
-        std::vector<Transform_Object_3D*> a_children = std::vector<Transform_Object_3D*>();
+        std::vector<std::weak_ptr<Transform_Object_3D>> a_children = std::vector<std::weak_ptr<Transform_Object_3D>>();
         // Parent of the object
         std::shared_ptr<Transform_Object_3D> a_parent;
+        // Shared ptr to this object
+        std::weak_ptr<Transform_Object_3D> a_this_object;
 
         //*********
         //
         // Transform_Object_3D position system
         //
         //*********
+
+        // Position of the object
+        Point_3D a_position;
 
         // Anchored position
         // X anchored position of the point
