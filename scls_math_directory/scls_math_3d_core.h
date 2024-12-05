@@ -63,6 +63,7 @@ namespace scls {
         // Simplest Point_3D constructor
         Point_3D(double x, double y, double z):a_x(x),a_y(y),a_z(z){};
         Point_3D():Point_3D(0,0,0){};
+        Point_3D(const Point_3D& point_copy):Point_3D(point_copy.a_x,point_copy.a_y,point_copy.a_z){};
 
         //*********
         //
@@ -90,6 +91,8 @@ namespace scls {
         //
         //*********
 
+        // Distance from another object
+        inline double distance(Point_3D point) const {return std::sqrt(std::pow(a_x - point.a_x, 2) + std::pow(a_y - point.a_y, 2) + std::pow(a_y - point.a_y, 2));};
         // Returns the norm of the vector
         inline double norm() const {return std::sqrt(std::pow(a_x, 2) + std::pow(a_y, 2) + std::pow(a_z, 2));};
         // Normalizes the vector
@@ -97,13 +100,13 @@ namespace scls {
 
         // Adds a vector to this vector with another
         inline void __add(Point_3D object) {set_x(x()+object.x());set_y(y()+object.y());set_z(z()+object.z());};
-        inline Point_3D __add_without_modification(Point_3D object) const {Point_3D to_return=*this;to_return.set_x(to_return.x()+object.x());to_return.set_y(to_return.y()+object.y());to_return.set_z(to_return.z()+object.z());return to_return;};
+        inline Point_3D __add_without_modification(Point_3D object) const {Point_3D to_return;to_return.set_x(x()+object.x());to_return.set_y(y()+object.y());to_return.set_z(z()+object.z());return to_return;};
         // Divides a vector to this vector with another
         inline void __divide(double value) {set_x(x()/value);set_y(y()/value);set_z(z()/value);};
         // Multiplies a vector to this vector with another
         inline void __multiply(double value) {set_x(x()*value);set_y(y()*value);set_z(z()*value);};
         // Returns a substraction of this vector with another
-        inline Point_3D __substract_without_modification(Point_3D object) const {Point_3D to_return=*this;to_return.set_x(x()-object.x());to_return.set_y(y()-object.y());to_return.set_z(z()-object.z());return to_return;};
+        inline Point_3D __substract_without_modification(Point_3D object) const {Point_3D to_return;to_return.set_x(x()-object.x());to_return.set_y(y()-object.y());to_return.set_z(z()-object.z());return to_return;};
 
         // Built-in operators
         // With Point_3D
@@ -271,13 +274,14 @@ namespace scls {
         //*********
 
         // Returns the distance from an another object
+        inline double distance(Point_3D point) { return std::sqrt((pow(point.x() - absolute_inner_x(), 2) + pow(point.y() - absolute_inner_y(), 2)) + pow(point.z() - absolute_inner_z(), 2)); };
         inline double distance(const Transform_Object_3D& object) { return std::sqrt((pow(object.absolute_inner_x() - absolute_inner_x(), 2) + pow(object.absolute_inner_y() - absolute_inner_y(), 2)) + pow(object.absolute_inner_z() - absolute_inner_z(), 2)); };
 
         // Absolute position handling
         // Returns the absolute X position
-        inline double absolute_x() const {if(parent() == 0)return a_real_local_parent_x;return parent()->absolute_x() + a_real_local_parent_x;};
-        inline double absolute_y() const {if(parent() == 0)return a_real_local_parent_y;return parent()->absolute_y() + a_real_local_parent_y;};
-        inline double absolute_z() const {if(parent() == 0)return a_real_local_parent_z;return parent()->absolute_z() + a_real_local_parent_z;};
+        inline double absolute_x() const {if(parent() == 0){return a_real_local_parent_x;}return parent()->absolute_x() + a_real_local_parent_x;};
+        inline double absolute_y() const {if(parent() == 0){return a_real_local_parent_y;}return parent()->absolute_y() + a_real_local_parent_y;};
+        inline double absolute_z() const {if(parent() == 0){return a_real_local_parent_z;}return parent()->absolute_z() + a_real_local_parent_z;};
         // Returns the real local parent position
         inline double __real_local_parent_x() const {return a_real_local_parent_x;};
         inline double __real_local_parent_y() const {return a_real_local_parent_y;};
@@ -339,8 +343,7 @@ namespace scls {
                 a_real_local_parent_x = x();
                 a_real_local_parent_y = y();
                 a_real_local_parent_z = z();
-            }
-            update_children_real_local_position();
+            } update_children_real_local_position();
         }
 
         // Update the rotation of the object
