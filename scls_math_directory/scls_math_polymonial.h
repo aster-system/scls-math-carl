@@ -288,7 +288,9 @@ namespace scls {
         // With formulas
         __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);to_return-=value;return to_return;};
         __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
+        __Formula_Base operator+(__Formula_Base value) {__Formula_Base to_return(*this);to_return.__add(value);return to_return;};
         __Formula_Base& operator+=(__Formula_Base value) {__add(value);return*this;};
+        __Formula_Base operator*(__Formula_Base value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
         __Formula_Base& operator*=(__Formula_Base value) {__multiply(value);return*this;};
         __Formula_Base operator/(__Formula_Base value) const {__Formula_Base other(*this);other.__divide(value);return other;};
         __Formula_Base& operator/=(__Formula_Base value) {__divide(value);return*this;};
