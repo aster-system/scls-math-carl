@@ -343,8 +343,9 @@ namespace scls {
         std::string current_str = "";
         std::string to_return = "";
         // Add the polymonial add
-        if(a_polymonial_add != 0) {
-            current_str = a_polymonial_add.to_std_string();
+        Polymonial needed_polymonial = added_element();
+        if(needed_polymonial != 0) {
+            current_str = needed_polymonial.to_std_string();
             if(current_str != "") {to_return += "(" + current_str + ") + ";}
         }
         // Add the polymonial factor
@@ -431,7 +432,7 @@ namespace scls {
         }
         // Add the added polymonial
         if(final_formula == 1) {std::string used_function = applied_function(); final_formula = 0; final_formula.set_applied_function(used_function);}
-        final_formula += formula_from_modified_polymonial_unknows(a_polymonial_add, unknown, new_value);
+        final_formula += formula_from_modified_polymonial_unknows(added_element(), unknown, new_value);
         // Add the added formulas
         for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
             final_formula += a_formulas_add[i].replace_unknown(unknown, new_value);
@@ -455,7 +456,7 @@ namespace scls {
 
         if(value.is_basic()) {
             // Added formulas
-            __add(value.a_polymonial_add);
+            __add(value.added_element());
             int formula_size = static_cast<int>(value.a_formulas_add.size());
             for(int i = 0;i<formula_size;i++) {
                 a_formulas_add.push_back(value.a_formulas_add[0]);
@@ -472,7 +473,7 @@ namespace scls {
         } else {
             if(value.is_simple_monomonial()) {
                 // Apply a division of a simple monomonial
-                __Monomonial used_monomonial = value.a_polymonial_add.monomonials()[0];
+                __Monomonial used_monomonial = value.added_element().monomonials()[0];
                 a_polymonial_add /= used_monomonial;
                 a_polymonial_factor /= used_monomonial;
                 for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {

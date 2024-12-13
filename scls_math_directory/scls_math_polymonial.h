@@ -228,25 +228,65 @@ namespace scls {
 
     //*********
 	//
+	// The "Field" class
+	//
+	//*********
+
+	template <typename E>
+	class Field {
+        // Class representating a mathematical element field
+    public:
+        // Field constructor
+        Field(){};
+        Field(E base_value):a_element_add(base_value){};
+
+        // Methods operators
+        // Add a formula to this one
+        inline void __add(E value) {a_element_add += value;};
+
+        // Returns if two formula are equals
+        virtual bool __is_equal(int value)const{return added_element() == value;};
+        virtual bool __is_equal(Fraction value)const{return added_element() == value;};
+
+        // Multiply a polymonial to this one
+        virtual void __multiply(E value) {a_element_add *= value;};
+        virtual void __multiply(Fraction value) {a_element_add *= value;};
+
+        // Operators
+        // With int
+        bool operator==(int value) {return __is_equal(value);};
+        // With fractions
+        bool operator==(Fraction value) {return __is_equal(value);};
+
+        // Getters and setters
+        inline E added_element() const {return a_element_add;};
+        inline void set_added_element(E new_added_element){a_element_add=new_added_element;};
+    private:
+        // Attached add polymonial
+        E a_element_add;
+	};
+
+    //*********
+	//
 	// The "Formula" class
 	//
 	//*********
 
-	class __Formula_Base {
+	class __Formula_Base : public Field<scls::Polymonial> {
         // Class representating the base of a mathematical formula
     public:
 
         // __Formula_Base constructor
-        __Formula_Base(){};
-        __Formula_Base(int number):a_polymonial_add(number){};
+        __Formula_Base():Field<scls::Polymonial>(){};
+        __Formula_Base(int number):Field<scls::Polymonial>(number){};
         __Formula_Base(Fraction fraction):__Formula_Base(__Monomonial(scls::Complex(fraction))){};
-        __Formula_Base(__Monomonial monomonial):a_polymonial_add(monomonial){};
-        __Formula_Base(Polymonial polymonial):a_polymonial_add(polymonial){};
+        __Formula_Base(__Monomonial monomonial):Field<scls::Polymonial>(monomonial){};
+        __Formula_Base(Polymonial polymonial):Field<scls::Polymonial>(polymonial){};
         // __Formula_Base copy constructor
-        __Formula_Base(const __Formula_Base& formula):a_formulas_add(formula.a_formulas_add),a_formulas_factor(formula.a_formulas_factor),a_polymonial_add(formula.a_polymonial_add),a_polymonial_factor(formula.a_polymonial_factor),a_applied_function(formula.a_applied_function){if(formula.a_denominator.get() != 0) {a_denominator = std::make_shared<__Formula_Base>(*formula.a_denominator.get());}};
+        __Formula_Base(const __Formula_Base& formula):Field<scls::Polymonial>(formula.added_element()),a_formulas_add(formula.a_formulas_add),a_formulas_factor(formula.a_formulas_factor),a_polymonial_factor(formula.a_polymonial_factor),a_applied_function(formula.a_applied_function){if(formula.a_denominator.get() != 0) {a_denominator = std::make_shared<__Formula_Base>(*formula.a_denominator.get());}};
 
         // Clear the formula
-        inline void clear() {a_formulas_add.clear();a_formulas_factor.clear();a_polymonial_add=0;a_polymonial_factor=1;};
+        inline void clear() {a_formulas_add.clear();a_formulas_factor.clear();set_added_element(0);a_polymonial_factor=1;};
         // Returns the polymonial to std::string
         std::string to_std_string() const;
 
@@ -255,7 +295,7 @@ namespace scls {
         // Returns if the formula is a basic formula or not
         inline bool is_basic() const {return a_applied_function == "" && a_denominator.get() == 0;};
         // Returns if the formula is a simple monomonial / polymonial or not
-        inline bool is_simple_monomonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_polymonial_add.monomonials_number() <= 1;};
+        inline bool is_simple_monomonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && added_element().monomonials_number() <= 1;};
         inline bool is_simple_polymonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0);};
 
         // Returns a formula from a monomonial where the unknows has been replaced
@@ -267,24 +307,23 @@ namespace scls {
 
         // Methods operators
         // Add a formula to this one
-        inline void __add(__Monomonial value) {a_polymonial_add += value;};
-        inline void __add(Polymonial value) {a_polymonial_add += value;};
+        inline void __add(__Monomonial value) {__add(value);};
         void __add(__Formula_Base value);
 
         // Divide a formula to this one
         void __divide(__Formula_Base value);
 
-        // Multiply a polymonial to this one
-        inline void __multiply(Polymonial value) {a_polymonial_add *= value;a_polymonial_factor *= value;for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;};
-        void __multiply(__Formula_Base value);
-        inline void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
+        // Returns if two numbers/formulas are equals
+        virtual bool __is_equal(int value)const{return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && Field::__is_equal(value);};
+        virtual bool __is_equal(Fraction value)const{return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && Field::__is_equal(value);};
 
-        // Operators
-        // With int
-        bool operator==(int value) {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_polymonial_add == value;};
+        // Multiply a polymonial to this one
+        virtual void __multiply(Polymonial value) {Field::__multiply(value);a_polymonial_factor *= value;for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;};
+        void __multiply(__Formula_Base value);
+        virtual void __multiply(Fraction value) {Field::__multiply(value);Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
+
         // With fractions
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
-        bool operator==(Fraction value) {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_polymonial_add == value;};
         // With formulas
         __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);to_return-=value;return to_return;};
         __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
@@ -295,7 +334,7 @@ namespace scls {
         __Formula_Base operator/(__Formula_Base value) const {__Formula_Base other(*this);other.__divide(value);return other;};
         __Formula_Base& operator/=(__Formula_Base value) {__divide(value);return*this;};
         // Converts the formula to a polymonial
-        inline Polymonial to_polymonial() const {return a_polymonial_add.simplify();};
+        inline Polymonial to_polymonial() const {return added_element();};
         operator Polymonial() const {return to_polymonial();};
 
         // Getters and setters
@@ -308,8 +347,6 @@ namespace scls {
         std::vector<__Formula_Base> a_formulas_add;
         // Attached factors polymonials
         std::vector<__Formula_Base> a_formulas_factor;
-        // Attached add polymonial
-        Polymonial a_polymonial_add;
         // Attached factor polymonial
         Polymonial a_polymonial_factor = 1;
 
