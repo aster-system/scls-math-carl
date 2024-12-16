@@ -82,6 +82,8 @@ namespace scls {
         static Fraction from_double(double result);
         // Returns a fraction from a std::string
         static Fraction from_std_string(std::string content);
+        // Returns the inverse of the fraction
+        inline Fraction inverse() const {return Fraction(a_denominator, a_numerator);};
         // Normalize the fraction
         void normalize();
         // Sets this fraction as a double

@@ -148,8 +148,7 @@ namespace scls {
                     delete_unknown(contained_unknown);
                 } else {contained_unknown->set_exponent(new_exponent);}
             }
-        }
-        return *this;
+        } return *this;
     }
 
     // Stream operator overloading
@@ -456,7 +455,7 @@ namespace scls {
 
         if(value.is_basic()) {
             // Added formulas
-            __add(value.added_element());
+            Field::__add(value.added_element());
             int formula_size = static_cast<int>(value.a_formulas_add.size());
             for(int i = 0;i<formula_size;i++) {
                 a_formulas_add.push_back(value.a_formulas_add[0]);
@@ -474,7 +473,7 @@ namespace scls {
             if(value.is_simple_monomonial()) {
                 // Apply a division of a simple monomonial
                 __Monomonial used_monomonial = value.added_element().monomonials()[0];
-                a_polymonial_add /= used_monomonial;
+                a_element_add /= used_monomonial;
                 a_polymonial_factor /= used_monomonial;
                 for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
                     a_formulas_add[i] /= used_monomonial;
@@ -491,7 +490,7 @@ namespace scls {
             __Formula_Base first_formula = internal_value();
             __Formula_Base second_formula = internal_value();
             std::vector<__Formula_Base> other_formulas;
-            first_formula.__multiply(value.a_polymonial_add);
+            first_formula.__multiply(value.added_element());
             if(value.a_formulas_factor.size() > 0) {
                 second_formula.__multiply(value.a_polymonial_factor);
                 for(int i = 0;i<static_cast<int>(value.a_formulas_factor.size());i++){second_formula.__multiply(value.a_formulas_factor.at(i));}
@@ -514,16 +513,17 @@ namespace scls {
             // Add the factor
             if(a_formulas_factor.size() > 0) a_formulas_factor.push_back(value);
             // Create a new formula from the add polymonial
-            if(a_polymonial_add != 0) {
+            Polymonial needed_polymonial = added_element();
+            if(needed_polymonial != 0) {
                 if(a_formulas_factor.size() > 0) {
                     __Formula_Base new_formula = value;
-                    new_formula *= a_polymonial_add;
+                    new_formula *= needed_polymonial;
                     a_formulas_add.push_back(new_formula);
-                    a_polymonial_add = 0;
+                    set_added_element(0);
                 } else {
-                    a_polymonial_factor = a_polymonial_add;
+                    a_polymonial_factor = needed_polymonial;
                     a_formulas_factor.push_back(value);
-                    a_polymonial_add = 0;
+                    set_added_element(0);
                 }
             }
         }

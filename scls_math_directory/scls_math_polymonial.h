@@ -112,12 +112,15 @@ namespace scls {
         // Returns the monomonial converted to std::string
         std::string to_std_string() const;
 
+        // Operators
         // Minus operator assignment
         __Monomonial& operator-=(__Monomonial const& obj) { a_factor -= obj.a_factor; return *this; }
         // Plus operator assignment
         __Monomonial& operator+=(__Monomonial const& obj) { a_factor += obj.a_factor; return *this; }
         // Multiplication operator assignment
         __Monomonial& operator*=(__Monomonial const& obj);
+        // With fractions
+        inline __Monomonial& operator*=(Fraction obj){__Monomonial temp(obj);return operator*=(temp);};
         // Convert the monomonial to a complex
         operator Complex() const {return a_factor;};
 
@@ -183,6 +186,7 @@ namespace scls {
         // Add a polymonial to this one
         void __add(Polymonial value);
         // Divide a monomonial to this void
+        inline void __divide(Fraction value) {Fraction used_inverse = value.inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
         inline void __divide(__Monomonial value) {__Monomonial used_inverse = value.inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
         // Multiply a polymonial to this one
         void __multiply(Polymonial value);
@@ -203,6 +207,7 @@ namespace scls {
         bool operator==(Complex value) const;
         // With fractions
         Polymonial& operator*=(Fraction value) {__multiply(value);return*this;};
+        Polymonial& operator/=(Fraction value) {__divide(value);return*this;};
         // With polymonials
         Polymonial operator-(Polymonial value) const {Polymonial to_return(*this);to_return-=value;return to_return;};
         Polymonial& operator-=(Polymonial value) {value*=Fraction(-1);__add(value);return*this;};
@@ -242,26 +247,45 @@ namespace scls {
 
         // Methods operators
         // Add a formula to this one
-        inline void __add(E value) {a_element_add += value;};
+        virtual void __add(Field value) {a_element_add += value.a_element_add;};
+        virtual void __add(E value) {a_element_add += value;};
 
-        // Returns if two formula are equals
-        virtual bool __is_equal(int value)const{return added_element() == value;};
-        virtual bool __is_equal(Fraction value)const{return added_element() == value;};
+        // Divide a polymonial to this one
+        virtual void __divide(Field value) {__divide(value.a_element_add);};
+        virtual void __divide(E value) {};
+        virtual void __divide(Fraction value) {a_element_add /= value;};
 
         // Multiply a polymonial to this one
+        virtual void __multiply(Field value) {a_element_add *= value.a_element_add;};
         virtual void __multiply(E value) {a_element_add *= value;};
         virtual void __multiply(Fraction value) {a_element_add *= value;};
 
         // Operators
-        // With int
-        bool operator==(int value) {return __is_equal(value);};
-        // With fractions
-        bool operator==(Fraction value) {return __is_equal(value);};
+        Field& operator*=(Fraction value) {__multiply(value);return*this;};
+        // With E
+        Field operator-(E value) const {Field to_return(*this);to_return-=value;return to_return;};
+        Field& operator-=(E value) {value*=Fraction(-1);__add(value);return*this;};
+        Field operator+(E value) {Field to_return(*this);to_return.__add(value);return to_return;};
+        Field& operator+=(E value) {__add(value);return*this;};
+        Field operator*(E value) {Field to_return(*this);to_return.__multiply(value);return to_return;};
+        Field& operator*=(E value) {__multiply(value);return*this;};
+        Field operator/(E value) const {Field other(*this);other.__divide(value);return other;};
+        Field& operator/=(E value) {__divide(value);return*this;};
+        // With formulas
+        Field operator-(Field value) const {Field to_return(*this);to_return-=value;return to_return;};
+        Field& operator-=(Field value) {value*=Fraction(-1);__add(value);return*this;};
+        Field operator+(Field value) {Field to_return(*this);to_return.__add(value);return to_return;};
+        Field& operator+=(Field value) {__add(value);return*this;};
+        Field operator*(Field value) {Field to_return(*this);to_return.__multiply(value);return to_return;};
+        Field& operator*=(Field value) {__multiply(value);return*this;};
+        Field operator/(Field value) const {Field other(*this);other.__divide(value);return other;};
+        Field& operator/=(Field value) {__divide(value);return*this;};
 
         // Getters and setters
         inline E added_element() const {return a_element_add;};
+        inline E& added_element_reference() {return a_element_add;};
         inline void set_added_element(E new_added_element){a_element_add=new_added_element;};
-    private:
+    protected:
         // Attached add polymonial
         E a_element_add;
 	};
@@ -305,24 +329,66 @@ namespace scls {
         // Returns a monomonial where an unkown is replaced by an another unknown
         __Formula_Base replace_unknown(std::string unknown, __Formula_Base new_value) const;
 
+        // Converts the formula to field of another object
+        template <typename E>
+        E to_field(std::vector<E> defined_names) {
+            int operation_number = 0; E to_return;
+            // Add the added element
+            scls::Polymonial needed_element = added_element();
+            std::cout << "T" << needed_element.monomonials().size() << std::endl;
+            for(int i = 0;i<static_cast<int>(needed_element.monomonials().size());i++) {
+                scls::__Monomonial &needed_monomonial = needed_element.monomonials()[i];
+                std::cout << "G " << needed_monomonial.to_std_string() << std::endl;
+                // Browse unknows
+                E current_element; int current_operation = 0; bool found = false;
+                for(int j = 0;j<static_cast<int>(needed_monomonial.unknowns().size());j++) {
+                    // Check each unknowns
+                    for(int k = 0;k<static_cast<int>(defined_names.size());k++) {
+                        std::cout << "U " << k << " " << defined_names[k].name() << " " << defined_names[k].to_std_string() << std::endl;
+                        if(defined_names[k].name() == needed_monomonial.unknowns()[j].name()) {
+                            // The good element has been found
+                            if(current_operation == 0) {current_element = defined_names[k];}
+                            else {current_element *= defined_names[k];}
+                            current_operation++;
+                            found = true; break;
+                        }
+                    }
+                }
+                // If a symbol has been found
+                if(found) {
+                    std::cout << "L " << current_element.to_std_string() << std::endl;
+                    current_element *= needed_monomonial.factor().real();
+                    if(operation_number <= 0) {to_return = current_element;}
+                    else {to_return += current_element;}
+                    operation_number++;
+                }
+            }
+            return to_return;
+        };
+
         // Methods operators
         // Add a formula to this one
         inline void __add(__Monomonial value) {__add(value);};
-        void __add(__Formula_Base value);
+        virtual void __add(__Formula_Base value);
 
         // Divide a formula to this one
-        void __divide(__Formula_Base value);
+        virtual void __divide(__Formula_Base value);
+        void __divide(Polymonial value){__divide(__Formula_Base(value));};
 
         // Returns if two numbers/formulas are equals
-        virtual bool __is_equal(int value)const{return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && Field::__is_equal(value);};
-        virtual bool __is_equal(Fraction value)const{return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && Field::__is_equal(value);};
+        bool __is_equal(int value)const{return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_element_add == value;};
+        bool __is_equal(Fraction value)const{return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_element_add == value;};
 
         // Multiply a polymonial to this one
         virtual void __multiply(Polymonial value) {Field::__multiply(value);a_polymonial_factor *= value;for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;};
         void __multiply(__Formula_Base value);
         virtual void __multiply(Fraction value) {Field::__multiply(value);Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
 
+        // Operators
+        // With int
+        bool operator==(int value) {return __is_equal(value);};
         // With fractions
+        bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
         // With formulas
         __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);to_return-=value;return to_return;};
