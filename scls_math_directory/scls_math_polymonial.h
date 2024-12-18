@@ -286,7 +286,7 @@ namespace scls {
         inline E& added_element_reference() {return a_element_add;};
         inline void set_added_element(E new_added_element){a_element_add=new_added_element;};
     protected:
-        // Attached add polymonial
+        // Attached added element
         E a_element_add;
 	};
 
@@ -319,8 +319,8 @@ namespace scls {
         // Returns if the formula is a basic formula or not
         inline bool is_basic() const {return a_applied_function == "" && a_denominator.get() == 0;};
         // Returns if the formula is a simple monomonial / polymonial or not
-        inline bool is_simple_monomonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && added_element().monomonials_number() <= 1;};
-        inline bool is_simple_polymonial() const {return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0);};
+        inline bool is_simple_monomonial() const {return is_basic() && a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && added_element().monomonials_number() <= 1;};
+        inline bool is_simple_polymonial() const {return is_basic() && a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0);};
 
         // Returns a formula from a monomonial where the unknows has been replaced
         static __Formula_Base formula_from_modified_monomonial_unknows(__Monomonial used_monomonial, std::string unknown, __Formula_Base new_value);
@@ -391,7 +391,7 @@ namespace scls {
         bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
         // With formulas
-        __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);to_return-=value;return to_return;};
+        __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);value*=Fraction(-1);to_return.__add(value);return to_return;};
         __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
         __Formula_Base operator+(__Formula_Base value) {__Formula_Base to_return(*this);to_return.__add(value);return to_return;};
         __Formula_Base& operator+=(__Formula_Base value) {__add(value);return*this;};
@@ -411,12 +411,13 @@ namespace scls {
     private:
         // Attached add polymonials
         std::vector<__Formula_Base> a_formulas_add;
-        // Attached factors polymonials
+
+        // Attached factors formulas
         std::vector<__Formula_Base> a_formulas_factor;
-        // Attached factor polymonial
+        // Attached factor of the formulas polymonial
         Polymonial a_polymonial_factor = 1;
 
-        // Applied function to the formula
+        // Applied function to the ENTIRE formula
         std::string a_applied_function = "";
 
         // Division of the formula
