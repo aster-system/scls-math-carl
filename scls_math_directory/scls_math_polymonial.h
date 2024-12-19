@@ -300,6 +300,20 @@ namespace scls {
         // Class representating the base of a mathematical formula
     public:
 
+        // Function possible for a formula
+        class __Formula_Base_Function {
+            public:
+                // __Formula_Base_Function constructor
+                __Formula_Base_Function(){};
+                __Formula_Base_Function(std::string new_name):a_name(new_name) {};
+
+                // Getters and setters
+                std::string name() const {return a_name;};
+            private:
+                // Name of the function
+                std::string a_name = "";
+        };
+
         // __Formula_Base constructor
         __Formula_Base():Field<scls::Polymonial>(){};
         __Formula_Base(int number):Field<scls::Polymonial>(number){};
@@ -317,7 +331,7 @@ namespace scls {
         // Returns the internal value of the formula (without functions)
         inline __Formula_Base internal_value() const {__Formula_Base to_return = *this;to_return.set_applied_function("");return to_return;};
         // Returns if the formula is a basic formula or not
-        inline bool is_basic() const {return a_applied_function == "" && a_denominator.get() == 0;};
+        inline bool is_basic() const {return a_applied_function.get() == 0 && a_denominator.get() == 0;};
         // Returns if the formula is a simple monomonial / polymonial or not
         inline bool is_simple_monomonial() const {return is_basic() && a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && added_element().monomonials_number() <= 1;};
         inline bool is_simple_polymonial() const {return is_basic() && a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0);};
@@ -382,7 +396,7 @@ namespace scls {
         // Multiply a polymonial to this one
         virtual void __multiply(Polymonial value) {Field::__multiply(value);a_polymonial_factor *= value;for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;};
         void __multiply(__Formula_Base value);
-        virtual void __multiply(Fraction value) {Field::__multiply(value);Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
+        virtual void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
 
         // Operators
         // With int
@@ -404,9 +418,11 @@ namespace scls {
         operator Polymonial() const {return to_polymonial();};
 
         // Getters and setters
-        inline std::string applied_function() const {return a_applied_function;};
+        inline __Formula_Base_Function* applied_function() const {return a_applied_function.get();};
+        inline std::shared_ptr<__Formula_Base_Function> applied_function_shared_ptr() const {return a_applied_function;};
         inline __Formula_Base* denominator() const {return a_denominator.get();};
-        inline void set_applied_function(std::string new_applied_function) {a_applied_function = new_applied_function;};
+        inline void set_applied_function(std::shared_ptr<__Formula_Base_Function> new_applied_function) {a_applied_function = new_applied_function;};
+        inline void set_applied_function(std::string new_applied_function) {if(new_applied_function==""){a_applied_function.reset();}else{set_applied_function(std::make_shared<__Formula_Base_Function>(new_applied_function));}};
 
     private:
         // Attached add polymonials
@@ -417,8 +433,8 @@ namespace scls {
         // Attached factor of the formulas polymonial
         Polymonial a_polymonial_factor = 1;
 
-        // Applied function to the ENTIRE formula
-        std::string a_applied_function = "";
+        // Applied function to the ENTIRE formula EXCEPTED DENOMINATOR
+        std::shared_ptr<__Formula_Base_Function> a_applied_function;
 
         // Division of the formula
         std::shared_ptr<__Formula_Base> a_denominator;
@@ -480,6 +496,9 @@ namespace scls {
         inline bool is_empty() const {return a_intervals.size()<=0;};
         // Returns if the set is infinite or not
         inline bool is_infinite() const {return a_intervals.size() > 0 && a_intervals.at(0).start_infinite() && a_intervals.at(0).end_infinite();};
+
+        // Returns the set in a std::string
+        std::string to_std_string();
 
         // Sort the intervals / numbers in the set
         void __sort_interval();

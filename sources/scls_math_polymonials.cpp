@@ -372,7 +372,7 @@ namespace scls {
         while(to_return[0] == '+' || to_return[0] == '*' || to_return[0] == ' ') to_return = to_return.substr(1, to_return.size() - 1);
         while(to_return[to_return.size() - 1] == '+' || to_return[to_return.size() - 1] == '*' || to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
         // Apply the function
-        if(applied_function() != "") to_return = applied_function() + "(" + to_return + ")";
+        if(applied_function() != 0) {to_return = applied_function()->name() + "(" + to_return + ")";}
 
         // Add the denominator if needed
         if(a_denominator.get() != 0) {
@@ -420,7 +420,7 @@ namespace scls {
     __Formula_Base __Formula_Base::replace_unknown(std::string unknown, __Formula_Base new_value) const {
         __Formula_Base current_formula;
         __Formula_Base final_formula = __Formula_Base(1);
-        final_formula.set_applied_function(applied_function());
+        final_formula.set_applied_function(applied_function_shared_ptr());
 
         // Add the factor polymonial
         current_formula = formula_from_modified_polymonial_unknows(a_polymonial_factor, unknown, new_value);
@@ -430,7 +430,7 @@ namespace scls {
             final_formula *= a_formulas_factor[i].replace_unknown(unknown, new_value);
         }
         // Add the added polymonial
-        if(final_formula == 1) {std::string used_function = applied_function(); final_formula = 0; final_formula.set_applied_function(used_function);}
+        if(final_formula == 1) {std::shared_ptr<__Formula_Base_Function> used_function = applied_function_shared_ptr(); final_formula = 0; final_formula.set_applied_function(used_function);}
         final_formula += formula_from_modified_polymonial_unknows(added_element(), unknown, new_value);
         // Add the added formulas
         for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
@@ -449,7 +449,7 @@ namespace scls {
         // Check if this formula is basic or not
         if(!is_basic()) {
             __Formula_Base temp(*this);
-            clear(); a_applied_function = ""; a_denominator.reset();
+            clear(); a_applied_function.reset(); a_denominator.reset();
             a_formulas_add.push_back(temp);
         }
 
@@ -485,7 +485,7 @@ namespace scls {
     };
     // Multiply a polymonial to this one
     void __Formula_Base::__multiply(__Formula_Base value) {
-        if(value.applied_function() == "") {
+        if(value.applied_function() == 0) {
             // The formula can be directly multiplied
             __Formula_Base first_formula = internal_value();
             __Formula_Base second_formula = internal_value();
@@ -542,6 +542,18 @@ namespace scls {
     // Sort the intervals / numbers in the set
     void Set_Number::__sort_interval() {std::sort(a_intervals.begin(), a_intervals.end(), __sort_interval_function);};
     void Set_Number::__sort_numbers() {std::sort(a_numbers.begin(), a_numbers.end(), __sort_numbers_function);};
+    // Returns the set in a std::string
+    std::string Set_Number::to_std_string() {
+        std::string to_return = "";
+
+        // Add the isoloted elements
+        for(int i = 0;i<static_cast<int>(numbers().size());i++) {
+            to_return += numbers().at(i).to_std_string_simple();
+        }
+
+        to_return = std::string("{") + to_return + std::string("}");
+        return to_return;
+    }
 
     //*********
 	//
