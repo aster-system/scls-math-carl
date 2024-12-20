@@ -354,7 +354,7 @@ namespace scls {
                 scls::__Monomonial &needed_monomonial = needed_element.monomonials()[i];
                 std::cout << "G " << needed_monomonial.to_std_string() << std::endl;
                 // Browse unknows
-                E current_element; int current_operation = 0; bool found = false;
+                E current_element; int current_operation = 0; scls::Fraction exponent = 1; bool found = false;
                 for(int j = 0;j<static_cast<int>(needed_monomonial.unknowns().size());j++) {
                     // Check each unknowns
                     for(int k = 0;k<static_cast<int>(defined_names.size());k++) {
@@ -363,6 +363,7 @@ namespace scls {
                             // The good element has been found
                             if(current_operation == 0) {current_element = defined_names[k];}
                             else {current_element *= defined_names[k];}
+                            exponent = needed_monomonial.unknowns()[j].exponent().real();
                             current_operation++;
                             found = true; break;
                         }
@@ -370,7 +371,10 @@ namespace scls {
                 }
                 // If a symbol has been found
                 if(found) {
-                    std::cout << "L " << current_element.to_std_string() << std::endl;
+                    std::cout << "L " << current_element.to_std_string() << " ^ " << exponent << std::endl;
+                    for(int l = 1;l<static_cast<int>(exponent.to_double());l++) {
+                        current_element *= current_element;
+                    }
                     current_element *= needed_monomonial.factor().real();
                     if(operation_number <= 0) {to_return = current_element;}
                     else {to_return += current_element;}
