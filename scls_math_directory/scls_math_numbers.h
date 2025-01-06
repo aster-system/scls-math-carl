@@ -92,6 +92,8 @@ namespace scls {
         inline long long to_int() const {if(a_denominator == 0) return 0; return a_numerator / a_denominator;};
         // Returns the fraction in double
         inline double to_double() const {if(a_denominator == 0) return 0; return static_cast<double>(a_numerator) / static_cast<double>(a_denominator);};
+        // Returns the fraction to MathML
+        inline std::string to_mathml()const{if(a_denominator == 1){return std::string("<math><mi>") + std::to_string(numerator()) + std::string("</mi></math>");}return std::string("<math><frac><mrow>") + std::to_string(a_numerator) + "</mrow><mrow>" + std::to_string(a_denominator) + std::string("</mrow></frac></math>");};
         // Returns the fraction to std::string, in the fraction redaction
         inline std::string to_std_string_fraction() const {if(denominator() == 1) return std::to_string(numerator()); return std::to_string(numerator()) + "/" + std::to_string(denominator());};
         inline std::string to_std_string(unsigned int max_number_size) const {std::string from_fraction = to_std_string_fraction();if(from_fraction.size() <= max_number_size) return from_fraction;return format_number_to_text(to_double());};
