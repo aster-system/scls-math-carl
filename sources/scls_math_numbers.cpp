@@ -59,7 +59,7 @@ namespace scls {
     };
     // Normalize the fraction
     void Fraction::normalize() {
-        if(a_normalized) return;
+        if(a_normalized){return;}
 
         const long long base_denominator = a_denominator; const long long base_numerator = a_numerator;
         if(a_denominator < 0) a_denominator = -a_denominator;
@@ -94,7 +94,7 @@ namespace scls {
 
     // Function to do operations with fractions
     // Adds an another Fraction to this fraction
-    void Fraction::_add(Fraction const& obj) {
+    void Fraction::_add(Fraction obj) {
         long long first_numerator = obj.a_numerator * a_denominator;
         long long second_numerator = a_numerator * obj.a_denominator;
         a_denominator = obj.a_denominator * a_denominator;
@@ -103,7 +103,7 @@ namespace scls {
         normalize();
     };
     // Returns the adding of this fraction and another function
-    Fraction Fraction::_add_without_modification(Fraction const& obj) const {
+    Fraction Fraction::_add_without_modification(Fraction obj) const {
         long long first_numerator = obj.a_numerator * a_denominator;
         long long second_numerator = a_numerator * obj.a_denominator;
         long long denominateur = obj.a_denominator * a_denominator;
@@ -112,7 +112,7 @@ namespace scls {
         return new_fraction;
     };
     // Substracts an another Fraction to this fraction
-    void Fraction::_substract(Fraction const& obj) {
+    void Fraction::_substract(Fraction obj) {
         long long first_numerator = obj.a_numerator * a_denominator;
         long long second_numerator = a_numerator * obj.a_denominator;
         a_denominator = obj.a_denominator * a_denominator;
@@ -121,7 +121,7 @@ namespace scls {
         normalize();
     };
     // Returns the substracting of this fraction and another function
-    Fraction Fraction::_substract_without_modification(Fraction const& obj) const {
+    Fraction Fraction::_substract_without_modification(Fraction obj) const {
         long long first_numerator = obj.a_numerator * a_denominator;
         long long second_numerator = a_numerator * obj.a_denominator;
         long long denominateur = obj.a_denominator * a_denominator;

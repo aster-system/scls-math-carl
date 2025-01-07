@@ -76,7 +76,7 @@ namespace scls {
         // Simple fraction constructor
         Fraction(long long numerator, long long denominator) : a_denominator(denominator), a_numerator(numerator) {normalize();}
         // Fraction copy constructor
-        Fraction(const Fraction& to_copy) : a_denominator(to_copy.a_denominator), a_numerator(to_copy.a_numerator) {a_normalized = true;};
+        Fraction(const Fraction& to_copy) : a_denominator(to_copy.a_denominator), a_normalized(to_copy.a_normalized), a_numerator(to_copy.a_numerator) {normalize();};
 
         // Returns a fraction from a double
         static Fraction from_double(double result);
@@ -86,6 +86,7 @@ namespace scls {
         inline Fraction inverse() const {return Fraction(a_denominator, a_numerator);};
         // Normalize the fraction
         void normalize();
+        inline Fraction normalized()const{Fraction other=*this;other.normalize();return other;};
         // Sets this fraction as a double
         inline void set_from_double(double result) {Fraction new_value = from_double(result);a_denominator = new_value.a_denominator;a_numerator = new_value.a_numerator;};
         // Returns the fraction in int
@@ -93,7 +94,7 @@ namespace scls {
         // Returns the fraction in double
         inline double to_double() const {if(a_denominator == 0) return 0; return static_cast<double>(a_numerator) / static_cast<double>(a_denominator);};
         // Returns the fraction to MathML
-        inline std::string to_mathml()const{if(a_denominator == 1){return std::string("<math><mi>") + std::to_string(numerator()) + std::string("</mi></math>");}return std::string("<math><frac><mrow>") + std::to_string(a_numerator) + "</mrow><mrow>" + std::to_string(a_denominator) + std::string("</mrow></frac></math>");};
+        inline std::string to_mathml(){normalize();if(a_denominator == 1){return std::string("<math><mi>") + std::to_string(numerator()) + std::string("</mi></math>");}return std::string("<math><frac><mrow>") + std::to_string(a_numerator) + "</mrow><mrow>" + std::to_string(a_denominator) + std::string("</mrow></frac></math>");};
         // Returns the fraction to std::string, in the fraction redaction
         inline std::string to_std_string_fraction() const {if(denominator() == 1) return std::to_string(numerator()); return std::to_string(numerator()) + "/" + std::to_string(denominator());};
         inline std::string to_std_string(unsigned int max_number_size) const {std::string from_fraction = to_std_string_fraction();if(from_fraction.size() <= max_number_size) return from_fraction;return format_number_to_text(to_double());};
@@ -111,27 +112,27 @@ namespace scls {
 
         // Function to do operations with fractions
         // Adds an another Fraction to this fraction
-        void _add(Fraction const& obj);
-        Fraction _add_without_modification(Fraction const& obj) const;
+        void _add(Fraction obj);
+        Fraction _add_without_modification(Fraction obj) const;
 
         // Divides the fraction with an another fraction
-        inline void _divide(Fraction const& obj) { _multiply(Fraction(obj.a_denominator, obj.a_numerator)); a_normalized = false; };
-        inline Fraction _divide_without_modification(Fraction const& obj) const { return _multiply_without_modification(Fraction(obj.a_denominator, obj.a_numerator)); };
+        inline void _divide(Fraction obj) { _multiply(Fraction(obj.a_denominator, obj.a_numerator)); a_normalized = false;};
+        inline Fraction _divide_without_modification(Fraction obj) const { return _multiply_without_modification(Fraction(obj.a_denominator, obj.a_numerator)); };
 
         // Returns if this fraction is equal to another
-        inline bool _equal(Fraction const& obj) const {return obj.a_numerator * a_denominator == a_numerator * obj.a_denominator;};
-        inline bool _equal(int const& obj) const {return a_numerator == obj && a_denominator == 1;};
+        inline bool _equal(Fraction obj) const {return obj.a_numerator * a_denominator == a_numerator * obj.a_denominator;};
+        inline bool _equal(int obj) const {return a_numerator == obj && a_denominator == 1;};
 
         // Multiplies the fraction with an another Fraction
-        inline void _multiply(Fraction const& obj) { a_numerator *= obj.a_numerator; a_denominator *= obj.a_denominator; a_normalized = false; };
-        inline Fraction _multiply_without_modification(Fraction const& obj) const { return Fraction(a_numerator * obj.a_numerator, a_denominator * obj.a_denominator); };
+        inline void _multiply(Fraction obj) { a_numerator *= obj.a_numerator; a_denominator *= obj.a_denominator; a_normalized = false; };
+        inline Fraction _multiply_without_modification(Fraction obj) const { return Fraction(a_numerator * obj.a_numerator, a_denominator * obj.a_denominator); };
         inline Fraction _multiply_without_modification(double obj) const { return Fraction(a_numerator * obj, a_denominator); };
         inline Fraction _multiply_without_modification(int obj) const { return Fraction(a_numerator * obj, a_denominator); };
         inline Fraction _multiply_without_modification(unsigned int obj) const { return Fraction(a_numerator * obj, a_denominator); };
 
         // Substracts an another Fraction to this fraction
-        void _substract(Fraction const& obj);
-        Fraction _substract_without_modification(Fraction const& obj) const;
+        void _substract(Fraction obj);
+        Fraction _substract_without_modification(Fraction obj) const;
         // Returns the square root of the fraction
         inline Fraction sqrt() {return Fraction(std::sqrt(numerator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION, std::sqrt(denominator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION);};
 
