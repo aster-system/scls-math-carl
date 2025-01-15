@@ -123,6 +123,20 @@ namespace scls {
         return final_monomonial;
     };
 
+    // Returns the monomonial to a GLSL calculation
+    std::string __Monomonial::to_glsl() const {
+        if(a_factor == 0){return std::string();}
+        std::string to_return = a_factor.to_std_string_simple();
+        // Add the unknown
+        for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
+            std::string current_unknow = a_unknowns.at(i).name();
+            if(current_unknow == std::string()){continue;}
+            int current_exponent = a_unknowns.at(i).exponent().real().to_double();
+            for(;current_exponent>0;current_exponent--) {to_return += std::string("*") + current_unknow;}
+        }
+        // Returns the result
+        return to_return;
+    }
     // Returns the monomonial converted to std::string
     std::string __Monomonial::to_std_string() const {
         std::string final_unknow = "";
@@ -205,6 +219,21 @@ namespace scls {
         return to_return;
     };
 
+    // Returns the polymonial to a GLSL function
+    std::string Polymonial::to_glsl() const {
+        std::string to_return = std::string("float poly(float x){float y = ");
+        for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+            if(a_monomonials.at(i).factor() != 0) {
+                std::string to_add = a_monomonials.at(i).to_glsl();
+                to_return += to_add;
+                if(to_add != std::string() && i < static_cast<int>(a_monomonials.size()) - 1) {
+                    to_return += " + ";
+                }
+            }
+        }
+        to_return += std::string(";return y;}");
+        return to_return;
+    }
     // Returns the polymonial to std::string
     std::string Polymonial::to_std_string() const {
         std::string to_return = "";

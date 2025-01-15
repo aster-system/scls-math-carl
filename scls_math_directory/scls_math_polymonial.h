@@ -109,6 +109,8 @@ namespace scls {
         inline std::vector<_Base_Unknown>& unknowns() {return a_unknowns;};
         inline unsigned int unknowns_number() const {unsigned int to_return = 0;for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns[i].name() != "")to_return++;}return to_return;};
 
+        // Returns the monomonial to a GLSL calculation
+        std::string to_glsl() const;
         // Returns the monomonial converted to std::string
         std::string to_std_string() const;
 
@@ -179,6 +181,8 @@ namespace scls {
         // Returns a list of unknowns monomonials
         std::vector<__Monomonial> unknown_monomonials() const;
 
+        // Returns the polymonial to a GLSL function
+        std::string to_glsl() const;
         // Returns the polymonial to std::string
         std::string to_std_string() const;
 
