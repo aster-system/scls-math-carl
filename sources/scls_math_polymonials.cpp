@@ -174,6 +174,33 @@ namespace scls {
 	//
 	//*********
 
+	// Converts a polymonialto a complex
+    std::shared_ptr<Polymonial::Polymonial_Complex> Polymonial::Polymonial_Complex::from_polymonial(Polymonial* polymonial) {
+        // Create the polymonial complex
+        std::shared_ptr<Polymonial::Polymonial_Complex> needed_polymonial = std::make_shared<Polymonial::Polymonial_Complex>();
+
+        // Handle each monomonial
+        Polymonial* imaginary_polymonial = needed_polymonial.get()->imaginary_polymonial();
+        Polymonial* real_polymonial = needed_polymonial.get()->real_polymonial();
+        for(int i = 0;i<static_cast<int>(polymonial->monomonials().size());i++) {
+            // Real and imaginary factor
+            scls::__Monomonial needed_monomonial = polymonial->monomonials()[i];
+            scls::Fraction imaginary_factor = needed_monomonial.factor().imaginary();
+            scls::Fraction real_factor = needed_monomonial.factor().real();
+
+            // Add the needed factors
+            scls::__Monomonial imaginary_monomonial = needed_monomonial;
+            imaginary_monomonial.set_factor(imaginary_factor);
+            scls::__Monomonial real_monomonial = needed_monomonial;
+            real_monomonial.set_factor(real_factor);
+            (*imaginary_polymonial) += imaginary_monomonial;
+            (*real_polymonial) += real_monomonial;
+        }
+
+        // Return the needed polymonial
+        return needed_polymonial;
+    }
+
 	// Returns the limit of a (only monomonial) polymonial for an unknown
     scls::Limit Polymonial::limit(Limit needed_limit, std::string unknown_name) {
         scls::Limit to_return;
@@ -262,6 +289,12 @@ namespace scls {
             }
         }
     };
+
+    // Divide the polymonial by an another polymonial
+    void Polymonial::__divide(Polymonial* value) {
+        std::shared_ptr<Polymonial_Complex> needed_complex = Polymonial_Complex::from_polymonial(value);
+        std::shared_ptr<Polymonial_Complex> needed_conjugate = needed_complex.get()->conjugate();
+    }
 
     // Multiply a polymonial to this one
     void Polymonial::__multiply(Polymonial value) {
@@ -507,7 +540,16 @@ namespace scls {
                 for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
                     a_formulas_add[i] /= used_monomonial;
                 }
-            } else {
+            }
+            else if(value.is_simple_polymonial()) {
+                // Apply a division of a simple polymonial
+                Polymonial used_polymonial = value.to_polymonial();
+                std::shared_ptr<Polymonial::Polymonial_Complex> needed_complex = Polymonial::Polymonial_Complex::from_polymonial(&used_polymonial);
+                std::shared_ptr<Polymonial::Polymonial_Complex> needed_conjugate = needed_complex.get()->conjugate();
+                used_polymonial *= (*needed_conjugate.get()->to_polymonial());
+                a_denominator = std::make_shared<__Formula_Base>(used_polymonial);
+            }
+            else {
                 a_denominator=std::make_shared<__Formula_Base>(value);
             }
         }

@@ -151,6 +151,31 @@ namespace scls {
         // Class representating a full polymonial form
     public:
 
+        // Polymonial to complex form
+        class Polymonial_Complex {
+        public:
+            // Polymonial_Complex constructor
+            Polymonial_Complex(){a_polymonial.push_back(__Polymonial_Complex_Member());a_polymonial.push_back(__Polymonial_Complex_Member());a_polymonial[0].unknown = std::string("");a_polymonial[1].unknown = std::string("i");};
+
+            // Conjugates the polymonial
+            inline std::shared_ptr<Polymonial_Complex> conjugate(){std::shared_ptr<Polymonial_Complex> to_return = std::make_shared<Polymonial_Complex>(*this);(*to_return.get()->imaginary_polymonial()) *= scls::Fraction(-1);return to_return;};
+            // Converts a polymonial to a complex
+            static std::shared_ptr<Polymonial_Complex> from_polymonial(Polymonial* polymonial);
+            // Returns the imaginary polymonial
+            inline Polymonial* imaginary_polymonial() const {for(int i = 0;i<static_cast<int>(a_polymonial.size());i++){if(a_polymonial[i].unknown == std::string("i")){return a_polymonial[i].polymonial.get();}}return 0;};
+            // Returns the real polymonial
+            inline Polymonial* real_polymonial() const {for(int i = 0;i<static_cast<int>(a_polymonial.size());i++){if(a_polymonial[i].unknown == std::string("")){return a_polymonial[i].polymonial.get();}}return 0;};
+            // Returns the polymonial to an entire polymonial
+            inline std::shared_ptr<Polymonial> to_polymonial() const {std::shared_ptr<Polymonial> to_return = std::make_shared<Polymonial>(*real_polymonial());to_return.get()->__add((*imaginary_polymonial()) * scls::Complex(0, 1));return to_return;};
+
+        private:
+            // Struct representating each members of the number
+            struct __Polymonial_Complex_Member{std::shared_ptr<Polymonial>polymonial=std::make_shared<Polymonial>();std::string unknown = std::string();};
+
+            // Each parts of the polymonial
+            std::vector<__Polymonial_Complex_Member> a_polymonial;
+        };
+
         // Polymonial constructor
         Polymonial(){};
         Polymonial(int number){a_monomonials.push_back(__Monomonial(Complex(number)));};
@@ -192,8 +217,10 @@ namespace scls {
         // Divide a monomonial to this void
         inline void __divide(Fraction value) {Fraction used_inverse = value.inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
         inline void __divide(__Monomonial value) {__Monomonial used_inverse = value.inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
+        void __divide(Polymonial* value);
         // Multiply a polymonial to this one
         void __multiply(Polymonial value);
+        inline void __multiply(Complex value){Polymonial temp; temp.add_monomonial(value);__multiply(temp);};
         inline void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
 
         // Returns the maximum degree in the polymonial
@@ -209,6 +236,7 @@ namespace scls {
         // With Complex
         bool operator!=(Complex value) const {return !(*this == value);};
         bool operator==(Complex value) const;
+        Polymonial operator*(Complex value){Polymonial to_return(*this);to_return.__multiply(value);return to_return;}
         // With fractions
         Polymonial& operator*=(Fraction value) {__multiply(value);return*this;};
         Polymonial& operator/=(Fraction value) {__divide(value);return*this;};
