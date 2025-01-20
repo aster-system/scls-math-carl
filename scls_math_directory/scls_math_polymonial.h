@@ -357,6 +357,8 @@ namespace scls {
 
         // Clear the formula
         inline void clear() {a_formulas_add.clear();a_formulas_factor.clear();set_added_element(0);a_polymonial_factor=1;};
+        // Returns the polymonial to mathml
+        std::string to_mathml() const;
         // Returns the polymonial to std::string
         std::string to_std_string() const;
 
@@ -417,8 +419,6 @@ namespace scls {
         };
 
         // Methods operators
-        // Add a formula to this one
-        inline void __add(__Monomonial value) {__add(value);};
         virtual void __add(__Formula_Base value);
 
         // Divide a formula to this one
@@ -430,6 +430,7 @@ namespace scls {
         bool __is_equal(Fraction value)const{return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_element_add == value;};
 
         // Multiply a polymonial to this one
+        inline void __multiply(__Monomonial value){__multiply(Polymonial(value));};
         virtual void __multiply(Polymonial value) {Field::__multiply(value);a_polymonial_factor *= value;for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;};
         void __multiply(__Formula_Base value);
         virtual void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
@@ -440,6 +441,9 @@ namespace scls {
         // With fractions
         bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
+        // With monomonial
+        __Formula_Base& operator+=(__Monomonial value) {__add(value);return*this;};
+        __Formula_Base& operator*=(__Monomonial value) {__multiply(value);return*this;};
         // With formulas
         __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);value*=Fraction(-1);to_return.__add(value);return to_return;};
         __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};

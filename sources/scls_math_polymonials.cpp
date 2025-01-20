@@ -184,7 +184,7 @@ namespace scls {
         Polymonial* real_polymonial = needed_polymonial.get()->real_polymonial();
         for(int i = 0;i<static_cast<int>(polymonial->monomonials().size());i++) {
             // Real and imaginary factor
-            scls::__Monomonial needed_monomonial = polymonial->monomonials()[i];
+            scls::__Monomonial& needed_monomonial = polymonial->monomonials()[i];
             scls::Fraction imaginary_factor = needed_monomonial.factor().imaginary();
             scls::Fraction real_factor = needed_monomonial.factor().real();
 
@@ -223,9 +223,25 @@ namespace scls {
 
     // Add a new monomonial to the polymonial
     void Polymonial::add_monomonial(__Monomonial new_monomonial) {
+        if(new_monomonial.factor() == 0){return;}
+
+        // Add the monomonial
         __Monomonial* same_monomonial = contains_monomonial(new_monomonial);
-        if(same_monomonial == 0) a_monomonials.push_back(new_monomonial);
-        else same_monomonial->set_factor(same_monomonial->factor() + new_monomonial.factor());
+        if(same_monomonial == 0){a_monomonials.push_back(new_monomonial);}
+        else{
+            if(same_monomonial->factor() + new_monomonial.factor() == 0) {
+                // Remove the empty monomonial
+                for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+                    if(a_monomonials[i].compare_unknown(*same_monomonial)) {
+                        a_monomonials.erase(a_monomonials.begin() + i, a_monomonials.begin() + i + 1);
+                    }
+                }
+            }
+            else {
+                // Add the monomonial
+                same_monomonial->set_factor(same_monomonial->factor() + new_monomonial.factor());
+            }
+        }
     };
 
     // Returns a monomonial by its unknown
@@ -279,6 +295,9 @@ namespace scls {
     // Methods operators
     // Add a polymonial to this one
     void Polymonial::__add(Polymonial value) {
+        if(value.monomonials().size() <= 0 || (value.monomonials().size() == 1 && value.monomonials().at(0).factor() == 0)){return;}
+
+        // Add the monomonial
         for(int i = 0;i<static_cast<int>(value.a_monomonials.size());i++) {
             __Monomonial& current_monomonial = value.a_monomonials[i];
             __Monomonial* contained_monomonial = contains_monomonial(current_monomonial);
@@ -399,6 +418,28 @@ namespace scls {
 	//
 	//*********
 
+	// Returns the polymonial to mathml
+    std::string __Formula_Base::to_mathml() const {
+        std::string to_return = "";
+
+        // Add the polymonial add
+        std::string current_str = std::string();
+        Polymonial needed_polymonial = added_element();
+        if(needed_polymonial != 0) {
+            current_str = needed_polymonial.to_std_string();
+            if(current_str != "") {to_return += current_str;}
+        }
+        if(to_return != ""){to_return = std::string("<mi>") + to_return + std::string("</mi>");}
+
+        // Add the denominator if needed
+        if(a_denominator.get() != 0) {
+            to_return = std::string("<frac><mrow>") + to_return + std::string("</mrow><mrow>") + a_denominator.get()->to_std_string() + std::string("</mrow></frac>");
+        }
+
+        // Return the result
+        return to_return;
+    }
+
 	// Returns the polymonial to std::string
     std::string __Formula_Base::to_std_string() const {
         std::string current_str = "";
@@ -499,6 +540,12 @@ namespace scls {
             final_formula += a_formulas_add[i].replace_unknown(unknown, new_value);
         }
 
+        // Add the denominator
+        if(a_denominator.get() != 0) {
+            __Formula_Base needed_formula = a_denominator.get()->replace_unknown(unknown, new_value);
+            final_formula /= needed_formula;
+        }
+
         return final_formula;
     };
 
@@ -535,19 +582,45 @@ namespace scls {
             if(value.is_simple_monomonial()) {
                 // Apply a division of a simple monomonial
                 __Monomonial used_monomonial = value.added_element().monomonials()[0];
-                a_element_add /= used_monomonial;
-                a_polymonial_factor /= used_monomonial;
-                for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
-                    a_formulas_add[i] /= used_monomonial;
+                // Handle the complex part
+                if(used_monomonial.factor().imaginary() != 0) {
+                    // Get the needed divisor
+                    scls::__Formula_Base needed_divisor = used_monomonial;
+                    needed_divisor *= used_monomonial.factor().conjugate();
+                    __divide(needed_divisor);
+                    // Multiply the numerator
+                    __multiply(used_monomonial.factor().conjugate());
+                }
+                else if(!used_monomonial.is_known()) {
+                    // Apply the division as the denominator
+                    a_denominator=std::make_shared<__Formula_Base>(value);
+                }
+                else {
+                    // Apply the division
+                    a_element_add /= used_monomonial;
+                    a_polymonial_factor /= used_monomonial;
+                    for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {
+                        a_formulas_add[i] /= used_monomonial;
+                    }
                 }
             }
             else if(value.is_simple_polymonial()) {
                 // Apply a division of a simple polymonial
                 Polymonial used_polymonial = value.to_polymonial();
                 std::shared_ptr<Polymonial::Polymonial_Complex> needed_complex = Polymonial::Polymonial_Complex::from_polymonial(&used_polymonial);
-                std::shared_ptr<Polymonial::Polymonial_Complex> needed_conjugate = needed_complex.get()->conjugate();
-                used_polymonial *= (*needed_conjugate.get()->to_polymonial());
-                a_denominator = std::make_shared<__Formula_Base>(used_polymonial);
+                if((*needed_complex.get()->imaginary_polymonial()) == 0) {
+                    // Apply the division as the denominator
+                    a_denominator=std::make_shared<__Formula_Base>(value);
+                }
+                else {
+                    // Handle the complex part
+                    std::shared_ptr<Polymonial::Polymonial_Complex> needed_conjugate = needed_complex.get()->conjugate();
+                    Polymonial needed_polymonial = (*needed_conjugate.get()->to_polymonial());
+                    used_polymonial *= needed_polymonial;
+                    a_denominator = std::make_shared<__Formula_Base>(used_polymonial);
+                    // Multiply the numerator
+                    __multiply(needed_polymonial);
+                }
             }
             else {
                 a_denominator=std::make_shared<__Formula_Base>(value);
