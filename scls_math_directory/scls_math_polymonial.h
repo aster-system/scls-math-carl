@@ -496,6 +496,11 @@ namespace scls {
         Interval(Fraction start, Fraction end):a_end(end),a_start(start){};
         Interval():Interval(Fraction(0), Fraction(0)){};
 
+        // Returns if a value is in an interval
+        inline bool is_in(scls::Fraction value){return ((a_end_infinite || value < a_end) && (a_start_infinite || value > a_start));};
+        // Returns if an interval is in an interval
+        inline bool is_in(Interval* value){return (((a_end_infinite) || (!value->a_end_infinite && value->a_end <= a_end)) && ((a_start_infinite) || (!value->a_start_infinite && value->a_start >= a_start)));};
+
         // Getters and setters
         inline Fraction end() const {return a_end;};
         inline bool end_infinite() const {return a_end_infinite;};
@@ -534,6 +539,13 @@ namespace scls {
 
         // Returns if the set is empty or not
         inline bool is_empty() const {return a_intervals.size()<=0;};
+        // Returns if a value is in the set numbers
+        inline bool is_in_intervals(scls::Fraction value){for(int i = 0;i<static_cast<int>(a_intervals.size());i++){if(a_intervals[i].is_in(value)){return true;}}return false;};
+        inline bool is_in_numbers(scls::Fraction value){for(int i = 0;i<static_cast<int>(a_numbers.size());i++){if(a_numbers[i]==value){return true;}}return false;};
+        inline bool is_in(scls::Fraction value){return is_in_intervals(value) || is_in_numbers(value);};
+        // Returns if an interval is in the set
+        inline bool is_in_intervals(Interval value){for(int i = 0;i<static_cast<int>(a_intervals.size());i++){if(a_intervals[i].is_in(&value)){return true;}}return false;};
+        inline bool is_in(Interval value){return is_in_intervals(value);};
         // Returns if the set is infinite or not
         inline bool is_infinite() const {return a_intervals.size() > 0 && a_intervals.at(0).start_infinite() && a_intervals.at(0).end_infinite();};
 
@@ -543,6 +555,10 @@ namespace scls {
         // Sort the intervals / numbers in the set
         void __sort_interval();
         void __sort_numbers();
+
+        // Predefined sets
+        // Real set
+        static Set_Number set_real() {Set_Number to_return;Interval i;i.set_end_infinite(true);i.set_start_infinite(true);to_return.add_interval(i);return to_return;};
 
         // Getters and setters
         const std::vector<Interval>& intervals() const {return a_intervals;};
