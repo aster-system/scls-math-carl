@@ -326,8 +326,10 @@ namespace scls {
             for(int j = 0;j<static_cast<int>(value.a_monomonials.size());j++) {
                 __Monomonial& current_monomonial = value.a_monomonials[j];
                 Polymonial needed_polymonial = current_polymonial;
-                needed_polymonial.a_monomonials[0] *= current_monomonial;
-                created_polymonial.push_back(needed_polymonial);
+                if(needed_polymonial.a_monomonials.size() > 0) {
+                    needed_polymonial.a_monomonials[0] *= current_monomonial;
+                    created_polymonial.push_back(needed_polymonial);
+                }
             }
         }
         // Apply the multiplication
