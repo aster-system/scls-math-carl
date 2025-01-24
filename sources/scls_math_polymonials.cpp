@@ -733,7 +733,7 @@ namespace scls {
         }
 
         // Create the formula
-        formula.set_applied_function(used_function);
+        //formula.set_applied_function(used_function);
         return formula;
     };
 

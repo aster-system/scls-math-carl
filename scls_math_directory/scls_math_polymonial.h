@@ -336,14 +336,16 @@ namespace scls {
         class __Formula_Base_Function {
             public:
                 // __Formula_Base_Function constructor
-                __Formula_Base_Function(){};
                 __Formula_Base_Function(std::string new_name):a_name(new_name) {};
+
+                // Real value
+                virtual double real_value(__Formula_Base* formula) = 0;
 
                 // Getters and setters
                 std::string name() const {return a_name;};
             private:
                 // Name of the function
-                std::string a_name = "";
+                const std::string a_name;
         };
 
         // __Formula_Base constructor
@@ -363,7 +365,7 @@ namespace scls {
         std::string to_std_string() const;
 
         // Returns the internal value of the formula (without functions)
-        inline __Formula_Base internal_value() const {__Formula_Base to_return = *this;to_return.set_applied_function("");return to_return;};
+        inline __Formula_Base internal_value() const {__Formula_Base to_return = *this;to_return.clear_applied_function();return to_return;};
         // Returns if the formula is a basic formula or not
         inline bool is_basic() const {return a_applied_function.get() == 0 && a_denominator.get() == 0;};
         // Returns if the formula is a simple monomonial / polymonial or not
@@ -458,11 +460,12 @@ namespace scls {
         operator Polymonial() const {return to_polymonial();};
 
         // Getters and setters
-        inline __Formula_Base_Function* applied_function() const {return a_applied_function.get();};
-        inline std::shared_ptr<__Formula_Base_Function> applied_function_shared_ptr() const {return a_applied_function;};
+        template<typename T = __Formula_Base_Function> inline T* applied_function() const {return a_applied_function.get();};
+        template<typename T = __Formula_Base_Function> inline std::shared_ptr<T> applied_function_shared_ptr() const {return a_applied_function;};
+        inline void clear_applied_function(){a_applied_function.reset();};
         inline __Formula_Base* denominator() const {return a_denominator.get();};
-        inline void set_applied_function(std::shared_ptr<__Formula_Base_Function> new_applied_function) {a_applied_function = new_applied_function;};
-        inline void set_applied_function(std::string new_applied_function) {if(new_applied_function==""){a_applied_function.reset();}else{set_applied_function(std::make_shared<__Formula_Base_Function>(new_applied_function));}};
+        template<typename T> inline void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;};
+        template<typename T> inline void set_applied_function() {set_applied_function(std::make_shared<T>());};
 
     private:
         // Attached add polymonials
@@ -481,6 +484,19 @@ namespace scls {
         // Exponent of the formula
         std::shared_ptr<__Formula_Base> a_exponent;
     }; typedef __Formula_Base Formula;
+
+    // Square root function possible for a formula
+    class __Sqrt_Function : public __Formula_Base::__Formula_Base_Function {
+        public:
+            // __Formula_Base_Function constructor
+            __Sqrt_Function():__Formula_Base_Function("sqrt"){};
+
+            // Real value
+            virtual double real_value(__Formula_Base* formula){
+                double value = formula->to_polymonial().known_monomonial().factor().real().to_double();
+                return std::sqrt(value);
+            };
+    };
 
     //*********
 	//
