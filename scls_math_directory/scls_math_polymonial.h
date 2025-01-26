@@ -322,6 +322,109 @@ namespace scls {
         E a_element_add;
 	};
 
+	//*********
+	//
+	// The sets class
+	//
+	//*********
+
+	class Interval {
+	    // Class representating an interval of real numbers
+    public:
+
+        // Interval constructor
+        Interval(Fraction start, Fraction end):a_end(end),a_start(start){};
+        Interval():Interval(Fraction(0), Fraction(0)){};
+
+        // Compares this definition set with another
+        inline bool compare(Interval value){return ((a_end_infinite == value.a_end_infinite) && (a_end_infinite || a_end == value.a_end)) && ((a_start_infinite == value.a_start_infinite) && (a_start_infinite || a_start == value.a_start)); };
+        // Returns if a value is in an interval
+        inline bool is_in(Fraction value){return ((a_end_infinite || value < a_end) && (a_start_infinite || value > a_start));};
+        // Returns if an interval is in an interval
+        inline bool is_in(Interval* value){return (((a_end_infinite) || (!value->a_end_infinite && value->a_end <= a_end)) && ((a_start_infinite) || (!value->a_start_infinite && value->a_start >= a_start)));};
+
+        // Getters and setters
+        inline Fraction end() const {return a_end;};
+        inline bool end_infinite() const {return a_end_infinite;};
+        inline void set_end(Fraction new_end) {a_end=new_end;};
+        inline void set_start(Fraction new_start) {a_start=new_start;};
+        inline Fraction start() const {return a_start;};
+        inline void set_end_infinite(bool new_end_infinite) {a_end_infinite=new_end_infinite;};
+        inline void set_start_infinite(bool new_start_infinite) {a_start_infinite=new_start_infinite;};
+        inline bool start_infinite() const {return a_start_infinite;};
+
+        // Operators
+        // With Interval
+        bool operator==(Interval value) {return compare(value);};
+        bool operator!=(Interval value) {return !compare(value);};
+
+    private:
+        // End of the interval
+        Fraction a_end;
+        // If the end is + infinite or not
+        bool a_end_infinite = false;
+        // Start of the interval
+        Fraction a_start;
+        // If the start is + infinite or not
+        bool a_start_infinite = false;
+	};
+
+	class Set_Number {
+        // Class representating a set of numbers
+    public:
+
+        // Set_Number constructor
+        Set_Number(){};
+        // Set_Number constructor convertors
+        Set_Number(Interval interval){a_intervals.push_back(interval);};
+
+        // Add an interval to the set
+        inline void add_interval(Interval to_add) {a_intervals.push_back(to_add);__sort_interval();};
+        // Add a number to the set
+        inline void add_number(Complex to_add) {a_numbers.push_back(to_add);__sort_numbers();};
+        inline void add_number(Fraction to_add) {add_number(Complex(to_add));};
+
+        // Compares this definition set with another
+        bool compare(Set_Number value);
+        // Returns if the set is empty or not
+        inline bool is_empty() const {return a_intervals.size()<=0;};
+        // Returns if a value is in the set numbers
+        inline bool is_in_intervals(scls::Fraction value){for(int i = 0;i<static_cast<int>(a_intervals.size());i++){if(a_intervals[i].is_in(value)){return true;}}return false;};
+        inline bool is_in_numbers(scls::Fraction value){for(int i = 0;i<static_cast<int>(a_numbers.size());i++){if(a_numbers[i]==value){return true;}}return false;};
+        inline bool is_in(scls::Fraction value){return is_in_intervals(value) || is_in_numbers(value);};
+        // Returns if an interval is in the set
+        inline bool is_in_intervals(Interval value){for(int i = 0;i<static_cast<int>(a_intervals.size());i++){if(a_intervals[i].is_in(&value)){return true;}}return false;};
+        inline bool is_in(Interval value){return is_in_intervals(value);};
+        // Returns if the set is infinite or not
+        inline bool is_infinite() const {return a_intervals.size() > 0 && a_intervals.at(0).start_infinite() && a_intervals.at(0).end_infinite();};
+
+        // Returns the set in a std::string
+        std::string to_std_string();
+
+        // Sort the intervals / numbers in the set
+        void __sort_interval();
+        void __sort_numbers();
+
+        // Predefined sets
+        // Real set
+        static Set_Number set_real() {Set_Number to_return;Interval i;i.set_end_infinite(true);i.set_start_infinite(true);to_return.add_interval(i);return to_return;};
+
+        // Operators
+        // With Set_Number
+        bool operator==(Set_Number value) {return compare(value);};
+        bool operator!=(Set_Number value) {return !compare(value);};
+
+        // Getters and setters
+        const std::vector<Interval>& intervals() const {return a_intervals;};
+        const std::vector<Complex>& numbers() const {return a_numbers;};
+
+    private:
+        // Intervals of fractions in this set
+        std::vector<Interval> a_intervals;
+        // Numbers of fractions in this set
+        std::vector<Complex> a_numbers;
+	};
+
     //*********
 	//
 	// The "Formula" class
@@ -338,6 +441,8 @@ namespace scls {
                 // __Formula_Base_Function constructor
                 __Formula_Base_Function(std::string new_name):a_name(new_name) {};
 
+                // Definition set of the function
+                virtual Set_Number definition_set() = 0;
                 // Real value
                 virtual double real_value(__Formula_Base* formula) = 0;
 
@@ -371,13 +476,6 @@ namespace scls {
         // Returns if the formula is a simple monomonial / polymonial or not
         inline bool is_simple_monomonial() const {return is_basic() && a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && added_element().monomonials_number() <= 1;};
         inline bool is_simple_polymonial() const {return is_basic() && a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0);};
-
-        // Returns a formula from a monomonial where the unknows has been replaced
-        static __Formula_Base formula_from_modified_monomonial_unknows(__Monomonial used_monomonial, std::string unknown, __Formula_Base new_value);
-        // Returns a formula from a polymonial where the unknows has been replaced
-        static __Formula_Base formula_from_modified_polymonial_unknows(Polymonial used_polymonial, std::string unknown, __Formula_Base new_value);
-        // Returns a monomonial where an unkown is replaced by an another unknown
-        __Formula_Base replace_unknown(std::string unknown, __Formula_Base new_value) const;
 
         // Converts the formula to field of another object
         template <typename E>
@@ -421,7 +519,7 @@ namespace scls {
         };
 
         // Methods operators
-        virtual void __add(__Formula_Base value);
+        virtual void __add(__Formula_Base* value);
 
         // Divide a formula to this one
         virtual void __divide(__Formula_Base value);
@@ -444,13 +542,13 @@ namespace scls {
         bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
         // With monomonial
-        __Formula_Base& operator+=(__Monomonial value) {__add(value);return*this;};
+        __Formula_Base& operator+=(__Monomonial value) {__Formula_Base temp=value;__add(&temp);return*this;};
         __Formula_Base& operator*=(__Monomonial value) {__multiply(value);return*this;};
         // With formulas
-        __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);value*=Fraction(-1);to_return.__add(value);return to_return;};
-        __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(value);return*this;};
-        __Formula_Base operator+(__Formula_Base value) {__Formula_Base to_return(*this);to_return.__add(value);return to_return;};
-        __Formula_Base& operator+=(__Formula_Base value) {__add(value);return*this;};
+        __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);value*=Fraction(-1);to_return.__add(&value);return to_return;};
+        __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(&value);return*this;};
+        __Formula_Base operator+(__Formula_Base value) {__Formula_Base to_return(*this);to_return.__add(&value);return to_return;};
+        __Formula_Base& operator+=(__Formula_Base value) {__add(&value);return*this;};
         __Formula_Base operator*(__Formula_Base value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
         __Formula_Base& operator*=(__Formula_Base value) {__multiply(value);return*this;};
         __Formula_Base operator/(__Formula_Base value) const {__Formula_Base other(*this);other.__divide(value);return other;};
@@ -466,6 +564,62 @@ namespace scls {
         inline __Formula_Base* denominator() const {return a_denominator.get();};
         template<typename T> inline void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;};
         template<typename T> inline void set_applied_function() {set_applied_function(std::make_shared<T>());};
+
+        //*********
+        // Unknown handling
+        //*********
+
+        // "Shared" __Formula_Base
+        class Formula {
+        public:
+            // Formula constructor
+            Formula(std::shared_ptr<__Formula_Base> needed_formula):a_formula(needed_formula){};
+            Formula(int number):Formula(std::make_shared<__Formula_Base>(number)){};
+            Formula(__Monomonial monomonial):Formula(std::make_shared<__Formula_Base>(monomonial)){};
+            Formula(__Formula_Base needed_formula):Formula(std::make_shared<__Formula_Base>(needed_formula)){};
+            Formula():Formula(std::make_shared<__Formula_Base>()){};
+
+            // Operations from __Formula_Base
+            inline __Formula_Base* formula_base() const {return a_formula.get();};
+            inline Polymonial to_polymonial() const {return a_formula.get()->to_polymonial();};
+            inline std::string to_std_string() const {return a_formula.get()->to_std_string();};
+
+            // Getters and setters
+            template<typename T> inline void set_applied_function(std::shared_ptr<T> new_applied_function) {a_formula.get()->set_applied_function<T>(new_applied_function);};
+            template<typename T> inline void set_applied_function() {a_formula.get()->set_applied_function(std::make_shared<T>());};
+
+            // Operators
+
+            // With int
+            bool operator==(int value) {return a_formula.get()->__is_equal(value);};
+            // With monomonial
+            Formula& operator+=(__Monomonial value) {__Formula_Base temp=value;a_formula.get()->__add(&temp);return*this;};
+            Formula& operator*=(__Monomonial value) {a_formula.get()->__multiply(value);return*this;};
+            // With __Formula_Base
+            Formula operator-(__Formula_Base value) const {Formula to_return(*a_formula.get());value*=Fraction(-1);to_return -= value;return to_return;};
+            Formula& operator-=(__Formula_Base value) {value*=Fraction(-1);a_formula.get()->__add(&value);return*this;};
+            Formula operator+(__Formula_Base value) {Formula to_return(*a_formula.get());to_return += value;return to_return;};
+            Formula& operator+=(__Formula_Base value) {a_formula.get()->__add(&value);return*this;};
+            Formula operator*(__Formula_Base value) {Formula to_return(*a_formula.get());to_return *= value;return to_return;};
+            Formula& operator*=(__Formula_Base value) {a_formula.get()->__multiply(value);return*this;};
+            Formula operator/(__Formula_Base value) const {Formula other(*a_formula.get());other /= value;return other;};
+            Formula& operator/=(__Formula_Base value) {a_formula.get()->__divide(value);return*this;};
+            // With Formula
+            Formula& operator+=(Formula value) {a_formula.get()->__add(value.a_formula.get());return*this;};
+            Formula& operator*=(Formula value) {a_formula.get()->__multiply(*value.a_formula.get());return*this;};
+            Formula& operator/=(Formula value) {a_formula.get()->__divide(*value.a_formula.get());return*this;};
+
+        private:
+            // Shared pointer to the needed formula base
+            std::shared_ptr<__Formula_Base> a_formula;
+        };
+
+        // Returns a formula from a monomonial where the unknows has been replaced
+        static Formula formula_from_modified_monomonial_unknows(__Monomonial used_monomonial, std::string unknown, __Formula_Base new_value);
+        // Returns a formula from a polymonial where the unknows has been replaced
+        static Formula formula_from_modified_polymonial_unknows(Polymonial used_polymonial, std::string unknown, __Formula_Base new_value);
+        // Returns a monomonial where an unkown is replaced by an another unknown
+        Formula replace_unknown(std::string unknown, __Formula_Base new_value) const;
 
     private:
         // Attached add polymonials
@@ -491,101 +645,19 @@ namespace scls {
             // __Formula_Base_Function constructor
             __Sqrt_Function():__Formula_Base_Function("sqrt"){};
 
+            // Definition set of the function
+            virtual Set_Number definition_set() {
+                Set_Number real = Set_Number();
+                Interval it; it.set_start(0); it.set_end_infinite(true);
+                real.add_interval(it);
+                return real;
+            };
             // Real value
             virtual double real_value(__Formula_Base* formula){
                 double value = formula->to_polymonial().known_monomonial().factor().real().to_double();
                 return std::sqrt(value);
             };
     };
-
-    //*********
-	//
-	// The sets class
-	//
-	//*********
-
-	class Interval {
-	    // Class representating an interval of real numbers
-    public:
-
-        // Interval constructor
-        Interval(Fraction start, Fraction end):a_end(end),a_start(start){};
-        Interval():Interval(Fraction(0), Fraction(0)){};
-
-        // Returns if a value is in an interval
-        inline bool is_in(scls::Fraction value){return ((a_end_infinite || value < a_end) && (a_start_infinite || value > a_start));};
-        // Returns if an interval is in an interval
-        inline bool is_in(Interval* value){return (((a_end_infinite) || (!value->a_end_infinite && value->a_end <= a_end)) && ((a_start_infinite) || (!value->a_start_infinite && value->a_start >= a_start)));};
-
-        // Getters and setters
-        inline Fraction end() const {return a_end;};
-        inline bool end_infinite() const {return a_end_infinite;};
-        inline void set_end(Fraction new_end) {a_end=new_end;};
-        inline void set_start(Fraction new_start) {a_start=new_start;};
-        inline Fraction start() const {return a_start;};
-        inline void set_end_infinite(bool new_end_infinite) {a_end_infinite=new_end_infinite;};
-        inline void set_start_infinite(bool new_start_infinite) {a_start_infinite=new_start_infinite;};
-        inline bool start_infinite() const {return a_start_infinite;};
-
-    private:
-        // End of the interval
-        Fraction a_end;
-        // If the end is + infinite or not
-        bool a_end_infinite = false;
-        // Start of the interval
-        Fraction a_start;
-        // If the start is + infinite or not
-        bool a_start_infinite = false;
-	};
-
-	class Set_Number {
-        // Class representating a set of numbers
-    public:
-
-        // Set_Number constructor
-        Set_Number(){};
-        // Set_Number constructor convertors
-        Set_Number(Interval interval){a_intervals.push_back(interval);};
-
-        // Add an interval to the set
-        inline void add_interval(Interval to_add) {a_intervals.push_back(to_add);__sort_interval();};
-        // Add a number to the set
-        inline void add_number(Complex to_add) {a_numbers.push_back(to_add);__sort_numbers();};
-        inline void add_number(Fraction to_add) {add_number(Complex(to_add));};
-
-        // Returns if the set is empty or not
-        inline bool is_empty() const {return a_intervals.size()<=0;};
-        // Returns if a value is in the set numbers
-        inline bool is_in_intervals(scls::Fraction value){for(int i = 0;i<static_cast<int>(a_intervals.size());i++){if(a_intervals[i].is_in(value)){return true;}}return false;};
-        inline bool is_in_numbers(scls::Fraction value){for(int i = 0;i<static_cast<int>(a_numbers.size());i++){if(a_numbers[i]==value){return true;}}return false;};
-        inline bool is_in(scls::Fraction value){return is_in_intervals(value) || is_in_numbers(value);};
-        // Returns if an interval is in the set
-        inline bool is_in_intervals(Interval value){for(int i = 0;i<static_cast<int>(a_intervals.size());i++){if(a_intervals[i].is_in(&value)){return true;}}return false;};
-        inline bool is_in(Interval value){return is_in_intervals(value);};
-        // Returns if the set is infinite or not
-        inline bool is_infinite() const {return a_intervals.size() > 0 && a_intervals.at(0).start_infinite() && a_intervals.at(0).end_infinite();};
-
-        // Returns the set in a std::string
-        std::string to_std_string();
-
-        // Sort the intervals / numbers in the set
-        void __sort_interval();
-        void __sort_numbers();
-
-        // Predefined sets
-        // Real set
-        static Set_Number set_real() {Set_Number to_return;Interval i;i.set_end_infinite(true);i.set_start_infinite(true);to_return.add_interval(i);return to_return;};
-
-        // Getters and setters
-        const std::vector<Interval>& intervals() const {return a_intervals;};
-        const std::vector<Complex>& numbers() const {return a_numbers;};
-
-    private:
-        // Intervals of fractions in this set
-        std::vector<Interval> a_intervals;
-        // Numbers of fractions in this set
-        std::vector<Complex> a_numbers;
-	};
 
     //*********
 	//
@@ -635,7 +707,7 @@ namespace scls {
 
     // Use parsers methods outside the class
     __Formula_Base string_to_formula(std::string source);
-    __Formula_Base replace_unknown(__Formula_Base used_formula, std::string unknown, std::string new_value);
+    __Formula_Base::Formula replace_unknown(__Formula_Base used_formula, std::string unknown, std::string new_value);
 }
 
 #endif // SCLS_MATH_POLYMONIAL
