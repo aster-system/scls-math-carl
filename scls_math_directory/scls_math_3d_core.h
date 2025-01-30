@@ -51,8 +51,9 @@ namespace scls {
     inline double degrees_to_radians(double degrees) {return (degrees / 180.0) * SCLS_PI;};
 
     // Rotates a 3D vector and returns it normalized
-    static double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z) {
+    static double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z) {
         double* to_return = new double[3];
+        vector_x -= anchor_x;vector_y -= anchor_y;vector_z -= anchor_z;
 
         // Calculate the first XZ angle
         double total_xz_length = std::sqrt(vector_x * vector_x + vector_z * vector_z);
@@ -105,8 +106,10 @@ namespace scls {
         to_return[2] *= total_length;
         to_return[0] *= total_length;
 
+        to_return[0] += anchor_x;to_return[1] += anchor_y;to_return[2] += anchor_z;
         return to_return;
     }
+    inline double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z){return __rotate_vector_3d(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
 
     class Point_3D {
         // Class representing a 3D point

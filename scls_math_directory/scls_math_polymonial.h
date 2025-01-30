@@ -462,6 +462,9 @@ namespace scls {
         // __Formula_Base copy constructor
         __Formula_Base(const __Formula_Base& formula):Field<scls::Polymonial>(formula.added_element()),a_formulas_add(formula.a_formulas_add),a_formulas_factor(formula.a_formulas_factor),a_polymonial_factor(formula.a_polymonial_factor),a_applied_function(formula.a_applied_function){if(formula.a_denominator.get() != 0) {a_denominator = std::make_shared<__Formula_Base>(*formula.a_denominator.get());}};
 
+        // Returns a copy of this formula
+        __Formula_Base formula_copy() {return *this;};
+
         // Clear the formula
         inline void clear() {a_formulas_add.clear();a_formulas_factor.clear();set_added_element(0);a_polymonial_factor=1;};
         // Returns the polymonial to mathml
@@ -520,6 +523,7 @@ namespace scls {
 
         // Methods operators
         virtual void __add(__Formula_Base* value);
+        inline void __substract(__Formula_Base* value){__Formula_Base temp(*value);temp.__multiply(-1);__add(&temp);};
 
         // Divide a formula to this one
         virtual void __divide(__Formula_Base value);
@@ -530,6 +534,7 @@ namespace scls {
         bool __is_equal(Fraction value)const{return a_formulas_add.size() <= 0 && (a_formulas_factor.size() <= 0 || a_polymonial_factor == 0) && a_element_add == value;};
 
         // Multiply a polymonial to this one
+        inline void __multiply(int value){__multiply(Polymonial(value));};
         inline void __multiply(__Monomonial value){__multiply(Polymonial(value));};
         virtual void __multiply(Polymonial value) {Field::__multiply(value);a_polymonial_factor *= value;for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;};
         void __multiply(__Formula_Base value);
