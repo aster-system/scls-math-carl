@@ -220,6 +220,9 @@ namespace scls {
         // Complex copy constructor
         Complex(const Complex& to_copy) : Complex(to_copy.real(), to_copy.imaginary()) {};
 
+        // Returns the module of the complex
+        inline scls::Fraction module() const{return a_real * a_real + a_imaginary * a_imaginary; };
+
         // Getters and setter
         inline Fraction imaginary() const {return a_imaginary;};
         inline Fraction real() const {return a_real;};

@@ -539,6 +539,7 @@ namespace scls {
         virtual void __multiply(Polymonial value) {Field::__multiply(value);a_polymonial_factor *= value;for(int i=0;i<static_cast<int>(a_formulas_add.size());i++)a_formulas_add[i]*=value;};
         void __multiply(__Formula_Base value);
         virtual void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
+        inline void __multiply(Complex value){__multiply(Polymonial(value));};
 
         // Operators
         // With int
@@ -546,6 +547,8 @@ namespace scls {
         // With fractions
         bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
+        // With complex
+        __Formula_Base operator*(Complex value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
         // With monomonial
         __Formula_Base& operator+=(__Monomonial value) {__Formula_Base temp=value;__add(&temp);return*this;};
         __Formula_Base& operator*=(__Monomonial value) {__multiply(value);return*this;};
