@@ -58,19 +58,22 @@ namespace scls {
         // Calculate the first XZ angle
         double total_xz_length = std::sqrt(vector_x * vector_x + vector_z * vector_z);
         double to_add = 0;
-        if(total_xz_length > 0) to_add = std::acos(std::abs(vector_z) / total_xz_length);
-        // Get the current angle
-        double current_angle = 0;
-        if(vector_z >= 0 && vector_x >= 0) {current_angle = to_add;}
-        else if (vector_z < 0 && vector_x >= 0) {current_angle = 3.1415 - to_add;}
-        else if(vector_z < 0 && vector_x < 0) {current_angle = 3.1415 + to_add;}
-        else {current_angle = 3.1415 * 2.0 - to_add;}
-        // Get the final XZ position
-        current_angle += degrees_to_radians(rotation_y);
-        while(current_angle < 0) current_angle += 3.1415 * 2.0;
-        while(current_angle >= 3.1415 * 2) current_angle -= 3.1415 * 2.0;
-        to_return[2] = std::cos(current_angle);
-        to_return[0] = std::sin(current_angle);
+        if(total_xz_length > 0) {
+            to_add = std::acos(std::abs(vector_z) / total_xz_length);
+            // Get the current angle
+            double current_angle = 0;
+            if(vector_z >= 0 && vector_x >= 0) {current_angle = to_add;}
+            else if (vector_z < 0 && vector_x >= 0) {current_angle = 3.1415 - to_add;}
+            else if(vector_z < 0 && vector_x < 0) {current_angle = 3.1415 + to_add;}
+            else {current_angle = 3.1415 * 2.0 - to_add;}
+            // Get the final XZ position
+            current_angle += degrees_to_radians(rotation_y);
+            while(current_angle < 0) current_angle += 3.1415 * 2.0;
+            while(current_angle >= 3.1415 * 2) current_angle -= 3.1415 * 2.0;
+            to_return[2] = std::cos(current_angle);
+            to_return[0] = std::sin(current_angle);
+        }
+        else {to_return[2] = 0; to_return[0] = 0;}
 
         // Calculate the real local Y anchored position
         double total_length = std::sqrt(total_xz_length * total_xz_length + vector_y * vector_y);
@@ -100,7 +103,7 @@ namespace scls {
             if(real_final_angle > 3.1415 / 2.0 && real_final_angle < 3.1415 * 1.5) y_cos = -y_cos;
             to_return[0] *= y_cos;
             to_return[2] *= y_cos;
-        }else{to_return[1] = 0;} //*/
+        }else{to_return[1] = vector_y;} //*/
 
         // Scale each vectors
         to_return[2] *= total_length;
@@ -153,11 +156,11 @@ namespace scls {
         //*********
 
         // Distance from another object
-        inline double distance(Point_3D point) const {return std::sqrt(std::pow(a_x - point.a_x, 2) + std::pow(a_y - point.a_y, 2) + std::pow(a_y - point.a_y, 2));};
+        inline double distance(Point_3D point) const {return std::sqrt(std::pow(a_x - point.a_x, 2) + std::pow(a_y - point.a_y, 2) + std::pow(a_z - point.a_z, 2));};
         // Returns the norm of the vector
         inline double norm() const {return std::sqrt(std::pow(a_x, 2) + std::pow(a_y, 2) + std::pow(a_z, 2));};
         // Normalizes the vector
-        inline void normalize() {double divisor = sqrt(1.0/norm());a_x *= divisor;a_y *= divisor;a_z *= divisor;};
+        inline void normalize() {double divisor = (1.0/norm());a_x *= divisor;a_y *= divisor;a_z *= divisor;};
 
         // Applies a rotation to the point
         inline Point_3D rotated(Point_3D rotation) const {
@@ -185,6 +188,7 @@ namespace scls {
         inline Point_3D operator+(Point_3D object)const{return __add_without_modification(object);};
         inline Point_3D& operator+=(Point_3D object){__add(object);return *this;};
         inline Point_3D& operator-=(Point_3D object){__substract(object);return *this;};
+        inline bool operator==(Point_3D object){return object.x() == x() && object.y() == y() && object.z() == z();};
         // With double
         inline Point_3D operator/(double object)const{Point_3D to_return=*this;to_return.__divide(object);return to_return;};
         inline Point_3D operator*(double object)const{Point_3D to_return=*this;to_return.__multiply(object);return to_return;};
@@ -239,6 +243,9 @@ namespace scls {
 
         return current_angle;
     }
+
+    // Returns a point 3D with an angle (on y axis)
+    static Point_3D vector_with_angle(double angle){return scls::Point_3D(cos(angle), 0, sin(angle));};
 
     class Transform_Object_3D {
         // Class representing a 3D object transform
@@ -348,6 +355,7 @@ namespace scls {
                 double* rotated = __rotate_vector_3d(x() * parent()->absolute_scale_x(), y() * parent()->absolute_scale_y(), z() * parent()->absolute_scale_z(), parent()->absolute_rotation_x(), parent()->absolute_rotation_y(), parent()->absolute_rotation_z());
 
                 // Calculate the final positions
+
                 a_real_local_parent_x = rotated[0];
                 a_real_local_parent_y = rotated[1];
                 a_real_local_parent_z = rotated[2];
@@ -427,6 +435,8 @@ namespace scls {
         inline void set_anchored_x(double new_anchored_x) {a_anchored_x = new_anchored_x;};
         inline void set_anchored_y(double new_anchored_y) {a_anchored_y = new_anchored_y;};
         inline void set_anchored_z(double new_anchored_z) {a_anchored_z = new_anchored_z;};
+        inline void set_position(double new_x, double new_y, double new_z){a_position.set_x(new_x);a_position.set_y(new_y);a_position.set_z(new_z);update_real_local_position();};
+        inline void set_position(Point_3D new_position){a_position.set_x(new_position.x());a_position.set_y(new_position.y());a_position.set_z(new_position.z());update_real_local_position();};
         virtual void set_x(double new_x) {a_position.set_x(new_x);update_real_local_position();};
         virtual void set_y(double new_y) {a_position.set_y(new_y);update_real_local_position();};
         virtual void set_z(double new_z) {a_position.set_z(new_z);update_real_local_position();};
@@ -479,9 +489,11 @@ namespace scls {
         // Getters
         inline void set_scale(double new_scale_x, double new_scale_y, double new_scale_z) {set_scale_x(new_scale_x);set_scale_y(new_scale_y);set_scale_z(new_scale_z);};
         inline void set_scale(double new_scale) {set_scale_x(new_scale);set_scale_y(new_scale);set_scale_z(new_scale);};
+        inline void set_scale(Point_3D new_scale) {set_scale_x(new_scale.x());set_scale_y(new_scale.y());set_scale_z(new_scale.z());};
         inline void set_scale_x(double new_scale_x) {a_scale_x = new_scale_x;};
         inline void set_scale_y(double new_scale_y) {a_scale_y = new_scale_y;};
         inline void set_scale_z(double new_scale_z) {a_scale_z = new_scale_z;};
+        inline Point_3D scale() const {return Point_3D(a_scale_x, a_scale_y, a_scale_z);};
         inline double scale_x() const {return a_scale_x;};
         inline double scale_y() const {return a_scale_y;};
         inline double scale_z() const {return a_scale_z;};

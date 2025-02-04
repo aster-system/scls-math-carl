@@ -55,6 +55,8 @@ namespace scls {
 
             // Possibles way to draw a VBO, built-in
             enum _VBO_Types {
+                // Curved VBO
+                _VT_Curved,
                 // Normal VBO
                 _VT_Normal,
                 // Map VBO
@@ -141,7 +143,7 @@ namespace scls {
                 to_return.get()->add_double(texture_x(asker_id));
                 to_return.get()->add_double(texture_y(asker_id));
 
-                if(vbo_type == _VBO_Types::_VT_Normal) {
+                if(vbo_type == _VBO_Types::_VT_Normal || vbo_type == _VBO_Types::_VT_Curved) {
                     // Add the texture rect
                     to_return.get()->add_double(texture_rect_x);
                     to_return.get()->add_double(texture_rect_y);
@@ -152,6 +154,12 @@ namespace scls {
                     to_return.get()->add_double(texture_multiplier_x(asker_id));
                     to_return.get()->add_double(texture_multiplier_y(asker_id));
                     to_return.get()->add_double(texture_multiplier_z(asker_id));
+
+                    if(vbo_type == _VBO_Types::_VT_Curved) {
+                        // Add the curve multiplier
+                        if(absolute_inner_z() > 0) {to_return.get()->add_double(1);}
+                        else{to_return.get()->add_double(-1);}
+                    }
                 }
 
                 return to_return;
@@ -170,10 +178,7 @@ namespace scls {
             //*********
 
             // Returns if the point contains datas by id
-            inline bool contains_face_datas(unsigned int id_to_check) const {
-                for(int i = 0;i<static_cast<int>(a_faces_datas.size());i++) { if(a_faces_datas.at(i).face_id == id_to_check) return true; }
-                return false;
-            };
+            inline bool contains_face_datas(unsigned int id_to_check) const {for(int i = 0;i<static_cast<int>(a_faces_datas.size());i++) { if(a_faces_datas.at(i).face_id == id_to_check) return true; }return false;};
             // Returns a pointer to some datas, and create them if necessary
             inline __Point_Datas_By_Face& face_datas(unsigned int face_id) {
                 for(int i = 0;i<static_cast<int>(a_faces_datas.size());i++) { if(a_faces_datas[i].face_id == face_id) return a_faces_datas[i]; }
@@ -1545,7 +1550,23 @@ namespace scls {
             static std::shared_ptr<Bytes_Set> __shader_arguments(Point::_VBO_Types vbo_type = Point::_VT_Normal) {
                 std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
 
-                if(vbo_type == Point::_VT_Normal) {
+                if(vbo_type == Point::_VT_Curved) {
+                    // Add the needed shaders argument
+                    to_return.get()->add_data(6);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(3, true);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(3, true);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(2, true);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(4, true);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(3, true);
+                    to_return.get()->add_ushort(0x1406, true);
+                    to_return.get()->add_ushort(1, true);
+                }
+                else if(vbo_type == Point::_VT_Normal) {
                     // Add the needed shaders argument
                     to_return.get()->add_data(5);
                     to_return.get()->add_ushort(0x1406, true);
@@ -2075,9 +2096,9 @@ namespace scls {
                 if(!reverse_texture_z) {y_texture *= -1;} y_texture++;
                 to_add.get()->set_texture_x(to_return.get()->id(), x_texture);
                 to_add.get()->set_texture_y(to_return.get()->id(), y_texture);
-                to_add.get()->set_texture_multiplier_x(1, to_return.get()->id());
-                to_add.get()->set_texture_multiplier_y(2, to_return.get()->id());
-                to_add.get()->set_texture_multiplier_z(0, to_return.get()->id());
+                to_add.get()->set_texture_multiplier_x(to_return.get()->id(), 1);
+                to_add.get()->set_texture_multiplier_y(to_return.get()->id(), 0);
+                to_add.get()->set_texture_multiplier_z(to_return.get()->id(), 2);
 
                 to_return.get()->points().push_back(to_add);
             }
@@ -2207,9 +2228,9 @@ namespace scls {
                 if(!reverse_texture_z) {z_texture *= -1; z_texture++;}
                 to_add.get()->set_texture_x(to_return.get()->id(), x_texture);
                 to_add.get()->set_texture_y(to_return.get()->id(), z_texture);
-                to_add.get()->set_texture_multiplier_x(1, to_return.get()->id());
-                to_add.get()->set_texture_multiplier_y(0, to_return.get()->id());
-                to_add.get()->set_texture_multiplier_z(2, to_return.get()->id());
+                to_add.get()->set_texture_multiplier_x(to_return.get()->id(), 1);
+                to_add.get()->set_texture_multiplier_y(to_return.get()->id(), 0);
+                to_add.get()->set_texture_multiplier_z(to_return.get()->id(), 2);
 
                 to_return.get()->points().push_back(to_add);
             }
