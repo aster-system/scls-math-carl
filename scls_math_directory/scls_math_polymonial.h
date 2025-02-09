@@ -106,6 +106,7 @@ namespace scls {
         // Returns this monomonial where an unknown is replaced by an another unknown
         __Monomonial replace_unknown(std::string unknown, __Monomonial new_value);
         // Unknows of the monomonial
+        inline _Base_Unknown* unknown(){if(unknowns().size()>0){if(unknowns()[0].name()==std::string()){if(unknowns().size()>1){return &unknowns()[1];}}else{return &unknowns()[0];}}return 0;};
         inline std::vector<_Base_Unknown>& unknowns() {return a_unknowns;};
         inline unsigned int unknowns_number() const {unsigned int to_return = 0;for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns[i].name() != "")to_return++;}return to_return;};
 

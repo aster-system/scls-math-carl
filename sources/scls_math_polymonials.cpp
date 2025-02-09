@@ -344,7 +344,7 @@ namespace scls {
         Complex max_degree = 0;
         for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
             if(a_monomonials[i].contains_unknown(unknown_name) && a_monomonials[i].unknowns_number() == 1) {
-                Complex current_factor = a_monomonials[i].unknowns()[0].exponent();
+                Complex current_factor = a_monomonials[i].unknown()->exponent();
                 if(current_factor.real() > max_degree.real()) max_degree = current_factor;
             }
         } return max_degree;

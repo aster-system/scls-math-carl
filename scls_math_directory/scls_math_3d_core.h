@@ -161,6 +161,7 @@ namespace scls {
         inline double norm() const {return std::sqrt(std::pow(a_x, 2) + std::pow(a_y, 2) + std::pow(a_z, 2));};
         // Normalizes the vector
         inline void normalize() {double divisor = (1.0/norm());a_x *= divisor;a_y *= divisor;a_z *= divisor;};
+        inline Point_3D normalized() {double divisor = (1.0/norm());return Point_3D(a_x * divisor, a_y * divisor, a_z * divisor);};
 
         // Applies a rotation to the point
         inline Point_3D rotated(Point_3D rotation) const {
@@ -178,6 +179,7 @@ namespace scls {
         inline void __divide(double value) {set_x(x()/value);set_y(y()/value);set_z(z()/value);};
         // Multiplies a vector to this vector with another
         inline void __multiply(double value) {set_x(x()*value);set_y(y()*value);set_z(z()*value);};
+        inline void __multiply(Point_3D value) {set_x(x()*value.x());set_y(y()*value.y());set_z(z()*value.z());};
         // Returns a substraction of this vector with another
         inline void __substract(Point_3D object) {set_x(x()-object.x());set_y(y()-object.y());set_z(z()-object.z());};
         inline Point_3D __substract_without_modification(Point_3D object) const {Point_3D to_return;to_return.set_x(x()-object.x());to_return.set_y(y()-object.y());to_return.set_z(z()-object.z());return to_return;};
@@ -188,6 +190,7 @@ namespace scls {
         inline Point_3D operator+(Point_3D object)const{return __add_without_modification(object);};
         inline Point_3D& operator+=(Point_3D object){__add(object);return *this;};
         inline Point_3D& operator-=(Point_3D object){__substract(object);return *this;};
+        inline Point_3D& operator*=(Point_3D object){__multiply(object);return *this;};
         inline bool operator==(Point_3D object){return object.x() == x() && object.y() == y() && object.z() == z();};
         // With double
         inline Point_3D operator/(double object)const{Point_3D to_return=*this;to_return.__divide(object);return to_return;};
@@ -246,6 +249,7 @@ namespace scls {
 
     // Returns a point 3D with an angle (on y axis)
     static Point_3D vector_with_angle(double angle){return scls::Point_3D(cos(angle), 0, sin(angle));};
+    static Point_3D vector_with_angle_degrees(double angle){angle *= SCLS_PI/180.0; return scls::Point_3D(cos(angle), 0, sin(angle));};
 
     class Transform_Object_3D {
         // Class representing a 3D object transform
