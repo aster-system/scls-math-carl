@@ -433,6 +433,11 @@ namespace scls {
         }
         if(to_return != ""){to_return = std::string("<mi>") + to_return + std::string("</mi>");}
 
+        // Add the applied function if needed
+        if(a_applied_function.get() != 0) {
+            to_return = std::string("<mi>") + a_applied_function.get()->name() + std::string("</mi><mo>(</mo>") + to_return + std::string("<mo>)</mo>");
+        }
+
         // Add the denominator if needed
         if(a_denominator.get() != 0) {
             to_return = std::string("<frac><mrow>") + to_return + std::string("</mrow><mrow>") + a_denominator.get()->to_std_string() + std::string("</mrow></frac>");
@@ -652,7 +657,8 @@ namespace scls {
             __add(&first_formula);
             __add(&second_formula);
             for(int i = 0;i<static_cast<int>(other_formulas.size());i++) {__add(&other_formulas[i]);}
-        } else {
+        }
+        else {
             // The formula can't be directly multiplied
             // Update the formulas
             for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){value.a_formulas_add[i].__multiply(value);}
@@ -813,15 +819,25 @@ namespace scls {
     Formula String_To_Formula_Parse::string_to_formula(std::string source) {
         // Format the text as needed
         source = remove_space(source);
+        std::string last_text_2 = std::string();std::string last_text_3 = std::string();std::string last_text_4 = std::string();
         for(int i = 0;i<static_cast<int>(source.size());i++) {
-            // Handle functions
-            if(i > 0 && contains_function(source[i])) {
-                if(!__string_is_operator(source[i - 1]) && source[i - 1] != '(') {
-                    // The part is a simple variable
-                    source.insert(i, "*");
-                    i++;
+            /*// Handle functions
+            if(i > 0) {
+                if(contains_function(source[i])) {
+                    if(!__string_is_operator(source[i - 1]) && source[i - 1] != '(') {
+                        // The part is a simple variable
+                        source.insert(i, "*");
+                        i++;
+                    }
                 }
-            }
+                else if(last_text_4.size() >= 4 && contains_function(last_text_4)) {
+                    if(!__string_is_operator(source[i - 1]) && source[i - 1] != '(') {
+                        // The part is a simple variable
+                        source.insert(i, "*");
+                        i++;
+                    }
+                }
+            }//*/
             // Remove the useless ")("
             if(i > 0 && source[i] == '(') {
                 if(source[i - 1] == ')') {
@@ -831,7 +847,10 @@ namespace scls {
                     source.insert(i, "1*");
                     i++;
                 } else if(!__string_is_operator(source[i - 1])) {
-                    if(contains_function(source[i - 1])) {
+                    std::string total_function = std::string();
+                    int current_pos = i - 1;
+                    while(current_pos >= 0 && !__string_is_operator(source[current_pos])){total_function=source[current_pos]+total_function;current_pos--;}
+                    if(contains_function(total_function)) {
                         // The part is a function
                         source.insert(i, ">");
                         i++;
@@ -842,6 +861,12 @@ namespace scls {
                     }
                 }
             }
+
+            // Handle last text
+            last_text_2 += source[i];last_text_3 += source[i];last_text_4 += source[i];
+            if(last_text_2.size() > 2){last_text_2 = last_text_2.substr(1, last_text_2.size() - 1);}
+            if(last_text_3.size() > 3){last_text_3 = last_text_3.substr(1, last_text_3.size() - 1);}
+            if(last_text_4.size() > 4){last_text_4 = last_text_4.substr(1, last_text_4.size() - 1);}
         }
         // Handle the "-"
         for(int i = 0;i<static_cast<int>(source.size());i++) {

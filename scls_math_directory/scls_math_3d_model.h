@@ -70,7 +70,9 @@ namespace scls {
             //*********
 
             // Point constructor
-            Point() : Transform_Object_3D() { reset(); };
+            Point(Point_3D pos) : Transform_Object_3D(pos) { reset(); };
+            Point(double x, double y, double z) : Point(scls::Point_3D(x, y, z)) {};
+            Point() : Point(Point_3D()) {};
             // Point copy constructor
             Point(const Point& copy_point) : Transform_Object_3D(copy_point) {
                 a_id = copy_point.a_id;

@@ -202,6 +202,7 @@ namespace scls {
         // Returns a monomonial by its unknown
         __Monomonial monomonial(std::string unknown, Complex exponent);
         inline __Monomonial monomonial(std::string unknown) {return monomonial(unknown, Complex(1, 0));};
+        inline __Monomonial monomonial() {if(monomonials().size() > 0){return monomonials()[0];}return __Monomonial(0);};
         // Returns the number of monomonials in the polymonial
         inline int monomonials_number() const {return a_monomonials.size();};
         // Returns a list of unknowns monomonials
@@ -277,6 +278,9 @@ namespace scls {
         // Field constructor
         Field(){};
         Field(E base_value):a_element_add(base_value){};
+
+        // Pastes a formula to this one
+        virtual void paste(Field* value){a_element_add=value->a_element_add;};
 
         // Methods operators
         // Add a formula to this one
@@ -446,6 +450,8 @@ namespace scls {
                 virtual Set_Number definition_set() = 0;
                 // Real value
                 virtual double real_value(__Formula_Base* formula) = 0;
+                // Simplify a value with the function
+                virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) = 0;
 
                 // Getters and setters
                 std::string name() const {return a_name;};
@@ -463,6 +469,8 @@ namespace scls {
         // __Formula_Base copy constructor
         __Formula_Base(const __Formula_Base& formula):Field<scls::Polymonial>(formula.added_element()),a_formulas_add(formula.a_formulas_add),a_formulas_factor(formula.a_formulas_factor),a_polymonial_factor(formula.a_polymonial_factor),a_applied_function(formula.a_applied_function){if(formula.a_denominator.get() != 0) {a_denominator = std::make_shared<__Formula_Base>(*formula.a_denominator.get());}};
 
+        // Pastes a formula to this one
+        virtual void paste(__Formula_Base* value){Field::paste(value);a_formulas_add=value->a_formulas_add;a_formulas_factor=value->a_formulas_factor;a_polymonial_factor=value->a_polymonial_factor;a_applied_function=value->a_applied_function;if(value->a_denominator.get() != 0) {a_denominator = std::make_shared<__Formula_Base>(*value->a_denominator.get());}};
         // Returns a copy of this formula
         __Formula_Base formula_copy() {return *this;};
 
@@ -571,7 +579,7 @@ namespace scls {
         template<typename T = __Formula_Base_Function> inline std::shared_ptr<T> applied_function_shared_ptr() const {return a_applied_function;};
         inline void clear_applied_function(){a_applied_function.reset();};
         inline __Formula_Base* denominator() const {return a_denominator.get();};
-        template<typename T> inline void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;};
+        template<typename T> inline void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;if(a_applied_function.get()!=0){std::shared_ptr<__Formula_Base>f=a_applied_function.get()->simplify(this);if(f.get()!=0){paste(f.get());}}};
         template<typename T> inline void set_applied_function() {set_applied_function(std::make_shared<T>());};
 
         //*********
@@ -639,13 +647,14 @@ namespace scls {
         // Attached factor of the formulas polymonial
         Polymonial a_polymonial_factor = 1;
 
-        // Applied function to the ENTIRE formula EXCEPTED DENOMINATOR
-        std::shared_ptr<__Formula_Base_Function> a_applied_function;
+        // Each parts of the formula are in order
 
         // Division of the formula
         std::shared_ptr<__Formula_Base> a_denominator;
         // Exponent of the formula
         std::shared_ptr<__Formula_Base> a_exponent;
+        // Applied function to the ENTIRE formula
+        std::shared_ptr<__Formula_Base_Function> a_applied_function;
     }; typedef __Formula_Base Formula;
 
     // Square root function possible for a formula
@@ -666,6 +675,21 @@ namespace scls {
                 double value = formula->to_polymonial().known_monomonial().factor().real().to_double();
                 return std::sqrt(value);
             };
+            // Simplify a value with the function
+            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {
+                __Formula_Base inner = value->internal_value();
+                if(inner.is_simple_monomonial()) {
+                    Polymonial to_poly = inner.to_polymonial();
+                    if(to_poly.is_simple_monomonial()){
+                        __Monomonial needed_monomonial = to_poly.monomonial();
+                        double value = std::sqrt(needed_monomonial.factor().real().to_double());
+                        value *= 1000000.0;
+                        std::cout << "R " << value << std::endl;
+                        if(value == round(value)){return std::make_shared<__Formula_Base>(scls::Fraction(value, 1000000));}
+                    }
+                }
+                return std::shared_ptr<__Formula_Base>();
+            };
     };
 
     //*********
@@ -678,7 +702,7 @@ namespace scls {
         // Class allowing to properly parse a std::string to a polymonial
     public:
         // String_To_Formula_Parse constructor
-        String_To_Formula_Parse(unsigned int level):a_level(level){};
+        String_To_Formula_Parse(unsigned int level):a_level(level){add_function(std::string("sqrt"));};
         String_To_Formula_Parse():String_To_Formula_Parse(0){};
 
         // Returns if a std::string is a number or not
