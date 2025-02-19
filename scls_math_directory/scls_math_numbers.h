@@ -43,7 +43,7 @@
 #define SCLS_MATH_NUMBER_LIMIT_SPECIAL_PZ 2
 #endif // SCLS_MATH_NUMBER_LIMIT_SPECIAL_PZ
 #ifndef SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION
-#define SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION 10000000000
+#define SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION 1000000.0
 #endif // SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION
 
 //*********
@@ -216,7 +216,7 @@ namespace scls {
         Complex(Fraction real_part, long long imaginary_part) : Complex(real_part, Fraction(imaginary_part)) {};
         // Most simple fraction constructor
         Complex(Fraction real_part) : Complex(real_part, Fraction(0)) {};
-        Complex(long long real_part) : Complex(Fraction(real_part)) {};
+        Complex(double real_part) : Complex(Fraction(real_part)) {};
         // Complex copy constructor
         Complex(const Complex& to_copy) : Complex(to_copy.real(), to_copy.imaginary()) {};
 

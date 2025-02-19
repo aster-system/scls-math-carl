@@ -190,6 +190,7 @@ namespace scls {
         inline Point_3D operator+(Point_3D object)const{return __add_without_modification(object);};
         inline Point_3D& operator+=(Point_3D object){__add(object);return *this;};
         inline Point_3D& operator-=(Point_3D object){__substract(object);return *this;};
+        inline Point_3D operator*(Point_3D object){Point_3D temp(*this);temp.__multiply(object);return temp;};
         inline Point_3D& operator*=(Point_3D object){__multiply(object);return *this;};
         inline bool operator==(Point_3D object){return object.x() == x() && object.y() == y() && object.z() == z();};
         // With double
@@ -306,9 +307,11 @@ namespace scls {
 
         // Absolute position handling
         // Returns the absolute X position
-        inline double absolute_x() const {if(parent() == 0){return a_real_local_parent_x;}return parent()->absolute_x() + a_real_local_parent_x;};
+        //inline double absolute_x() const {if(parent() == 0){return a_real_local_parent_x;}return parent()->absolute_x() + a_real_local_parent_x;};
+        inline double absolute_x() const {if(parent() == 0){return a_real_local_parent_x;}return parent()->absolute_x() + x();};
         inline double absolute_y() const {if(parent() == 0){return a_real_local_parent_y;}return parent()->absolute_y() + a_real_local_parent_y;};
-        inline double absolute_z() const {if(parent() == 0){return a_real_local_parent_z;}return parent()->absolute_z() + a_real_local_parent_z;};
+        //inline double absolute_z() const {if(parent() == 0){return a_real_local_parent_z;}return parent()->absolute_z() + a_real_local_parent_z;};
+        inline double absolute_z() const {if(parent() == 0){return a_real_local_parent_z;}return parent()->absolute_z() + z();};
         // Returns the real local parent position
         inline double __real_local_parent_x() const {return a_real_local_parent_x;};
         inline double __real_local_parent_y() const {return a_real_local_parent_y;};
@@ -316,11 +319,13 @@ namespace scls {
 
         // Absolute inner position handling
         // Returns the absolute inner X position
-        inline double absolute_inner_x() const { return absolute_x() + a_real_local_anchored_x; };
+        //inline double absolute_inner_x() const { return absolute_x() + a_real_local_anchored_x; };
+        inline double absolute_inner_x() const { return absolute_x(); };
         // Returns the absolute inner Y position
         inline double absolute_inner_y() const { return absolute_y() + a_real_local_anchored_y; };
         // Returns the absolute inner Z position
-        inline double absolute_inner_z() const { return absolute_z() + a_real_local_anchored_z; };
+        //inline double absolute_inner_z() const { return absolute_z() + a_real_local_anchored_z; };
+        inline double absolute_inner_z() const { return absolute_z(); };
 
         // Anchored position
         // Returns the X anchored position of the point

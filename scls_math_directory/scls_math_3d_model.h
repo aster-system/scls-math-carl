@@ -74,10 +74,7 @@ namespace scls {
             Point(double x, double y, double z) : Point(scls::Point_3D(x, y, z)) {};
             Point() : Point(Point_3D()) {};
             // Point copy constructor
-            Point(const Point& copy_point) : Transform_Object_3D(copy_point) {
-                a_id = copy_point.a_id;
-                a_faces_datas = copy_point.a_faces_datas;
-            };
+            Point(const Point& copy_point) : Transform_Object_3D(copy_point) {a_id = copy_point.a_id;a_faces_datas = copy_point.a_faces_datas;};
 
             // Returns the point as a binary
             std::shared_ptr<Bytes_Set> binary() {
@@ -2142,11 +2139,7 @@ namespace scls {
         // Returns a face which make a simple polygon in 3D
         static std::shared_ptr<Solid> polygon_3d(std::shared_ptr<Polygon> points) {return polygon_3d(points.get()->points);};
         // Returns a face which make a simple polygon in 3D
-        static std::shared_ptr<Solid> polygon_3d(std::vector<std::shared_ptr<Point>> points) {
-            std::vector<Point> points_to_pass = std::vector<Point>();
-            for(int i = 0;i<static_cast<int>(points.size());i++) {points_to_pass.push_back(*points[i].get());}
-            return polygon_3d(points_to_pass);
-        };
+        inline std::shared_ptr<Solid> polygon_3d(std::vector<std::shared_ptr<Point>> points) {std::vector<Point> points_to_pass = std::vector<Point>();for(int i = 0;i<static_cast<int>(points.size());i++) {points_to_pass.push_back(*points[i].get());}return polygon_3d(points_to_pass);};
 
         //*********
         //
@@ -2155,7 +2148,7 @@ namespace scls {
         //*********
 
         // Returns a simple regular polygon
-        static std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number, double y = 0, double scale = 1) {
+        static std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number, int needed_side_number, int side_start, double y, double scale) {
             // Configurate the creation
             double angle_sum = static_cast<double>((side_number - 2) * SCLS_PI);
             double current_angle = 0;
@@ -2173,10 +2166,12 @@ namespace scls {
                 if(x > max_x) {max_x = x;} if(x < min_x) {min_x = x;}
                 if(z > max_z) {max_z = z;} if(z < min_z) {min_z = z;}
 
-                // Create the point
-                Point point = Point();
-                point.move_xyz(x, y, z);
-                to_return.get()->points.push_back(point);
+                if((i >= side_start && i < needed_side_number + side_start) || (i >= side_number + side_start)) {
+                    // Create the point
+                    Point point = Point();
+                    point.move_xyz(x, y, z);
+                    to_return.get()->points.push_back(point);
+                }
 
                 current_angle += one_angle;
             }
@@ -2207,14 +2202,16 @@ namespace scls {
 
             return to_return;
         };
+        inline std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number, double y, double scale){return regular_polygon_points(side_number, side_number, 0, y, scale);};
+        inline std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number){return regular_polygon_points(side_number, side_number, 0, 0, 1);};
         // Returns a face which make a simple regular polygon
-        static std::shared_ptr<Face> regular_polygon(unsigned short side_number, bool reverse_texture_x = false, bool reverse_texture_z = false, double y = 0) {
+        static std::shared_ptr<Face> regular_polygon(unsigned short side_number, unsigned short needed_side_number, int side_start, bool reverse_texture_x, bool reverse_texture_z, double y) {
             std::shared_ptr<Face> to_return = std::make_shared<Face>();
             to_return.get()->set_y(y);
             to_return.get()->set_normal_y(1);
 
             // Add each points
-            std::shared_ptr<Polygon> points = regular_polygon_points(side_number, 0);
+            std::shared_ptr<Polygon> points = regular_polygon_points(side_number, needed_side_number, side_start, 0, 1);
             for(int i = 0;i<static_cast<int>(points.get()->points.size());i++) {
                 std::shared_ptr<Point> to_add = std::make_shared<Point>(points.get()->points.at(i));
                 to_add.get()->set_this_object(to_add);
@@ -2240,11 +2237,12 @@ namespace scls {
 
             return to_return;
         };
+        inline std::shared_ptr<Face> regular_polygon(unsigned short side_number){return regular_polygon(side_number, side_number, 0, true, true, 0);};
         // Returns a face which make a simple regular polygon in 3D
-        static std::shared_ptr<Solid> regular_polygon_3d(unsigned short side_number){
+        static std::shared_ptr<Solid> regular_polygon_3d(unsigned short side_number, unsigned short needed_side_number, int side_start){
             // Create the base faces
-            std::shared_ptr<Face> face_1 = regular_polygon(side_number, true, true, 0.5); face_1.get()->set_normal_y(1);
-            std::shared_ptr<Face> face_2 = regular_polygon(side_number, true, true, -0.5); face_2.get()->set_normal_y(-1);
+            std::shared_ptr<Face> face_1 = regular_polygon(side_number, needed_side_number, side_start, true, true, 0.5); face_1.get()->set_normal_y(1);
+            std::shared_ptr<Face> face_2 = regular_polygon(side_number, needed_side_number, side_start, true, true, -0.5); face_2.get()->set_normal_y(-1);
 
             // Create the solid
             std::shared_ptr<Solid> to_return = std::make_shared<Solid>();
@@ -2254,6 +2252,7 @@ namespace scls {
 
             return to_return;
         };
+        inline std::shared_ptr<Solid> regular_polygon_3d(unsigned short side_number){return regular_polygon_3d(side_number, side_number, 0);};
 
         // Returns a squared-solid with a frame of faces in its top
         static std::shared_ptr<Solid> frame_polyhedron_in_top(unsigned int frame_width, unsigned int frame_height) {

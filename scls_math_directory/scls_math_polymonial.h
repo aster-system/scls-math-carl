@@ -191,6 +191,8 @@ namespace scls {
 
         // Add a new monomonial to the polymonial
         void add_monomonial(__Monomonial new_monomonial);
+         // Returns all the unknowns in the formula
+        inline std::vector<std::string> all_unknowns(){std::vector<std::string> to_return;for(int i=0;i<static_cast<int>(a_monomonials.size());i++){for(int j=0;j<static_cast<int>(a_monomonials[i].unknowns().size());j++){std::string to_add=a_monomonials[i].unknowns()[j].name();if(to_add!=""&&std::count(to_return.begin(),to_return.end(),to_add)<=0){to_return.push_back(to_add);}}}return to_return;};
         // Returns if the polymonial contains a monomonial
         inline __Monomonial* contains_monomonial(__Monomonial new_monomonial) {for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {if(a_monomonials[i].compare_unknown(new_monomonial)) {return &a_monomonials[i];}} return 0;};
         // Returns if the polymonial is known
@@ -338,22 +340,37 @@ namespace scls {
     public:
 
         // Interval constructor
-        Interval(Fraction start, Fraction end):a_end(end),a_start(start){};
+        Interval(Fraction start, bool start_included, Fraction end, bool end_included):a_end(end),a_end_included(end_included),a_start(start),a_start_included(start_included){};
+        Interval(Fraction start, Fraction end):Interval(start, true, end, true){};
+        Interval(Fraction value):Interval(value, true, value, true){};
         Interval():Interval(Fraction(0), Fraction(0)){};
+        Interval(const Interval& other):a_end(other.a_end),a_end_included(other.a_end_included),a_end_infinite(other.a_end_infinite),a_start(other.a_start),a_start_included(other.a_start_included),a_start_infinite(other.a_start_infinite){}
 
         // Compares this definition set with another
         inline bool compare(Interval value){return ((a_end_infinite == value.a_end_infinite) && (a_end_infinite || a_end == value.a_end)) && ((a_start_infinite == value.a_start_infinite) && (a_start_infinite || a_start == value.a_start)); };
+        // Returns if the interval is empty or not
+        inline bool is_empty() const {return a_start == a_end && (!a_start_included || !a_end_included) && !a_start_infinite && !a_end_infinite;};
         // Returns if a value is in an interval
         inline bool is_in(Fraction value){return ((a_end_infinite || value < a_end) && (a_start_infinite || value > a_start));};
         // Returns if an interval is in an interval
         inline bool is_in(Interval* value){return (((a_end_infinite) || (!value->a_end_infinite && value->a_end <= a_end)) && ((a_start_infinite) || (!value->a_start_infinite && value->a_start >= a_start)));};
+        // Returns the intersection between this interval and an another interval
+        Interval intersection(Interval other);
+        inline Interval intersection(Fraction needed_start, bool needed_start_included, Fraction needed_end, bool needed_end_included){return intersection(Interval(needed_start, needed_start_included, needed_end, needed_end_included));};
+
+        // Returns the Interval to an std::string
+        inline std::string to_std_string() {std::string to_return;if(a_start_infinite||!a_start_included){to_return+=std::string("]");}else{to_return+=std::string("[");}if(a_start_infinite){to_return+=std::string("-inf");}else{to_return+=a_start.to_std_string();};to_return+=std::string(";");if(a_end_infinite){to_return+=std::string("+inf");}else{to_return+=a_end.to_std_string();}if(a_end_infinite||!a_end_included){to_return+=std::string("[");}else{to_return+=std::string("]");}return to_return;};
 
         // Getters and setters
         inline Fraction end() const {return a_end;};
+        inline bool end_included() const {return a_end_included;};
         inline bool end_infinite() const {return a_end_infinite;};
         inline void set_end(Fraction new_end) {a_end=new_end;};
+        inline void set_end_included(bool new_end_included) {a_end_included=new_end_included;};
         inline void set_start(Fraction new_start) {a_start=new_start;};
+        inline void set_start_included(bool new_start_included) {a_start_included=new_start_included;};
         inline Fraction start() const {return a_start;};
+        inline bool start_included() const {return a_start_included;};
         inline void set_end_infinite(bool new_end_infinite) {a_end_infinite=new_end_infinite;};
         inline void set_start_infinite(bool new_start_infinite) {a_start_infinite=new_start_infinite;};
         inline bool start_infinite() const {return a_start_infinite;};
@@ -366,10 +383,14 @@ namespace scls {
     private:
         // End of the interval
         Fraction a_end;
+        // If the end is included or not
+        bool a_end_included = false;
         // If the end is + infinite or not
         bool a_end_infinite = false;
         // Start of the interval
         Fraction a_start;
+        // If the start is included or not
+        bool a_start_included = false;
         // If the start is + infinite or not
         bool a_start_infinite = false;
 	};
@@ -380,17 +401,20 @@ namespace scls {
 
         // Set_Number constructor
         Set_Number(){};
-        // Set_Number constructor convertors
         Set_Number(Interval interval){a_intervals.push_back(interval);};
+        Set_Number(const Set_Number& other):a_intervals(other.a_intervals),a_numbers(other.a_numbers){}
 
         // Add an interval to the set
-        inline void add_interval(Interval to_add) {a_intervals.push_back(to_add);__sort_interval();};
+        inline void add_interval(Interval to_add) {a_intervals.push_back(to_add);__sort_interval();check_intervals();};
         // Add a number to the set
         inline void add_number(Complex to_add) {a_numbers.push_back(to_add);__sort_numbers();};
         inline void add_number(Fraction to_add) {add_number(Complex(to_add));};
 
         // Compares this definition set with another
         bool compare(Set_Number value);
+        // Returns the intersection between this set and an interval
+        Set_Number intersection(Interval other);
+        Set_Number intersection(Set_Number other);
         // Returns if the set is empty or not
         inline bool is_empty() const {return a_intervals.size()<=0;};
         // Returns if a value is in the set numbers
@@ -406,6 +430,8 @@ namespace scls {
         // Returns the set in a std::string
         std::string to_std_string();
 
+        // Checks the intervals / numbers
+        void check_intervals();
         // Sort the intervals / numbers in the set
         void __sort_interval();
         void __sort_numbers();
@@ -464,6 +490,7 @@ namespace scls {
         __Formula_Base():Field<scls::Polymonial>(){};
         __Formula_Base(int number):Field<scls::Polymonial>(number){};
         __Formula_Base(Fraction fraction):__Formula_Base(__Monomonial(scls::Complex(fraction))){};
+        __Formula_Base(Complex number):__Formula_Base(__Monomonial(number)){};
         __Formula_Base(__Monomonial monomonial):Field<scls::Polymonial>(monomonial){};
         __Formula_Base(Polymonial polymonial):Field<scls::Polymonial>(polymonial){};
         // __Formula_Base copy constructor
@@ -558,6 +585,7 @@ namespace scls {
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
         // With complex
         __Formula_Base operator*(Complex value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
+        __Formula_Base& operator*=(Complex value) {__multiply(value);return *this;};
         // With monomonial
         __Formula_Base& operator+=(__Monomonial value) {__Formula_Base temp=value;__add(&temp);return*this;};
         __Formula_Base& operator*=(__Monomonial value) {__multiply(value);return*this;};
@@ -575,6 +603,8 @@ namespace scls {
         operator Polymonial() const {return to_polymonial();};
 
         // Getters and setters
+        template<typename T> inline void add_applied_function(std::shared_ptr<T> new_applied_function) {if(applied_function() != 0){__Formula_Base temp=formula_copy();clear();a_formulas_add.push_back(temp);}set_applied_function(new_applied_function);};
+        template<typename T> inline void add_applied_function() {add_applied_function(std::make_shared<T>());};
         template<typename T = __Formula_Base_Function> inline T* applied_function() const {return a_applied_function.get();};
         template<typename T = __Formula_Base_Function> inline std::shared_ptr<T> applied_function_shared_ptr() const {return a_applied_function;};
         inline void clear_applied_function(){a_applied_function.reset();};
@@ -590,18 +620,24 @@ namespace scls {
         class Formula {
         public:
             // Formula constructor
+            Formula(Complex number):Formula(std::make_shared<__Formula_Base>(number)){};
             Formula(std::shared_ptr<__Formula_Base> needed_formula):a_formula(needed_formula){};
             Formula(int number):Formula(std::make_shared<__Formula_Base>(number)){};
             Formula(__Monomonial monomonial):Formula(std::make_shared<__Formula_Base>(monomonial)){};
+            Formula(Polymonial polymonial):Formula(std::make_shared<__Formula_Base>(polymonial)){};
             Formula(__Formula_Base needed_formula):Formula(std::make_shared<__Formula_Base>(needed_formula)){};
             Formula():Formula(std::make_shared<__Formula_Base>()){};
 
             // Operations from __Formula_Base
+            inline void clear()const{a_formula.get()->clear();};
             inline __Formula_Base* formula_base() const {return a_formula.get();};
+            inline void paste(__Formula_Base* to_paste)const{a_formula.get()->paste(to_paste);};
+            inline void paste(Formula to_paste)const{a_formula.get()->paste(to_paste.a_formula.get());};
             inline Polymonial to_polymonial() const {return a_formula.get()->to_polymonial();};
             inline std::string to_std_string() const {return a_formula.get()->to_std_string();};
 
             // Getters and setters
+            inline __Formula_Base_Function* applied_function()const{return a_formula.get()->applied_function();};
             template<typename T> inline void set_applied_function(std::shared_ptr<T> new_applied_function) {a_formula.get()->set_applied_function<T>(new_applied_function);};
             template<typename T> inline void set_applied_function() {a_formula.get()->set_applied_function(std::make_shared<T>());};
 
@@ -609,6 +645,8 @@ namespace scls {
 
             // With int
             bool operator==(int value) {return a_formula.get()->__is_equal(value);};
+            // With monomonial
+            Formula& operator+=(Complex value) {__Formula_Base temp=value;a_formula.get()->__add(&temp);return*this;};
             // With monomonial
             Formula& operator+=(__Monomonial value) {__Formula_Base temp=value;a_formula.get()->__add(&temp);return*this;};
             Formula& operator*=(__Monomonial value) {a_formula.get()->__multiply(value);return*this;};
@@ -631,12 +669,20 @@ namespace scls {
             std::shared_ptr<__Formula_Base> a_formula;
         };
 
+        // Returns all the unknowns in the formula
+        std::vector<std::string> all_unknowns();
         // Returns a formula from a monomonial where the unknows has been replaced
         static Formula formula_from_modified_monomonial_unknows(__Monomonial used_monomonial, std::string unknown, __Formula_Base new_value);
         // Returns a formula from a polymonial where the unknows has been replaced
         static Formula formula_from_modified_polymonial_unknows(Polymonial used_polymonial, std::string unknown, __Formula_Base new_value);
         // Returns a monomonial where an unkown is replaced by an another unknown
         Formula replace_unknown(std::string unknown, __Formula_Base new_value) const;
+        // Returns the final value of the formula
+        scls::Complex value(scls::Fraction current_value);
+        inline scls::Fraction value_to_fraction(scls::Fraction current_value){return value(current_value).real();};
+        inline scls::Fraction value_to_fraction(){return value(1).real();};
+        inline double value_to_double(scls::Fraction current_value){return value(current_value).real().to_double();};
+        inline double value_to_double(){return value(1).real().to_double();};
 
     private:
         // Attached add polymonials
@@ -658,6 +704,34 @@ namespace scls {
     }; typedef __Formula_Base Formula;
 
     // Square root function possible for a formula
+    class __Exp_Function : public __Formula_Base::__Formula_Base_Function {
+        public:
+            // __Exp_Function constructor
+            __Exp_Function():__Formula_Base_Function("exp"){};
+
+            // Definition set of the function
+            virtual Set_Number definition_set() {Set_Number real = Set_Number();real.set_real();return real;};
+            // Real value
+            virtual double real_value(__Formula_Base* formula){double value = formula->value_to_double();return std::exp(value);};
+            // Simplify a value with the function
+            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base>();};
+    };
+
+    // Logarithm function function possible for a formula
+    class __Log_Function : public __Formula_Base::__Formula_Base_Function {
+        public:
+            // __Log_Function constructor
+            __Log_Function():__Formula_Base_Function("log"){};
+
+            // Definition set of the function
+            virtual Set_Number definition_set() {Set_Number real = Set_Number();real.set_real();return real;};
+            // Real value
+            virtual double real_value(__Formula_Base* formula){double value = formula->value_to_double();return std::log(value);};
+            // Simplify a value with the function
+            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base>();};
+    };
+
+    // Square root function possible for a formula
     class __Sqrt_Function : public __Formula_Base::__Formula_Base_Function {
         public:
             // __Formula_Base_Function constructor
@@ -671,21 +745,28 @@ namespace scls {
                 return real;
             };
             // Real value
-            virtual double real_value(__Formula_Base* formula){
-                double value = formula->to_polymonial().known_monomonial().factor().real().to_double();
-                return std::sqrt(value);
-            };
+            virtual double real_value(__Formula_Base* formula){double value = formula->to_polymonial().known_monomonial().factor().real().to_double();return std::sqrt(value);};
             // Simplify a value with the function
             virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {
-                __Formula_Base inner = value->internal_value();
-                if(inner.is_simple_monomonial()) {
-                    Polymonial to_poly = inner.to_polymonial();
-                    if(to_poly.is_simple_monomonial()){
-                        __Monomonial needed_monomonial = to_poly.monomonial();
-                        double value = std::sqrt(needed_monomonial.factor().real().to_double());
-                        value *= 1000000.0;
-                        std::cout << "R " << value << std::endl;
-                        if(value == round(value)){return std::make_shared<__Formula_Base>(scls::Fraction(value, 1000000));}
+                if(value->applied_function() == 0) {
+                    __Formula_Base inner = value->internal_value();
+                    if(inner.is_simple_monomonial()) {
+                        Polymonial to_poly = inner.to_polymonial();
+                        if(to_poly.is_simple_monomonial()){
+                            // Simplify a simple monomonial
+                            __Monomonial needed_monomonial = to_poly.monomonial();
+                            std::vector<double> needed_exponent; bool good = true;
+                            for(int i = 0;i<static_cast<int>(needed_monomonial.unknowns().size());i++){if(needed_monomonial.unknowns()[i].name()!=std::string()){needed_exponent.push_back(std::log2(needed_monomonial.unknowns()[i].exponent().real().to_double()));}}
+                            for(int i = 0;i<static_cast<int>(needed_exponent.size());i++){if(needed_exponent[i]!=round(needed_exponent[i])||needed_exponent[i]==0){good=false;break;}}
+                            if(good) {
+                                // Create the needed monomonial
+                                scls::Fraction value = std::sqrt(needed_monomonial.factor().real().to_double());
+                                scls::__Monomonial final_monomonial = needed_monomonial;
+                                final_monomonial.set_factor(value);
+                                for(int i = 0;i<static_cast<int>(final_monomonial.unknowns().size());i++){if(final_monomonial.unknowns()[i].name()!=std::string()){final_monomonial.unknowns()[i].set_exponent(final_monomonial.unknowns()[i].exponent()/2);}}
+                                return std::make_shared<__Formula_Base>(final_monomonial);
+                            }
+                        }
                     }
                 }
                 return std::shared_ptr<__Formula_Base>();
@@ -702,7 +783,7 @@ namespace scls {
         // Class allowing to properly parse a std::string to a polymonial
     public:
         // String_To_Formula_Parse constructor
-        String_To_Formula_Parse(unsigned int level):a_level(level){add_function(std::string("sqrt"));};
+        String_To_Formula_Parse(unsigned int level):a_level(level){add_function(std::string("exp"));add_function(std::string("ln"));add_function(std::string("sqrt"));};
         String_To_Formula_Parse():String_To_Formula_Parse(0){};
 
         // Returns if a std::string is a number or not
