@@ -75,9 +75,7 @@ namespace scls {
             a_denominator = base_denominator / a_numerator;
             a_numerator = base_numerator / a_numerator;
         }
-        else {
-            a_denominator = 1;
-        }
+        else {a_denominator = 1;}
         if(a_denominator < 0) a_denominator = -a_denominator;
         if(a_numerator < 0) a_numerator = -a_numerator;
 
