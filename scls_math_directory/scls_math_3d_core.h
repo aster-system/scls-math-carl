@@ -171,6 +171,7 @@ namespace scls {
             delete rotated_point; rotated_point = 0; return to_return;
         };
         inline void rotate(scls::Point_3D rotation) {rotation = rotated(rotation);a_x = rotation.a_x; a_y = rotation.a_y; a_z = rotation.a_z;};
+        inline void rotate_y(double rotation) {rotate(scls::Point_3D(0, rotation, 0));};
 
         // Adds a vector to this vector with another
         inline void __add(Point_3D object) {set_x(x()+object.x());set_y(y()+object.y());set_z(z()+object.z());};
@@ -308,10 +309,10 @@ namespace scls {
         // Absolute position handling
         // Returns the absolute X position
         //inline double absolute_x() const {if(parent() == 0){return a_real_local_parent_x;}return parent()->absolute_x() + a_real_local_parent_x;};
-        inline double absolute_x() const {if(parent() == 0){return a_real_local_parent_x;}return parent()->absolute_x() + x();};
+        inline double absolute_x() const {if(parent() == 0){return a_real_local_parent_x;}return parent()->absolute_x() + x() * parent()->absolute_scale_x();};
         inline double absolute_y() const {if(parent() == 0){return a_real_local_parent_y;}return parent()->absolute_y() + a_real_local_parent_y;};
         //inline double absolute_z() const {if(parent() == 0){return a_real_local_parent_z;}return parent()->absolute_z() + a_real_local_parent_z;};
-        inline double absolute_z() const {if(parent() == 0){return a_real_local_parent_z;}return parent()->absolute_z() + z();};
+        inline double absolute_z() const {if(parent() == 0){return a_real_local_parent_z;}return parent()->absolute_z() + z() * parent()->absolute_scale_z();};
         // Returns the real local parent position
         inline double __real_local_parent_x() const {return a_real_local_parent_x;};
         inline double __real_local_parent_y() const {return a_real_local_parent_y;};
