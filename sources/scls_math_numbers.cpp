@@ -46,8 +46,8 @@ namespace scls {
     Fraction Fraction::from_double(double result) {
         long long result_in_long = static_cast<long long>(result);
         double after_decimal_point = static_cast<double>(result - static_cast<double>(result_in_long));
-        if(after_decimal_point == 0) return Fraction(result_in_long, 1);
-        long long after_decimal_point_in_long = static_cast<long long>(after_decimal_point * 100000);
+        if(after_decimal_point == 0){return Fraction(result_in_long, 1);}
+        long long after_decimal_point_in_long = static_cast<long long>(after_decimal_point * 100000.0);
         return Fraction(result_in_long, 1) + Fraction(after_decimal_point_in_long, 100000);
     };
     // Returns a fraction from a std::string
