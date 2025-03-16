@@ -71,7 +71,7 @@ namespace scls {
         //*********
 
         // Most simple fraction constructor
-        Fraction(double real){if(real == static_cast<long long>(real)){a_numerator=real;}else{a_numerator=real*SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;a_denominator=SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;} normalize();};
+        Fraction(double real){if(real == round(real)){a_numerator=real;}else{a_numerator=real*SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;a_denominator=SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;normalize();}};
         Fraction():Fraction(0){};
         // Simple fraction constructor
         Fraction(long long numerator, long long denominator) : a_denominator(denominator), a_numerator(numerator) {if(a_denominator!=1&&a_numerator!=1){normalize();}}
