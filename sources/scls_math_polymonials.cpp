@@ -573,6 +573,7 @@ namespace scls {
         final_formula.set_applied_function(applied_function_shared_ptr());
         return final_formula;
     };
+    __Formula_Base::Formula __Formula_Base::replace_unknown(std::string unknown, __Formula_Base::Formula new_value) const{return replace_unknown(unknown, *new_value.formula_base());}
     // Returns the final value of the formula
     scls::Complex __Formula_Base::__Formula_Factor::value(scls::Fraction current_value){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(factors.size());i++){to_return*=factors.at(i).get()->value(current_value);}return to_return;}
     scls::Complex __Formula_Base::value(scls::Fraction current_value) {

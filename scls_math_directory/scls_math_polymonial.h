@@ -685,6 +685,7 @@ namespace scls {
         static Formula formula_from_modified_polymonial_unknows(Polymonial used_polymonial, std::string unknown, __Formula_Base new_value);
         // Returns a monomonial where an unkown is replaced by an another unknown
         Formula replace_unknown(std::string unknown, __Formula_Base new_value) const;
+        Formula replace_unknown(std::string unknown, Formula new_value) const;
         // Returns the final value of the formula
         scls::Complex value(scls::Fraction current_value);
         inline scls::Fraction value_to_fraction(scls::Fraction current_value){return value(current_value).real();};
