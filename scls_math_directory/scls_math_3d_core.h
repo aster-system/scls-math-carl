@@ -51,67 +51,7 @@ namespace scls {
     inline double degrees_to_radians(double degrees) {return (degrees / 180.0) * SCLS_PI;};
 
     // Rotates a 3D vector and returns it normalized
-    static double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z) {
-        double* to_return = new double[3];
-        vector_x -= anchor_x;vector_y -= anchor_y;vector_z -= anchor_z;
-
-        // Calculate the first XZ angle
-        double total_xz_length = std::sqrt(vector_x * vector_x + vector_z * vector_z);
-        double to_add = 0;
-        if(total_xz_length > 0) {
-            to_add = std::acos(std::abs(vector_z) / total_xz_length);
-            // Get the current angle
-            double current_angle = 0;
-            if(vector_z >= 0 && vector_x >= 0) {current_angle = to_add;}
-            else if (vector_z < 0 && vector_x >= 0) {current_angle = 3.1415 - to_add;}
-            else if(vector_z < 0 && vector_x < 0) {current_angle = 3.1415 + to_add;}
-            else {current_angle = 3.1415 * 2.0 - to_add;}
-            // Get the final XZ position
-            current_angle += degrees_to_radians(rotation_y);
-            while(current_angle < 0) current_angle += 3.1415 * 2.0;
-            while(current_angle >= 3.1415 * 2) current_angle -= 3.1415 * 2.0;
-            to_return[2] = std::cos(current_angle);
-            to_return[0] = std::sin(current_angle);
-        }
-        else {to_return[2] = 0; to_return[0] = 0;}
-
-        // Calculate the real local Y anchored position
-        double total_length = std::sqrt(total_xz_length * total_xz_length + vector_y * vector_y);
-        if(total_length > 0 && rotation_x > 0) {
-            // Calculate the Y multiplier
-            // Calculate the current angle
-            double y_sin = std::abs(vector_y) / total_length;
-            // Apply an X transformation
-            double current_angle = std::asin(y_sin);
-            // Get the Y position
-            double final_angle = current_angle + degrees_to_radians(rotation_x);
-            if(vector_y > 0) final_angle += 3.1415;
-            y_sin = std::sin(final_angle);
-            to_return[1] = -y_sin * total_length;
-
-            // Calculate the XZ multiplier
-            while(current_angle > 3.1415 / 2.0 && current_angle < 3.1415 * 1.5) current_angle += 3.1415;
-            while(current_angle >= 3.1415 * 2) current_angle -= 3.1415 * 2;
-            final_angle = current_angle + degrees_to_radians(rotation_x);
-            while(final_angle < 0) final_angle += 3.1415 * 2;
-            while(final_angle >= 3.1415 * 2) final_angle -= 3.1415 * 2;
-            const double real_final_angle = final_angle;
-            while(final_angle > 3.1415 / 2.0 && final_angle < 3.1415 * 1.5) final_angle += 3.1415;
-            while(final_angle >= 3.1415 * 2) final_angle -= 3.1415 * 2;
-            // Apply the XZ multiplier
-            double y_cos = std::abs(std::cos(final_angle));
-            if(real_final_angle > 3.1415 / 2.0 && real_final_angle < 3.1415 * 1.5) y_cos = -y_cos;
-            to_return[0] *= y_cos;
-            to_return[2] *= y_cos;
-        }else{to_return[1] = vector_y;} //*/
-
-        // Scale each vectors
-        to_return[2] *= total_length;
-        to_return[0] *= total_length;
-
-        to_return[0] += anchor_x;to_return[1] += anchor_y;to_return[2] += anchor_z;
-        return to_return;
-    }
+    double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z);
     inline double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z){return __rotate_vector_3d(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
 
     class Point_3D {
@@ -213,6 +153,14 @@ namespace scls {
         // Z position of the point
         double a_z = 0;
     }; typedef Point_3D Vector_3D;
+
+    // Returns the datas point of two crossing lines
+    struct Crossing_Datas {bool crossed = false;double crossing_x = 0;double crossing_y = 0;bool same_lines = false;};
+    Crossing_Datas check_crossing(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y);
+
+    // Returns the datas point of two crossing segments
+    struct Crossing_Datas_Segment {bool crossed_in_segment = false;Crossing_Datas crossing_datas;};
+    Crossing_Datas_Segment check_crossing_segment(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true);
 
     //*********
     //

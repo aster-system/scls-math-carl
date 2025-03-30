@@ -231,153 +231,24 @@ namespace scls {
         //*********
 
         // Returns the datas point of two crossing lines
-        struct __Crossing_Datas {bool crossed = false;double crossing_x = 0;double crossing_y = 0;bool same_lines = false;};
-        static __Crossing_Datas __check_crossing(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y) {
-            __Crossing_Datas to_return;
-
-            // Get the carthesian coordonates of the given points
-            // Get some basic informations
-            double base_x = (second_point_x - first_point_x);
-            double base_y = (second_point_y - first_point_y);
-            double line_ratio = base_x / base_y;
-            // Get the carthesian coordonates
-            double a_part = base_y;
-            double b_part = -base_x;
-            double c_part = -(a_part * first_point_x + b_part * first_point_y);
-
-            // Check the second sides with carthesian coordonates
-            // Get the carthesian coordonates
-            double current_base_x = (fourth_point_x - third_point_x);
-            double current_base_y = (fourth_point_y - third_point_y);
-            double current_line_ratio = current_base_x / current_base_y;
-            // Check the value
-            if(abs(current_base_y) < SCLS_MATH_TOLERANCE) {
-                if(base_y > 0) {
-                    // Constant horizontal line
-                    to_return.crossed = true;
-                    to_return.crossing_x = ((b_part * third_point_y) + c_part) / (-a_part);
-                    to_return.crossing_y = third_point_y;
-                }
-                else if(abs(first_point_y - third_point_y) < SCLS_MATH_TOLERANCE) {
-                    // Same constant horizontal
-                    to_return.crossed = true;
-                    to_return.crossing_x = third_point_y;
-                    to_return.same_lines = true;
-                }
-            }
-            else if(abs(base_y) < SCLS_MATH_TOLERANCE) {
-                // Constant horizontal line
-                to_return.crossed = true;
-                // Get the carthesian coordonates
-                double current_a_part = current_base_y;
-                double current_b_part = -current_base_x;
-                double current_c_part = -(current_a_part * third_point_x + current_b_part * third_point_y);
-                to_return.crossing_x = ((current_b_part * first_point_y) + current_c_part) / (-current_a_part);
-                to_return.crossing_y = first_point_y;
-            }
-            else if(abs(current_base_x) < SCLS_MATH_TOLERANCE) {
-                if(base_x != 0) {
-                    // Constant vertical
-                    to_return.crossed = true;
-                    to_return.crossing_x = third_point_x;
-                    to_return.crossing_y = ((a_part * third_point_x) + c_part) / (-b_part);
-                }
-                else if(abs(first_point_x - third_point_x) < SCLS_MATH_TOLERANCE) {
-                    // Same constant vertical
-                    to_return.crossed = true;
-                    to_return.crossing_x = third_point_x;
-                    to_return.same_lines = true;
-                }
-            }
-            else if(abs(base_x) < SCLS_MATH_TOLERANCE) {
-                // Constant vertical line
-                to_return.crossed = true;
-                // Get the carthesian coordonates
-                double current_a_part = current_base_y;
-                double current_b_part = -current_base_x;
-                double current_c_part = -(current_a_part * third_point_x + current_b_part * third_point_y);
-                to_return.crossing_x = first_point_x;
-                to_return.crossing_y = ((current_a_part * first_point_x) + current_c_part) / (-current_b_part);
-            }
-            else if(current_line_ratio != line_ratio) {
-                to_return.crossed = true;
-                // Get the carthesian coordonates
-                double current_a_part = current_base_y;
-                double current_b_part = -current_base_x;
-                double current_c_part = -(current_a_part * third_point_x + current_b_part * third_point_y);
-                // Resolve the equation for the intersection point
-                to_return.crossing_y = (-current_a_part * c_part) + (a_part * current_c_part);
-                to_return.crossing_y /= (current_a_part * b_part) - (a_part * current_b_part);
-            }
-
-            return to_return;
-        };
-        static __Crossing_Datas __check_crossing(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point) {return __check_crossing(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z());};
+        inline Crossing_Datas __check_crossing(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point) {return scls::check_crossing(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z());};
         // Returns the datas point of two crossing segments
-        struct __Crossing_Datas_Segment {bool crossed_in_segment = false;__Crossing_Datas crossing_datas;};
-        static __Crossing_Datas_Segment __check_crossing_segment(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {
-            // Get Y about the first segment
-            double min_y = second_point_y; double max_y = first_point_y;
-            if(min_y > max_y) {min_y = first_point_y; max_y = second_point_y;}
-            // Get X about the first segment
-            double min_x = second_point_x; double max_x = first_point_x;
-            if(min_x > max_x) {min_x = first_point_x; max_x = second_point_x;}
-
-            // Get Y about the second segment
-            double current_min_y = fourth_point_y; double current_max_y = third_point_y;
-            if(current_min_y > current_max_y) {current_min_y = third_point_y; current_max_y = fourth_point_y;}
-            // Get X about the second segment
-            double current_min_x = fourth_point_x; double current_max_x = third_point_x;
-            if(current_min_x > current_max_x) {current_min_x = third_point_x; current_max_x = fourth_point_x;}
-
-            // Get the crossing datas
-            __Crossing_Datas_Segment datas;
-            datas.crossing_datas = __check_crossing(first_point_x, first_point_y, second_point_x, second_point_y, third_point_x, third_point_y, fourth_point_x, fourth_point_y);
-            bool on_first_segment = false;
-            bool on_second_segment = false;
-            // Check the segments
-            if(datas.crossing_datas.crossed) {
-                if(current_max_y - current_min_y < SCLS_MATH_TOLERANCE && max_y - min_y < SCLS_MATH_TOLERANCE) {
-                    // Two horizontal lines
-                    if(datas.crossing_datas.crossing_x - current_min_x >= 0 && current_max_x - datas.crossing_datas.crossing_x >= 0) on_first_segment = true;
-                    if(datas.crossing_datas.crossing_x - min_x >= 0 && max_x - datas.crossing_datas.crossing_x >= 0) on_second_segment = true;
-                }
-                else if(current_max_y - current_min_y < SCLS_MATH_TOLERANCE) {
-                    // Horizontal lines
-                    if(datas.crossing_datas.crossing_x - current_min_x >= 0 && current_max_x - datas.crossing_datas.crossing_x >= 0) on_first_segment = true;
-                    if(datas.crossing_datas.crossing_y - min_y >= 0 && max_y - datas.crossing_datas.crossing_y >= 0) on_second_segment = true;
-                }
-                else if(max_y - min_y < SCLS_MATH_TOLERANCE) {
-                    // Horizontal lines
-                    if(datas.crossing_datas.crossing_y - current_min_y >= 0 && current_max_y - datas.crossing_datas.crossing_y >= 0) on_first_segment = true;
-                    if(datas.crossing_datas.crossing_x - min_x >= 0 && max_x - datas.crossing_datas.crossing_x >= 0) on_second_segment = true;
-                }
-                else {
-                    // No horizontal lines
-                    if(datas.crossing_datas.crossing_y - current_min_y >= 0 && current_max_y - datas.crossing_datas.crossing_y >= 0) on_first_segment = true;
-                    if(datas.crossing_datas.crossing_y - min_y >= 0 && max_y - datas.crossing_datas.crossing_y >= 0) on_second_segment = true;
-                }
-            }
-
-            datas.crossed_in_segment = (on_first_segment || !check_third_and_fourth_point) && (on_second_segment || !check_first_and_second_point);
-            return datas;
-        };
-        static __Crossing_Datas_Segment __check_crossing_segment(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {return __check_crossing_segment(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z(), check_first_and_second_point, check_third_and_fourth_point);};
-        static __Crossing_Datas_Segment __check_crossing_segment(const std::shared_ptr<Point>& first_point, const std::shared_ptr<Point>& second_point, const std::shared_ptr<Point>& third_point, const std::shared_ptr<Point>& fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {return __check_crossing_segment(first_point.get(), second_point.get(), third_point.get(), fourth_point.get(), check_first_and_second_point, check_third_and_fourth_point);};
+        inline Crossing_Datas_Segment __check_crossing_segment(const Point* first_point, const Point* second_point, const Point* third_point, const Point* fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {return scls::check_crossing_segment(first_point->x(), first_point->z(), second_point->x(), second_point->z(), third_point->x(), third_point->z(), fourth_point->x(), fourth_point->z(), check_first_and_second_point, check_third_and_fourth_point);};
+        inline Crossing_Datas_Segment __check_crossing_segment(const std::shared_ptr<Point>& first_point, const std::shared_ptr<Point>& second_point, const std::shared_ptr<Point>& third_point, const std::shared_ptr<Point>& fourth_point, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true) {return __check_crossing_segment(first_point.get(), second_point.get(), third_point.get(), fourth_point.get(), check_first_and_second_point, check_third_and_fourth_point);};
         // Returns if a point is in a set of point
         static bool __check_shape_content(const std::vector<std::shared_ptr<Point>>& points, double point_to_test_x, double point_to_test_y, bool last_point_is_first_point = true) {
             // Check each sides
-            __Crossing_Datas_Segment datas;
+            Crossing_Datas_Segment datas;
             unsigned int top_collision = 0;
             for(int i = 0;i<static_cast<int>(points.size() - 1);i++) {
-                datas = __check_crossing_segment(point_to_test_x, point_to_test_y, point_to_test_x, point_to_test_y + 1.0, points.at(i).get()->x(), points.at(i).get()->z(), points.at(i + 1).get()->x(), points.at(i + 1).get()->z(), false, true);
+                datas = scls::check_crossing_segment(point_to_test_x, point_to_test_y, point_to_test_x, point_to_test_y + 1.0, points.at(i).get()->x(), points.at(i).get()->z(), points.at(i + 1).get()->x(), points.at(i + 1).get()->z(), false, true);
                 if(datas.crossed_in_segment) {
                     if(datas.crossing_datas.crossing_y >= point_to_test_y) top_collision++;
                 }
             }
             // Check the last border
             if(last_point_is_first_point && static_cast<int>(points.size()) > 1) {
-                datas = __check_crossing_segment(point_to_test_x, point_to_test_y, point_to_test_x, point_to_test_y + 1.0, points[points.size() - 1].get()->x(), points[points.size() - 1].get()->z(), points[0].get()->x(), points[0].get()->z(), false, true);
+                datas = scls::check_crossing_segment(point_to_test_x, point_to_test_y, point_to_test_x, point_to_test_y + 1.0, points[points.size() - 1].get()->x(), points[points.size() - 1].get()->z(), points[0].get()->x(), points[0].get()->z(), false, true);
                 if(datas.crossed_in_segment) {
                     if(datas.crossing_datas.crossing_y >= point_to_test_y) top_collision++;
                 }
@@ -389,7 +260,7 @@ namespace scls {
         // Check if two triangles are opposed to their sharing side or not
         static bool __check_triangle_opposed(const Point* first_point, const Point* second_point, const Point* first_top, const Point* second_top) {
             // Get the crossing datas
-            __Crossing_Datas_Segment datas = __check_crossing_segment(first_point, second_point, first_top, second_top, true, false);
+            Crossing_Datas_Segment datas = __check_crossing_segment(first_point, second_point, first_top, second_top, true, false);
             return datas.crossed_in_segment;
         };
         static bool __check_triangle_opposed(const std::shared_ptr<Point>& first_point, const std::shared_ptr<Point>& second_point, const std::shared_ptr<Point>& third_point, const std::shared_ptr<Point>& fourth_point) {return __check_triangle_opposed(first_point.get(), second_point.get(), third_point.get(), fourth_point.get());};
@@ -406,7 +277,7 @@ namespace scls {
                 // The points does not belong to the boundary
                 else {
                     // Check each sides with carthesian coordonates
-                    __Crossing_Datas_Segment datas = __check_crossing_segment(first_point.get(), second_point.get(), points.at(i).get(), points.at(i + 1).get());
+                    Crossing_Datas_Segment datas = __check_crossing_segment(first_point.get(), second_point.get(), points.at(i).get(), points.at(i + 1).get());
                     if(datas.crossed_in_segment) return true;
                 }
             }
