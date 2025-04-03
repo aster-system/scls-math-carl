@@ -86,7 +86,9 @@ namespace scls {
         inline Fraction inverse() const {return Fraction(a_denominator, a_numerator);};
         // Normalize the fraction
         void normalize();
+        inline void normalize(int limit){if(std::abs(a_denominator) > std::pow(10, limit) && std::abs(a_numerator) > std::pow(10, limit)){int value = std::ceil(std::log10(std::max(std::abs(a_denominator), std::abs(a_numerator)))) - limit;a_denominator/=std::pow(10, value);a_numerator/=std::pow(10, value);}};
         inline Fraction normalized()const{Fraction other=*this;other.normalize();return other;};
+        inline Fraction normalized(int limit)const{Fraction other=*this;other.normalize(limit);return other;};
         // Sets this fraction as a double
         inline void set_from_double(double result) {Fraction new_value = from_double(result);a_denominator = new_value.a_denominator;a_numerator = new_value.a_numerator;};
         // Returns the fraction in int
