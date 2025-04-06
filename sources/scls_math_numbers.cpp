@@ -58,10 +58,9 @@ namespace scls {
         else{return Fraction(std::stoi(cutted[0]), std::stoi(cutted[1]));}
     };
     // Normalize the fraction
-    int __normalize_limit = 1000000000;
-    void Fraction::normalize() {
-        if(a_normalized || (a_denominator < __normalize_limit && a_numerator < __normalize_limit)){return;}
-
+    int __normalize_limit = 0;
+    void Fraction::__normalize() {if(a_normalized || (std::abs(a_denominator) < __normalize_limit && std::abs(a_numerator) < __normalize_limit)){return;}normalize_force();};
+    void Fraction::normalize_force() {
         const long long base_denominator = a_denominator; const long long base_numerator = a_numerator;
         if(a_denominator < 0) a_denominator = -a_denominator;
         if(a_numerator < 0) a_numerator = -a_numerator;

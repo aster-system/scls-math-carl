@@ -46,6 +46,8 @@
 #define SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION 1000000.0
 #endif // SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION
 
+#define SCLS_MATH_NUMBER_NORMALIZE_VALUE 8
+
 //*********
 //
 // The Rational part
@@ -85,8 +87,10 @@ namespace scls {
         // Returns the inverse of the fraction
         inline Fraction inverse() const {return Fraction(a_denominator, a_numerator);};
         // Normalize the fraction
-        void normalize();
-        inline void normalize(int limit){if(std::abs(a_denominator) > std::pow(10, limit) && std::abs(a_numerator) > std::pow(10, limit)){int value = std::ceil(std::log10(std::max(std::abs(a_denominator), std::abs(a_numerator)))) - limit;a_denominator/=std::pow(10, value);a_numerator/=std::pow(10, value);}};
+        void normalize_force();
+        void __normalize();
+        inline void normalize(){if(SCLS_MATH_NUMBER_NORMALIZE_VALUE > 0){normalize(SCLS_MATH_NUMBER_NORMALIZE_VALUE);}else{__normalize();}};
+        inline void normalize(int limit){if(std::abs(a_denominator) > std::pow(10, limit) && std::abs(a_numerator) > std::pow(10, limit)){int value = std::ceil(std::log10(std::max(std::abs(a_denominator), std::abs(a_numerator)))) - limit;a_denominator/=std::pow(10, value);a_numerator/=std::pow(10, value);}normalize_force();};
         inline Fraction normalized()const{Fraction other=*this;other.normalize();return other;};
         inline Fraction normalized(int limit)const{Fraction other=*this;other.normalize(limit);return other;};
         // Sets this fraction as a double
@@ -129,7 +133,7 @@ namespace scls {
         inline bool _equal(int obj) const {return a_numerator == obj && a_denominator == 1;};
 
         // Multiplies the fraction with an another Fraction
-        inline void _multiply(Fraction obj) { a_numerator *= obj.a_numerator; a_denominator *= obj.a_denominator; a_normalized = false; };
+        void _multiply(Fraction obj) { a_numerator *= obj.a_numerator; a_denominator *= obj.a_denominator; a_normalized = false; };
         inline Fraction _multiply_without_modification(Fraction obj) const { return Fraction(a_numerator * obj.a_numerator, a_denominator * obj.a_denominator); };
         inline Fraction _multiply_without_modification(double obj) const { return Fraction(a_numerator * obj, a_denominator); };
         inline Fraction _multiply_without_modification(int obj) const { return Fraction(a_numerator * obj, a_denominator); };
