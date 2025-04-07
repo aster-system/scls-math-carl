@@ -518,6 +518,8 @@ namespace scls {
         // Returns if the formula is a simple monomonial / polymonial or not
         inline bool is_simple_monomonial() const {return is_simple_polymonial() && added_element().monomonials_number() <= 1;};
         inline bool is_simple_polymonial() const {return is_basic() && a_denominator.get() == 0 && a_exponent.get() == 0 && a_formulas_add.size() <= 0;};
+        // Returns the numerator value
+        inline __Formula_Base numerator_value() const {__Formula_Base to_return = *this;to_return.clear_applied_function();to_return.clear_denominator();return to_return;};
 
         // Converts the formula to field of another object
         template <typename E>
@@ -614,6 +616,7 @@ namespace scls {
         template<typename T = __Formula_Base_Function> inline T* applied_function() const {return a_applied_function.get();};
         template<typename T = __Formula_Base_Function> inline std::shared_ptr<T> applied_function_shared_ptr() const {return a_applied_function;};
         inline void clear_applied_function(){a_applied_function.reset();};
+        inline void clear_denominator(){a_denominator.reset();};
         inline __Formula_Base* denominator() const {return a_denominator.get();};
         template<typename T> inline void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;if(a_applied_function.get()!=0){std::shared_ptr<__Formula_Base>f=a_applied_function.get()->simplify(this);if(f.get()!=0){paste(f.get());}}};
         template<typename T> inline void set_applied_function() {set_applied_function(std::make_shared<T>());};

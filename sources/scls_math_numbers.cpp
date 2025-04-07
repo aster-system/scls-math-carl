@@ -43,7 +43,7 @@ namespace scls {
     //*********
 
     // Returns a fraction from a double
-    Fraction Fraction::from_double(double result) {
+    __Fraction_Base __Fraction_Base::from_double(double result) {
         long long result_in_long = static_cast<long long>(result);
         double after_decimal_point = static_cast<double>(result - static_cast<double>(result_in_long));
         if(after_decimal_point == 0){return Fraction(result_in_long, 1);}
@@ -51,7 +51,7 @@ namespace scls {
         return Fraction(result_in_long, 1) + Fraction(after_decimal_point_in_long, 100000);
     };
     // Returns a fraction from a std::string
-    Fraction Fraction::from_std_string(std::string content) {
+    __Fraction_Base __Fraction_Base::from_std_string(std::string content) {
         std::vector<std::string> cutted = cut_string(content, "/");
         if(cutted.size() <= 0) return Fraction(0);
         else if(cutted.size() == 1) {if(cutted[0]=="-")return Fraction(-1);return Fraction(std::stoi(cutted[0]));}
@@ -59,8 +59,8 @@ namespace scls {
     };
     // Normalize the fraction
     int __normalize_limit = 0;
-    void Fraction::__normalize() {if(a_normalized || (std::abs(a_denominator) < __normalize_limit && std::abs(a_numerator) < __normalize_limit)){return;}normalize_force();};
-    void Fraction::normalize_force() {
+    void __Fraction_Base::__normalize() {if(a_normalized || (std::abs(a_denominator) < __normalize_limit && std::abs(a_numerator) < __normalize_limit)){return;}normalize_force();};
+    void __Fraction_Base::normalize_force() {
         const long long base_denominator = a_denominator; const long long base_numerator = a_numerator;
         if(a_denominator < 0) a_denominator = -a_denominator;
         if(a_numerator < 0) a_numerator = -a_numerator;
@@ -92,7 +92,7 @@ namespace scls {
 
     // Function to do operations with fractions
     // Adds an another Fraction to this fraction
-    void Fraction::_add(Fraction obj) {
+    void __Fraction_Base::_add(__Fraction_Base obj) {
         long long first_numerator = obj.a_numerator * a_denominator;
         long long second_numerator = a_numerator * obj.a_denominator;
         a_denominator = obj.a_denominator * a_denominator;
@@ -101,7 +101,7 @@ namespace scls {
         normalize();
     };
     // Returns the adding of this fraction and another function
-    Fraction Fraction::_add_without_modification(Fraction obj) const {
+    __Fraction_Base __Fraction_Base::_add_without_modification(__Fraction_Base obj) const {
         long long first_numerator = obj.a_numerator * a_denominator;
         long long second_numerator = a_numerator * obj.a_denominator;
         long long denominateur = obj.a_denominator * a_denominator;
@@ -110,7 +110,7 @@ namespace scls {
         return new_fraction;
     };
     // Substracts an another Fraction to this fraction
-    void Fraction::_substract(Fraction obj) {
+    void __Fraction_Base::_substract(__Fraction_Base obj) {
         long long first_numerator = obj.a_numerator * a_denominator;
         long long second_numerator = a_numerator * obj.a_denominator;
         a_denominator = obj.a_denominator * a_denominator;
@@ -119,21 +119,23 @@ namespace scls {
         normalize();
     };
     // Returns the substracting of this fraction and another function
-    Fraction Fraction::_substract_without_modification(Fraction obj) const {
+    __Fraction_Base __Fraction_Base::_substract_without_modification(__Fraction_Base obj) const {
         long long first_numerator = obj.a_numerator * a_denominator;
         long long second_numerator = a_numerator * obj.a_denominator;
         long long denominateur = obj.a_denominator * a_denominator;
 
-        Fraction new_fraction = Fraction(second_numerator - first_numerator, denominateur);
+        __Fraction_Base new_fraction = Fraction(second_numerator - first_numerator, denominateur);
         return new_fraction;
     };
 
 	// Multiplication operator
+    __Fraction_Base operator*(int obj_1, __Fraction_Base obj){return obj._multiply_without_modification(obj_1);}
     Fraction operator*(int obj_1, Fraction obj){return obj._multiply_without_modification(obj_1);}
     // Minus operator
-    Fraction operator-(int obj_1, Fraction obj){return scls::Fraction(obj_1)._substract_without_modification(obj);}
+    __Fraction_Base operator-(int obj_1, __Fraction_Base obj){return __Fraction_Base(obj_1)._substract_without_modification(obj);}
+    Fraction operator-(int obj_1, Fraction obj){return Fraction(obj_1)._substract_without_modification(obj);}
 	// Stream operator overloading (indev)
-    std::ostream& operator<<(std::ostream& os, const Fraction& obj){ os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; }
+    std::ostream& operator<<(std::ostream& os, const __Fraction_Base& obj){ os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; }
 }
 
 //*********

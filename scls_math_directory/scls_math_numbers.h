@@ -63,38 +63,38 @@ namespace scls {
     //
     //*********
 
-    class Fraction {
-	    // Class representating a fraction
+    class __Fraction_Base {
+	    // Class representating the base of a fraction
     public:
         //*********
         //
-        // Fraction simple methods
+        // __Fraction_Base simple methods
         //
         //*********
 
         // Most simple fraction constructor
-        Fraction(double real){if(real == round(real)){a_numerator=real;}else{a_numerator=real*SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;a_denominator=SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;normalize();}};
-        Fraction():Fraction(0){};
+        __Fraction_Base(double real){if(real == round(real)){a_numerator=real;}else{a_numerator=real*SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;a_denominator=SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION;normalize();}};
+        __Fraction_Base():__Fraction_Base(0){};
         // Simple fraction constructor
-        Fraction(long long numerator, long long denominator) : a_denominator(denominator), a_numerator(numerator) {if(a_denominator!=1&&a_numerator!=1){normalize();}}
+        __Fraction_Base(long long numerator, long long denominator) : a_denominator(denominator), a_numerator(numerator) {if(a_denominator!=1&&a_numerator!=1){normalize();}}
         // Fraction copy constructor
-        Fraction(const Fraction& to_copy) : a_denominator(to_copy.a_denominator), a_normalized(to_copy.a_normalized), a_numerator(to_copy.a_numerator) {normalize();};
+        __Fraction_Base(const __Fraction_Base& to_copy) : a_denominator(to_copy.a_denominator), a_normalized(to_copy.a_normalized), a_numerator(to_copy.a_numerator) {normalize();};
 
         // Returns a fraction from a double
-        static Fraction from_double(double result);
+        static __Fraction_Base from_double(double result);
         // Returns a fraction from a std::string
-        static Fraction from_std_string(std::string content);
+        static __Fraction_Base from_std_string(std::string content);
         // Returns the inverse of the fraction
-        inline Fraction inverse() const {return Fraction(a_denominator, a_numerator);};
+        inline __Fraction_Base inverse() const {return __Fraction_Base(a_denominator, a_numerator);};
         // Normalize the fraction
         void normalize_force();
         void __normalize();
         inline void normalize(){if(SCLS_MATH_NUMBER_NORMALIZE_VALUE > 0){normalize(SCLS_MATH_NUMBER_NORMALIZE_VALUE);}else{__normalize();}};
         inline void normalize(int limit){if(std::abs(a_denominator) > std::pow(10, limit) && std::abs(a_numerator) > std::pow(10, limit)){int value = std::ceil(std::log10(std::max(std::abs(a_denominator), std::abs(a_numerator)))) - limit;a_denominator/=std::pow(10, value);a_numerator/=std::pow(10, value);}normalize_force();};
-        inline Fraction normalized()const{Fraction other=*this;other.normalize();return other;};
-        inline Fraction normalized(int limit)const{Fraction other=*this;other.normalize(limit);return other;};
+        inline __Fraction_Base normalized()const{__Fraction_Base other=*this;other.normalize();return other;};
+        inline __Fraction_Base normalized(int limit)const{__Fraction_Base other=*this;other.normalize(limit);return other;};
         // Sets this fraction as a double
-        inline void set_from_double(double result) {Fraction new_value = from_double(result);a_denominator = new_value.a_denominator;a_numerator = new_value.a_numerator;};
+        inline void set_from_double(double result) {__Fraction_Base new_value = from_double(result);a_denominator = new_value.a_denominator;a_numerator = new_value.a_numerator;};
         // Returns the fraction in int
         inline long long to_int() const {if(a_denominator == 0) return 0; return a_numerator / a_denominator;};
         // Returns the fraction in double
@@ -121,61 +121,56 @@ namespace scls {
 
         // Function to do operations with fractions
         // Adds an another Fraction to this fraction
-        void _add(Fraction obj);
-        Fraction _add_without_modification(Fraction obj) const;
+        void _add(__Fraction_Base obj);
+        __Fraction_Base _add_without_modification(__Fraction_Base obj) const;
 
         // Divides the fraction with an another fraction
-        inline void _divide(Fraction obj) { _multiply(Fraction(obj.a_denominator, obj.a_numerator)); a_normalized = false;};
-        inline Fraction _divide_without_modification(Fraction obj) const { return _multiply_without_modification(Fraction(obj.a_denominator, obj.a_numerator)); };
+        inline void _divide(__Fraction_Base obj) { _multiply(__Fraction_Base(obj.a_denominator, obj.a_numerator)); a_normalized = false;};
+        inline __Fraction_Base _divide_without_modification(__Fraction_Base obj) const { return _multiply_without_modification(__Fraction_Base(obj.a_denominator, obj.a_numerator)); };
 
         // Returns if this fraction is equal to another
-        inline bool _equal(Fraction obj) const {return obj.a_numerator * a_denominator == a_numerator * obj.a_denominator;};
+        inline bool _equal(__Fraction_Base obj) const {return obj.a_numerator * a_denominator == a_numerator * obj.a_denominator;};
         inline bool _equal(int obj) const {return a_numerator == obj && a_denominator == 1;};
 
         // Multiplies the fraction with an another Fraction
-        void _multiply(Fraction obj) { a_numerator *= obj.a_numerator; a_denominator *= obj.a_denominator; a_normalized = false; };
-        inline Fraction _multiply_without_modification(Fraction obj) const { return Fraction(a_numerator * obj.a_numerator, a_denominator * obj.a_denominator); };
-        inline Fraction _multiply_without_modification(double obj) const { return Fraction(a_numerator * obj, a_denominator); };
-        inline Fraction _multiply_without_modification(int obj) const { return Fraction(a_numerator * obj, a_denominator); };
-        inline Fraction _multiply_without_modification(unsigned int obj) const { return Fraction(a_numerator * obj, a_denominator); };
+        void _multiply(__Fraction_Base obj) { a_numerator *= obj.a_numerator; a_denominator *= obj.a_denominator; a_normalized = false; };
+        inline __Fraction_Base _multiply_without_modification(__Fraction_Base obj) const { return __Fraction_Base(a_numerator * obj.a_numerator, a_denominator * obj.a_denominator); };
+        inline __Fraction_Base _multiply_without_modification(double obj) const { return __Fraction_Base(a_numerator * obj, a_denominator); };
+        inline __Fraction_Base _multiply_without_modification(int obj) const { return __Fraction_Base(a_numerator * obj, a_denominator); };
+        inline __Fraction_Base _multiply_without_modification(unsigned int obj) const { return __Fraction_Base(a_numerator * obj, a_denominator); };
 
         // Substracts an another Fraction to this fraction
-        void _substract(Fraction obj);
-        Fraction _substract_without_modification(Fraction obj) const;
+        void _substract(__Fraction_Base obj);
+        __Fraction_Base _substract_without_modification(__Fraction_Base obj) const;
         // Returns the square root of the fraction
-        inline Fraction sqrt() {return Fraction(std::sqrt(numerator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION, std::sqrt(denominator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION);};
+        inline __Fraction_Base sqrt() {return __Fraction_Base(std::sqrt(numerator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION, std::sqrt(denominator()) * SCLS_MATH_NUMBER_DOUBLE_TO_FRACTION);};
 
         // Operator overloading with fractions
         // Decrement operator
-        Fraction& operator--(int) { _substract(Fraction(1, 1)); return *this; }
+        __Fraction_Base& operator--(int) { _substract(__Fraction_Base(1, 1)); return *this; }
         // Divisor operator
-        Fraction operator/(Fraction obj) const { return _divide_without_modification(obj); };
+        __Fraction_Base operator/(__Fraction_Base obj) const { return _divide_without_modification(obj); };
         // Divisor operator assignment
-        Fraction& operator/=(Fraction obj) { _divide(obj); return *this; };
+        __Fraction_Base& operator/=(__Fraction_Base obj) { _divide(obj); return *this; };
         // Equality operator
-        bool operator==(Fraction obj) const { return _equal(obj); }
+        bool operator==(__Fraction_Base obj) const { return _equal(obj); }
         // Greater or equal than than operator
-        bool operator>=(Fraction r) const { return _equal(r) || to_double() > r.to_double(); }
+        bool operator>=(__Fraction_Base r) const { return _equal(r) || to_double() > r.to_double(); }
         // Greater than than operator
-        bool operator>(Fraction r) const { return to_double() > r.to_double(); }
+        bool operator>(__Fraction_Base r) const { return to_double() > r.to_double(); }
         // Increment operator
-        Fraction& operator++(int) { _add(Fraction(1, 1)); return *this; }
+        __Fraction_Base& operator++(int) { _add(__Fraction_Base(1, 1)); return *this; }
         // Lesser than than operator
-        bool operator<(Fraction r) const { return to_double() < r.to_double(); }
+        bool operator<(__Fraction_Base r) const { return to_double() < r.to_double(); }
         // Lesser or equal than than operator
-        bool operator<=(Fraction r) const { return _equal(r) || to_double() < r.to_double(); }
-        // Minus operator
-        Fraction operator-(Fraction obj) const { return _substract_without_modification(obj); };
-        // Minus operator assignment
-        Fraction& operator-=(Fraction obj) { _substract(obj); return *this; }
-        // Multiplciation operator
-        Fraction operator*(Fraction obj) const { return _multiply_without_modification(obj); };
-        // Multiplication operator assignment
-        Fraction& operator*=(Fraction obj) { _multiply(obj); return *this; };
-        // Plus operator
-        Fraction operator+(Fraction obj) const { return _add_without_modification(obj); };
-        // Plus operator assignment
-        Fraction& operator+=(Fraction obj) { _add(obj); return *this; }
+        bool operator<=(__Fraction_Base r) const { return _equal(r) || to_double() < r.to_double(); }
+        // Arithmetic operator
+        __Fraction_Base operator-(__Fraction_Base obj) const { return _substract_without_modification(obj); };
+        __Fraction_Base& operator-=(__Fraction_Base obj) { _substract(obj); return *this; }
+        __Fraction_Base operator*(__Fraction_Base obj) const { return _multiply_without_modification(obj); };
+        __Fraction_Base& operator*=(__Fraction_Base obj) { _multiply(obj); return *this; };
+        __Fraction_Base operator+(__Fraction_Base obj) const { return _add_without_modification(obj); };
+        __Fraction_Base& operator+=(__Fraction_Base obj) { _add(obj); return *this; }
     private:
         //*********
         //
@@ -192,9 +187,37 @@ namespace scls {
 
 	};
 
-	// Multiplciation operator
+    class Fraction : public __Fraction_Base {
+	    // Class representating a precise (but slow and unstable) fraction
+    public:
+        //*********
+        //
+        // Fraction simple methods
+        //
+        //*********
+
+        // Most simple fraction constructor
+        Fraction(double real):__Fraction_Base(real){};
+        Fraction():__Fraction_Base(0){};
+        // Simple fraction constructor
+        Fraction(long long numerator, long long denominator) : __Fraction_Base(numerator, denominator) {}
+        // Fraction copy constructor
+        Fraction(const __Fraction_Base& to_copy) : __Fraction_Base(to_copy) {};
+
+        // Arithmetic operator
+        Fraction operator-(__Fraction_Base obj) const { return _substract_without_modification(obj); };
+        Fraction& operator-=(__Fraction_Base obj) { _substract(obj); return *this; }
+        Fraction operator*(__Fraction_Base obj) const { return _multiply_without_modification(obj); };
+        Fraction& operator*=(__Fraction_Base obj) { _multiply(obj); return *this; };
+        Fraction operator+(__Fraction_Base obj) const { return _add_without_modification(obj); };
+        Fraction& operator+=(__Fraction_Base obj) { _add(obj); return *this; }
+	};
+
+	// Multiplication operator
+    __Fraction_Base operator*(int obj_1, __Fraction_Base obj);
     Fraction operator*(int obj_1, Fraction obj);
     // Minus operator
+    __Fraction_Base operator-(int obj_1, __Fraction_Base obj);
     Fraction operator-(int obj_1, Fraction obj);
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const Fraction& obj);

@@ -528,7 +528,8 @@ namespace scls {
             final_formula = new_value;
             for(int i = 1;i<needed_exponent;i++) {final_formula *= new_value;}
             final_formula *= used_monomonial;
-        } else {final_formula = used_monomonial;}
+        }
+        else {final_formula = used_monomonial;}
 
         return final_formula;
     };
@@ -578,7 +579,7 @@ namespace scls {
     scls::Complex __Formula_Base::__Formula_Factor::value(scls::Fraction current_value){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(factors.size());i++){to_return*=factors.at(i).get()->value(current_value);}return to_return;}
     scls::Complex __Formula_Base::value(scls::Fraction current_value) {
         // Get the needed datas
-        __Formula_Base::Formula current_formula = internal_value();
+        __Formula_Base::Formula current_formula = numerator_value();
         std::vector<std::string> unknowns = all_unknowns();
 
         // Get the needed value
