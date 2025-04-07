@@ -275,8 +275,7 @@ namespace scls {
 	//
 	//*********
 
-	template <typename E>
-	class Field {
+	template <typename E> class Field {
         // Class representating a mathematical element field
     public:
         // Field constructor
@@ -476,6 +475,8 @@ namespace scls {
 
                 // Definition set of the function
                 virtual Set_Number definition_set() = 0;
+                // Derivate value
+                virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula) = 0;
                 // Real value
                 virtual double real_value(__Formula_Base* formula) = 0;
                 // Simplify a value with the function
@@ -587,6 +588,7 @@ namespace scls {
         // Operators
         // With int
         bool operator==(int value) {return __is_equal(value);};
+        __Formula_Base operator*(int value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
         // With fractions
         bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
@@ -680,32 +682,13 @@ namespace scls {
             std::shared_ptr<__Formula_Base> a_formula;
         };
 
-        // Returns all the unknowns in the formula
-        std::vector<std::string> all_unknowns();
-        // Returns a formula from a monomonial where the unknows has been replaced
-        static Formula formula_from_modified_monomonial_unknows(__Monomonial used_monomonial, std::string unknown, __Formula_Base new_value);
-        // Returns a formula from a polymonial where the unknows has been replaced
-        static Formula formula_from_modified_polymonial_unknows(Polymonial used_polymonial, std::string unknown, __Formula_Base new_value);
-        // Returns a monomonial where an unkown is replaced by an another unknown
-        Formula replace_unknown(std::string unknown, __Formula_Base new_value) const;
-        Formula replace_unknown(std::string unknown, Formula new_value) const;
-        // Returns the final value of the formula
-        scls::Complex value(scls::Fraction current_value);
-        inline scls::Fraction value_to_fraction(scls::Fraction current_value){return value(current_value).real();};
-        inline scls::Fraction value_to_fraction(){return value(1).real();};
-        inline double value_to_double(scls::Fraction current_value){return value(current_value).real().to_double();};
-        inline double value_to_double(){return value(1).real().to_double();};
-
-    private:
-        // Each parts of the formula are in order
-
         // Factor of formulas
-        struct __Formula_Factor{
+        struct Formula_Factor{
             // Constructors
-            __Formula_Factor(){};
-            __Formula_Factor(std::shared_ptr<__Formula_Base> base){factors.push_back(base);};
-            __Formula_Factor(__Formula_Base base):__Formula_Factor(std::make_shared<__Formula_Base>(base)){};
-            __Formula_Factor(const __Formula_Factor& formula_factor_copy):factors(formula_factor_copy.factors){};
+            Formula_Factor(){};
+            Formula_Factor(std::shared_ptr<__Formula_Base> base){factors.push_back(base);};
+            Formula_Factor(__Formula_Base base):Formula_Factor(std::make_shared<__Formula_Base>(base)){};
+            Formula_Factor(const Formula_Factor& formula_factor_copy):factors(formula_factor_copy.factors){};
 
             // Returns the formula factor to a MathML
             std::string to_mathml() const;
@@ -724,7 +707,7 @@ namespace scls {
             inline void __multiply(Polymonial value) {basic_formula()->__multiply(value);};
             void __multiply(__Formula_Base value){factors.push_back(std::make_shared<__Formula_Base>(value));};
 
-            // Returns a __Formula_Factor where an unkown is replaced by an another unknown
+            // Returns a Formula_Factor where an unkown is replaced by an another unknown
             Formula replace_unknown(std::string unknown, __Formula_Base new_value) const;
             // Returns the final value of the formula
             scls::Complex value(scls::Fraction current_value);
@@ -733,8 +716,30 @@ namespace scls {
             std::vector<std::shared_ptr<__Formula_Base>> factors;
         };
 
+        // Returns all the unknowns in the formula
+        std::vector<std::string> all_unknowns();
+        // Returns a formula from a monomonial where the unknows has been replaced
+        static Formula formula_from_modified_monomonial_unknows(__Monomonial used_monomonial, std::string unknown, __Formula_Base new_value);
+        // Returns a formula from a polymonial where the unknows has been replaced
+        static Formula formula_from_modified_polymonial_unknows(Polymonial used_polymonial, std::string unknown, __Formula_Base new_value);
+        // Returns a monomonial where an unkown is replaced by an another unknown
+        Formula replace_unknown(std::string unknown, __Formula_Base new_value) const;
+        Formula replace_unknown(std::string unknown, Formula new_value) const;
+        // Returns the final value of the formula
+        scls::Complex value(scls::Fraction current_value);
+        inline scls::Fraction value_to_fraction(scls::Fraction current_value){return value(current_value).real();};
+        inline scls::Fraction value_to_fraction(){return value(1).real();};
+        inline double value_to_double(scls::Fraction current_value){return value(current_value).real().to_double();};
+        inline double value_to_double(){return value(1).real().to_double();};
+
+        // Getters and setters
+        inline std::vector<Formula_Factor>& formulas_add(){return a_formulas_add;};
+
+    private:
+        // Each parts of the formula are in order
+
         // Attached add polymonials (factorized)
-        std::vector<__Formula_Factor> a_formulas_add;
+        std::vector<Formula_Factor> a_formulas_add;
         // Division of the formula
         std::shared_ptr<__Formula_Base> a_denominator;
         // Exponent of the formula
@@ -751,6 +756,8 @@ namespace scls {
 
             // Definition set of the function
             virtual Set_Number definition_set() {Set_Number real = Set_Number();real.set_real();return real;};
+            // Derivate value
+            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){return std::make_shared<__Formula_Base>(formula);};
             // Real value
             virtual double real_value(__Formula_Base* formula){double value = formula->value_to_double();return std::exp(value);};
             // Simplify a value with the function
@@ -765,6 +772,8 @@ namespace scls {
 
             // Definition set of the function
             virtual Set_Number definition_set() {Set_Number real = Set_Number();real.set_real();return real;};
+            // Derivate value
+            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){formula.clear_applied_function();std::shared_ptr<__Formula_Base> to_return=std::make_shared<__Formula_Base>(1);to_return.get()->__divide(formula);return to_return;};
             // Real value
             virtual double real_value(__Formula_Base* formula){double value = formula->value_to_double();return std::log(value);};
             // Simplify a value with the function
@@ -778,12 +787,9 @@ namespace scls {
             __Sqrt_Function():__Formula_Base_Function("sqrt"){};
 
             // Definition set of the function
-            virtual Set_Number definition_set() {
-                Set_Number real = Set_Number();
-                Interval it; it.set_start(0); it.set_end_infinite(true);
-                real.add_interval(it);
-                return real;
-            };
+            virtual Set_Number definition_set() {Set_Number real = Set_Number();Interval it; it.set_start(0); it.set_end_infinite(true);real.add_interval(it);return real;};
+            // Derivate value
+            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){std::shared_ptr<__Formula_Base> to_return=std::make_shared<__Formula_Base>(1);to_return.get()->__divide(formula * 2);return to_return;};
             // Real value
             virtual double real_value(__Formula_Base* formula){double value = formula->to_polymonial().known_monomonial().factor().real().to_double();return std::sqrt(value);};
             // Simplify a value with the function

@@ -421,7 +421,7 @@ namespace scls {
 	//*********
 
 	// Returns the formula factor to a MathML
-    std::string __Formula_Base::__Formula_Factor::to_mathml() const {
+    std::string __Formula_Base::Formula_Factor::to_mathml() const {
         std::string to_return = "";
 
         // Add the factors
@@ -463,7 +463,7 @@ namespace scls {
         return to_return;
     }
     // Returns the formula factor to a std::string
-    std::string __Formula_Base::__Formula_Factor::to_std_string() const {
+    std::string __Formula_Base::Formula_Factor::to_std_string() const {
         std::string to_return = "";
 
         // Add the factors
@@ -544,8 +544,8 @@ namespace scls {
         return final_formula;
     };
     // Returns a formula where an unkown is replaced by an another unknown
-    // Returns a __Formula_Factor where an unkown is replaced by an another unknown
-    __Formula_Base::Formula __Formula_Base::__Formula_Factor::replace_unknown(std::string unknown, __Formula_Base new_value) const {
+    // Returns a Formula_Factor where an unkown is replaced by an another unknown
+    __Formula_Base::Formula __Formula_Base::Formula_Factor::replace_unknown(std::string unknown, __Formula_Base new_value) const {
         __Formula_Base::Formula to_return;
 
         // Replace each factors
@@ -576,7 +576,7 @@ namespace scls {
     };
     __Formula_Base::Formula __Formula_Base::replace_unknown(std::string unknown, __Formula_Base::Formula new_value) const{return replace_unknown(unknown, *new_value.formula_base());}
     // Returns the final value of the formula
-    scls::Complex __Formula_Base::__Formula_Factor::value(scls::Fraction current_value){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(factors.size());i++){to_return*=factors.at(i).get()->value(current_value);}return to_return;}
+    scls::Complex __Formula_Base::Formula_Factor::value(scls::Fraction current_value){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(factors.size());i++){to_return*=factors.at(i).get()->value(current_value);}return to_return;}
     scls::Complex __Formula_Base::value(scls::Fraction current_value) {
         // Get the needed datas
         __Formula_Base::Formula current_formula = numerator_value();
@@ -587,9 +587,7 @@ namespace scls {
 
         // Get the final formula
         __Formula_Base::Formula final_formula = current_formula.formula_base()->added_element();
-        for(int i = 0;i<static_cast<int>(current_formula.formula_base()->a_formulas_add.size());i++) {
-            final_formula += current_formula.formula_base()->a_formulas_add[i].value(current_value);
-        }
+        for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++) {final_formula += a_formulas_add[i].value(current_value);}
 
         // Apply the division
         if(denominator() != 0) {final_formula /= denominator()->value(current_value);}
@@ -627,7 +625,7 @@ namespace scls {
         } else {a_formulas_add.push_back(*value);}
     };
     // Divide a formula to this one
-    void __Formula_Base::__Formula_Factor::__divide(__Formula_Base value) {basic_formula()->__divide(value);}
+    void __Formula_Base::Formula_Factor::__divide(__Formula_Base value) {basic_formula()->__divide(value);}
     void __Formula_Base::__divide(__Formula_Base value) {
         // Handle a formula function
         if(!is_basic()) {sub_place();a_denominator=std::make_shared<__Formula_Base>(value);return;}
