@@ -223,6 +223,11 @@ namespace scls {
         inline void __divide(Complex value) {__divide(__Monomonial(value));};
         inline void __divide(Fraction value) {__divide(__Monomonial(value));};
         void __divide(Polymonial* value);
+        // Returns if two values are equals or not
+        inline bool __is_equal(int value) const{return __is_equal(Complex(value));};
+        inline bool __is_equal(Fraction value) const{return __is_equal(Complex(value));};
+        bool __is_equal(Complex value) const;
+        bool __is_equal(Polymonial value) const;
         // Multiply a polymonial to this one
         void __multiply(Polymonial value);
         inline void __multiply(Complex value){Polymonial temp; temp.add_monomonial(value);__multiply(temp);};
@@ -240,7 +245,7 @@ namespace scls {
         // Operators
         // With Complex
         bool operator!=(Complex value) const {return !(*this == value);};
-        bool operator==(Complex value) const;
+        bool operator==(Complex value)const{return __is_equal(value);};
         Polymonial operator*(Complex value){Polymonial to_return(*this);to_return.__multiply(value);return to_return;}
         Polymonial& operator/=(Complex value) {__divide(value);return*this;};
         // With fractions
@@ -463,7 +468,7 @@ namespace scls {
 	//
 	//*********
 
-	class __Formula_Base : public Field<scls::Polymonial> {
+	class __Formula_Base {
         // Class representating the base of a mathematical formula
     public:
 
@@ -489,23 +494,139 @@ namespace scls {
                 const std::string a_name;
         };
 
+        //*********
+        // Sub-classes of formulas
+        //*********
+
+        // Factor of formulas
+        struct Formula_Factor {
+            // Constructors
+            Formula_Factor(){};
+            Formula_Factor(std::shared_ptr<__Formula_Base> base){a_factors.push_back(base);};
+            Formula_Factor(__Formula_Base base):Formula_Factor(std::make_shared<__Formula_Base>(base)){};
+            Formula_Factor(const Formula_Factor& formula_factor_copy):a_factors(formula_factor_copy.a_factors){};
+
+            // Returns the formula factor to a MathML
+            std::string to_mathml() const;
+            // Returns the formula factor to a std::string
+            std::string to_std_string() const;
+
+            // Returns the basic formula
+            inline std::shared_ptr<__Formula_Base> basic_formula_shared_ptr(){for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(a_factors.at(i).get()->is_basic()){return a_factors.at(i);}}std::shared_ptr<__Formula_Base>to_add=std::make_shared<__Formula_Base>();a_factors.insert(a_factors.begin(), to_add);return a_factors.at(0);};
+            inline __Formula_Base* basic_formula(){return basic_formula_shared_ptr().get();};
+
+            // Form of the formula
+            inline bool is_simple_monomonial() const {return a_factors.size() == 0 || (a_factors.size() == 1 && a_factors[0].get()->is_simple_monomonial());};
+            inline bool is_simple_polymonial() const {return a_factors.size() == 0 || (a_factors.size() == 1 && a_factors[0].get()->is_simple_polymonial());};
+            // Converts the formula to a polymonial
+            inline Polymonial to_polymonial() const {for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(a_factors.at(i).get()->is_simple_polymonial()){return a_factors.at(i).get()->to_polymonial();}}return Polymonial();};
+            operator Polymonial() const {return to_polymonial();};
+
+            // Divides a formula to this one
+            void __divide(__Formula_Base value);
+            inline void __divide(Polymonial value){__divide(__Formula_Base(value));};
+            inline void __divide(__Monomonial value){__divide(__Formula_Base(value));};
+            // Multiplies the factor by a polymonial
+            inline void __multiply(Polymonial value) {basic_formula()->__multiply(value);};
+            void __multiply(__Formula_Base value){a_factors.push_back(std::make_shared<__Formula_Base>(value));};
+
+            // Returns if two numbers/formulas are equals
+            bool __is_equal(int value)const{return __is_equal(scls::Fraction(value));};
+            bool __is_equal(Fraction value)const{return a_factors.size() == 1 && a_factors[0].get()->__is_equal(value);};
+            bool __is_equal(Polymonial value)const{return a_factors.size() == 1 && a_factors[0].get()->__is_equal(value);};
+
+            // Operators
+            Formula_Factor& operator*=(__Formula_Base value) {__multiply(value);return*this;};
+
+            // Returns the final value of the formula
+            scls::Complex value(scls::Fraction current_value);
+
+            // Factors
+            std::vector<std::shared_ptr<__Formula_Base>> a_factors;
+            inline std::vector<std::shared_ptr<__Formula_Base>>& factors(){return a_factors;};
+        };
+
+        // Sum of formula factor
+        class Formula_Sum {
+        public:
+            // Constructors
+            Formula_Sum(){};
+            Formula_Sum(std::shared_ptr<Formula_Factor> base){a_formulas_add.push_back(base);};
+            Formula_Sum(Formula_Factor base):Formula_Sum(std::make_shared<Formula_Factor>(base)){};
+            Formula_Sum(const Formula_Sum& formula_factor_copy):a_formulas_add(formula_factor_copy.a_formulas_add){};
+
+            // Form of the formula
+            inline bool is_simple_monomonial() const {return a_formulas_add.size() == 1 && a_formulas_add[0].get()->is_simple_monomonial();};
+            inline bool is_simple_polymonial() const {return a_formulas_add.size() == 1 && a_formulas_add[0].get()->is_simple_polymonial();};
+            // Converts the formula to a polymonial
+            inline Polymonial to_polymonial() const {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){if(a_formulas_add.at(i).get()->is_simple_polymonial()){return a_formulas_add.at(i).get()->to_polymonial();}}return Polymonial();};
+            operator Polymonial() const {return to_polymonial();};
+
+            // Returns if two numbers/formulas are equals
+            bool __is_equal(int value)const{return __is_equal(scls::Fraction(value));};
+            bool __is_equal(Fraction value)const{return __is_equal(Polymonial(value));};
+            bool __is_equal(Polymonial value)const{return a_formulas_add.size() == 1 && a_formulas_add[0].get()->__is_equal(value);};
+
+            // Multiply a polymonial to this one
+            virtual void __multiply(Polymonial value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
+        private:
+            // Attached add polymonials (factorized)
+            std::vector<std::shared_ptr<Formula_Factor>> a_formulas_add;
+        };
+
+        // Fraction of formulas
+        class Formula_Fraction {
+        public:
+            // Constructors
+            Formula_Fraction(){};
+            Formula_Fraction(std::shared_ptr<Formula_Sum> base):a_numerator(base){};
+            Formula_Fraction(Formula_Sum base):Formula_Fraction(std::make_shared<Formula_Sum>(base)){};
+            Formula_Fraction(const Formula_Fraction& formula_factor_copy):a_denominator(formula_factor_copy.a_denominator),a_numerator(formula_factor_copy.a_numerator){};
+
+            // Cleart the denominator in the fraction
+            inline void clear_denominator(){a_denominator.reset();};
+
+            // Form of the formula
+            inline bool is_simple_monomonial() const {return a_denominator.get() == 0 && a_numerator.get()->is_simple_monomonial();};
+            inline bool is_simple_polymonial() const {return a_denominator.get() == 0 && a_numerator.get()->is_simple_polymonial();};
+            // Converts the formula to a polymonial
+            inline Polymonial to_polymonial() const {return a_numerator.get()->to_polymonial();};
+            operator Polymonial() const {return to_polymonial();};
+
+            // Returns if two numbers/formulas are equals
+            bool __is_equal(int value)const{return __is_equal(scls::Fraction(value));};
+            bool __is_equal(Fraction value)const{return a_numerator.get() == 0 && a_numerator.get()->__is_equal(value);};
+            bool __is_equal(Polymonial value)const{return a_numerator.get() == 0 && a_numerator.get()->__is_equal(value);};
+
+            // Multiply a polymonial to this one
+            virtual void __multiply(Polymonial value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}};
+
+            // Getters and setters
+            Formula_Sum* denominator(){return a_denominator.get();};
+        private:
+            // Denominator of the fraction
+            std::shared_ptr<Formula_Sum> a_denominator;
+            // Numerator of the fraction
+            std::shared_ptr<Formula_Sum> a_numerator = std::make_shared<Formula_Sum>();
+        };
+
         // __Formula_Base constructor
-        __Formula_Base():Field<scls::Polymonial>(){};
-        __Formula_Base(int number):Field<scls::Polymonial>(number){};
-        __Formula_Base(Fraction fraction):__Formula_Base(__Monomonial(scls::Complex(fraction))){};
-        __Formula_Base(Complex number):__Formula_Base(__Monomonial(number)){};
-        __Formula_Base(__Monomonial monomonial):Field<scls::Polymonial>(monomonial){};
-        __Formula_Base(Polymonial polymonial):Field<scls::Polymonial>(polymonial){};
-        __Formula_Base(const __Formula_Base& formula):Field<scls::Polymonial>(formula.added_element()),a_formulas_add(formula.a_formulas_add),a_applied_function(formula.a_applied_function){if(formula.a_denominator.get() != 0) {a_denominator = std::make_shared<__Formula_Base>(*formula.a_denominator.get());}};
+        __Formula_Base(){};
+        __Formula_Base(int number):a_fraction(std::make_shared<Formula_Fraction>(number)){};
+        __Formula_Base(Fraction number):a_fraction(std::make_shared<Formula_Fraction>(number)){};
+        __Formula_Base(Complex number):a_fraction(std::make_shared<Formula_Fraction>(number)){};
+        __Formula_Base(__Monomonial monomonial):a_fraction(std::make_shared<Formula_Fraction>(monomonial)){};
+        __Formula_Base(Polymonial polymonial):a_fraction(std::make_shared<Formula_Fraction>(polymonial)){};
+        __Formula_Base(const __Formula_Base& formula):a_fraction(std::make_shared<Formula_Fraction>(formula.a_fraction)),a_applied_function(formula.a_applied_function){};
 
         // Clear the formula
-        inline void clear() {a_formulas_add.clear();set_added_element(0);a_applied_function.reset();};
+        inline void clear() {a_fraction = std::make_shared<Formula_Fraction>();a_applied_function.reset();};
         // Pastes a formula to this one
-        virtual void paste(__Formula_Base* value){Field::paste(value);a_formulas_add=value->a_formulas_add;a_applied_function=value->a_applied_function;if(value->a_denominator.get() != 0) {a_denominator = std::make_shared<__Formula_Base>(*value->a_denominator.get());}};
+        virtual void paste(__Formula_Base* value){a_fraction = std::make_shared<Formula_Fraction>(value->a_fraction);a_applied_function=value->a_applied_function;};
         // Returns a copy of this formula
         __Formula_Base formula_copy() {return *this;};
         // Sub-place the current formula to a "formula add"
-        inline void sub_place(){__Formula_Base needed_copy = formula_copy();clear();a_formulas_add.push_back(needed_copy);};
+        inline void sub_place(){__Formula_Base needed_copy = formula_copy();clear();a_fraction = std::make_shared<Formula_Fraction>(needed_copy);};
 
         // Returns the polymonial to mathml
         std::string to_mathml() const;
@@ -515,14 +636,14 @@ namespace scls {
         // Returns the internal value of the formula (without functions)
         inline __Formula_Base internal_value() const {__Formula_Base to_return = *this;to_return.clear_applied_function();return to_return;};
         // Returns if the formula is a basic formula or not
-        inline bool is_basic() const {return a_applied_function.get() == 0;};
+        inline bool is_basic() const {return a_applied_function.get() == 0 && a_exponent.get() == 0;};
         // Returns if the formula is a simple monomonial / polymonial or not
-        inline bool is_simple_monomonial() const {return is_simple_polymonial() && added_element().monomonials_number() <= 1;};
-        inline bool is_simple_polymonial() const {return is_basic() && a_denominator.get() == 0 && a_exponent.get() == 0 && a_formulas_add.size() <= 0;};
+        inline bool is_simple_monomonial() const {return is_basic() && a_polymonial.get() != 0 && a_polymonial.get()->is_simple_monomonial();};
+        inline bool is_simple_polymonial() const {return is_basic() && a_polymonial.get() != 0;};
         // Returns the numerator value
-        inline __Formula_Base numerator_value() const {__Formula_Base to_return = *this;to_return.clear_applied_function();to_return.clear_denominator();return to_return;};
+        inline __Formula_Base numerator_value() const {if(a_polymonial.get() != 0){return (*a_polymonial.get());} __Formula_Base to_return = *this;to_return.clear_applied_function();to_return.clear_denominator();return to_return;};
 
-        // Converts the formula to field of another object
+        /*// Converts the formula to field of another object
         template <typename E>
         E to_field(std::vector<E> defined_names) {
             int operation_number = 0; E to_return;
@@ -562,6 +683,7 @@ namespace scls {
             }
             return to_return;
         };
+        //*/
 
         // Methods operators
         virtual void __add(__Formula_Base* value);
@@ -573,11 +695,12 @@ namespace scls {
         virtual void __divide(__Formula_Base value);
 
         // Returns if two numbers/formulas are equals
-        bool __is_equal(int value)const{return a_formulas_add.size() <= 0 && a_element_add == value;};
-        bool __is_equal(Fraction value)const{return a_formulas_add.size() <= 0 && a_element_add == value;};
+        bool __is_equal(int value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);} return a_fraction.get()->__is_equal(value);};
+        bool __is_equal(Fraction value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
+        bool __is_equal(Polymonial value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
 
         // Multiply a polymonial to this one
-        virtual void __multiply(Polymonial value) {Field::__multiply(value);for(int i=0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add[i].__multiply(value);}};
+        virtual void __multiply(Polymonial value) {if(a_polymonial.get() != 0){a_polymonial.get()->__multiply(value);}else{a_fraction.get()->__multiply(value);}};
         inline void __multiply(int value){__multiply(Polymonial(value));};
         inline void __multiply(__Monomonial value){__multiply(Polymonial(value));};
         virtual void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
@@ -609,17 +732,17 @@ namespace scls {
         __Formula_Base operator/(__Formula_Base value) const {__Formula_Base other(*this);other.__divide(value);return other;};
         __Formula_Base& operator/=(__Formula_Base value) {__divide(value);return*this;};
         // Converts the formula to a polymonial
-        inline Polymonial to_polymonial() const {return added_element();};
+        inline Polymonial to_polymonial() const {if(a_polymonial.get() != 0){return *a_polymonial.get();} return a_fraction.get()->to_polymonial();};
         operator Polymonial() const {return to_polymonial();};
 
         // Getters and setters
-        template<typename T> inline void add_applied_function(std::shared_ptr<T> new_applied_function) {if(applied_function() != 0){__Formula_Base temp=formula_copy();clear();a_formulas_add.push_back(temp);}set_applied_function(new_applied_function);};
+        template<typename T> inline void add_applied_function(std::shared_ptr<T> new_applied_function) {if(applied_function() != 0){sub_place();}set_applied_function(new_applied_function);};
         template<typename T> inline void add_applied_function() {add_applied_function(std::make_shared<T>());};
         template<typename T = __Formula_Base_Function> inline T* applied_function() const {return a_applied_function.get();};
         template<typename T = __Formula_Base_Function> inline std::shared_ptr<T> applied_function_shared_ptr() const {return a_applied_function;};
         inline void clear_applied_function(){a_applied_function.reset();};
-        inline void clear_denominator(){a_denominator.reset();};
-        inline __Formula_Base* denominator() const {return a_denominator.get();};
+        inline void clear_denominator(){a_fraction.get()->clear_denominator();};
+        //inline __Formula_Base* denominator() const {return a_fraction.get()->denominator();};
         template<typename T> inline void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;if(a_applied_function.get()!=0){std::shared_ptr<__Formula_Base>f=a_applied_function.get()->simplify(this);if(f.get()!=0){paste(f.get());}}};
         template<typename T> inline void set_applied_function() {set_applied_function(std::make_shared<T>());};
 
@@ -682,40 +805,6 @@ namespace scls {
             std::shared_ptr<__Formula_Base> a_formula;
         };
 
-        // Factor of formulas
-        struct Formula_Factor{
-            // Constructors
-            Formula_Factor(){};
-            Formula_Factor(std::shared_ptr<__Formula_Base> base){factors.push_back(base);};
-            Formula_Factor(__Formula_Base base):Formula_Factor(std::make_shared<__Formula_Base>(base)){};
-            Formula_Factor(const Formula_Factor& formula_factor_copy):factors(formula_factor_copy.factors){};
-
-            // Returns the formula factor to a MathML
-            std::string to_mathml() const;
-            // Returns the formula factor to a std::string
-            std::string to_std_string() const;
-
-            // Returns the basic formula
-            inline std::shared_ptr<__Formula_Base> basic_formula_shared_ptr(){for(int i = 0;i<static_cast<int>(factors.size());i++){if(factors.at(i).get()->is_basic()){return factors.at(i);}}std::shared_ptr<__Formula_Base>to_add=std::make_shared<__Formula_Base>();factors.insert(factors.begin(), to_add);return factors.at(0);};
-            inline __Formula_Base* basic_formula(){return basic_formula_shared_ptr().get();};
-
-            // Divides a formula to this one
-            void __divide(__Formula_Base value);
-            inline void __divide(Polymonial value){__divide(__Formula_Base(value));};
-            inline void __divide(__Monomonial value){__divide(__Formula_Base(value));};
-            // Multiplies the factor by a polymonial
-            inline void __multiply(Polymonial value) {basic_formula()->__multiply(value);};
-            void __multiply(__Formula_Base value){factors.push_back(std::make_shared<__Formula_Base>(value));};
-
-            // Returns a Formula_Factor where an unkown is replaced by an another unknown
-            Formula replace_unknown(std::string unknown, __Formula_Base new_value) const;
-            // Returns the final value of the formula
-            scls::Complex value(scls::Fraction current_value);
-
-            // Factors
-            std::vector<std::shared_ptr<__Formula_Base>> factors;
-        };
-
         // Returns all the unknowns in the formula
         std::vector<std::string> all_unknowns();
         // Returns a formula from a monomonial where the unknows has been replaced
@@ -732,16 +821,14 @@ namespace scls {
         inline double value_to_double(scls::Fraction current_value){return value(current_value).real().to_double();};
         inline double value_to_double(){return value(1).real().to_double();};
 
-        // Getters and setters
-        inline std::vector<Formula_Factor>& formulas_add(){return a_formulas_add;};
-
     private:
         // Each parts of the formula are in order
 
-        // Attached add polymonials (factorized)
-        std::vector<Formula_Factor> a_formulas_add;
-        // Division of the formula
-        std::shared_ptr<__Formula_Base> a_denominator;
+        // Polymonial of the formula (fraction is ignored if a polymonial is used)
+        std::shared_ptr<scls::Polymonial> a_polymonial;
+
+        // Attached fraction of the formula
+        std::shared_ptr<Formula_Fraction> a_fraction = std::make_shared<Formula_Fraction>();
         // Exponent of the formula
         std::shared_ptr<__Formula_Base> a_exponent;
         // Applied function to the ENTIRE formula
@@ -757,7 +844,7 @@ namespace scls {
             // Definition set of the function
             virtual Set_Number definition_set() {Set_Number real = Set_Number();real.set_real();return real;};
             // Derivate value
-            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){return std::make_shared<__Formula_Base>(formula);};
+            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){std::shared_ptr<__Formula_Base> to_return = std::make_shared<__Formula_Base>(formula);to_return.get()->set_applied_function<__Exp_Function>();return to_return;};
             // Real value
             virtual double real_value(__Formula_Base* formula){double value = formula->value_to_double();return std::exp(value);};
             // Simplify a value with the function

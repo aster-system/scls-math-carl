@@ -399,11 +399,14 @@ namespace scls {
 
     // Operators
     // With Complex
-    bool Polymonial::operator==(Complex value) const {
+    bool Polymonial::__is_equal(Complex value) const {
         if(value.real() == 0 && value.imaginary() == 0) {
             return (a_monomonials.size() == 0) || (a_monomonials.size() == 1 && a_monomonials.at(0).factor().real() == 0 && a_monomonials.at(0).factor().imaginary() == 0);
-        } return (a_monomonials.size() == 1 && a_monomonials.at(0).factor().real() == value);
+        }
+        return (a_monomonials.size() == 1 && a_monomonials.at(0).factor().real() == value);
     };
+    // With polymonial
+    bool Polymonial::__is_equal(Polymonial value) const {return value.a_monomonials == a_monomonials;};
 
     // Stream operator overloading
     std::ostream& operator<<(std::ostream& os, Polymonial& obj) {os << obj.to_std_string(); return os; }
@@ -425,9 +428,9 @@ namespace scls {
         std::string to_return = "";
 
         // Add the factors
-        for(int i = 0;i<static_cast<int>(factors.size());i++){
+        for(int i = 0;i<static_cast<int>(a_factors.size());i++){
             if(to_return != std::string()){to_return += std::string("<mo>*</mo>");}
-            to_return += factors.at(i).get()->to_mathml();
+            to_return += a_factors.at(i).get()->to_mathml();
         }
 
         // Return the result
@@ -467,9 +470,9 @@ namespace scls {
         std::string to_return = "";
 
         // Add the factors
-        for(int i = 0;i<static_cast<int>(factors.size());i++){
+        for(int i = 0;i<static_cast<int>(a_factors.size());i++){
             if(to_return != std::string()){to_return += std::string("*");}
-            to_return += factors.at(i).get()->to_std_string();
+            to_return += a_factors.at(i).get()->to_std_string();
         }
 
         // Return the result
@@ -549,7 +552,7 @@ namespace scls {
         __Formula_Base::Formula to_return;
 
         // Replace each factors
-        for(int i = 0;i<static_cast<int>(factors.size());i++) {Formula current=factors.at(i).get()->replace_unknown(unknown, new_value);to_return*=current;}
+        for(int i = 0;i<static_cast<int>(a_factors.size());i++) {Formula current=a_factors.at(i).get()->replace_unknown(unknown, new_value);to_return*=current;}
 
         return to_return;
     }
@@ -576,7 +579,7 @@ namespace scls {
     };
     __Formula_Base::Formula __Formula_Base::replace_unknown(std::string unknown, __Formula_Base::Formula new_value) const{return replace_unknown(unknown, *new_value.formula_base());}
     // Returns the final value of the formula
-    scls::Complex __Formula_Base::Formula_Factor::value(scls::Fraction current_value){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(factors.size());i++){to_return*=factors.at(i).get()->value(current_value);}return to_return;}
+    scls::Complex __Formula_Base::Formula_Factor::value(scls::Fraction current_value){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(a_factors.size());i++){to_return*=a_factors.at(i).get()->value(current_value);}return to_return;}
     scls::Complex __Formula_Base::value(scls::Fraction current_value) {
         // Get the needed datas
         __Formula_Base::Formula current_formula = numerator_value();
@@ -678,6 +681,12 @@ namespace scls {
     };
     // Multiply a polymonial to this one
     void __Formula_Base::__multiply(__Formula_Base value) {
+        // Check this appliedd function
+        if(applied_function() != 0) {
+            __Formula_Base current_copy = formula_copy();
+            clear();__add(&current_copy);
+        }
+
         if(value.applied_function() == 0) {
             // The formula can be directly multiplied
             __Formula_Base first_formula = internal_value();
@@ -685,7 +694,7 @@ namespace scls {
             first_formula.__multiply(value.added_element());
             for(int i = 0;i<static_cast<int>(value.a_formulas_add.size());i++) {
                 __Formula_Base current_formula = internal_value();
-                for(int j = 0;j<static_cast<int>(value.a_formulas_add.at(i).factors.size());j++){current_formula *= *value.a_formulas_add.at(i).factors.at(j).get();}
+                for(int j = 0;j<static_cast<int>(value.a_formulas_add.at(i).a_factors.size());j++){current_formula *= *value.a_formulas_add.at(i).a_factors.at(j).get();}
                 other_formulas.push_back(current_formula);
             }
 
@@ -699,7 +708,7 @@ namespace scls {
             // Create a new formula from the add polymonial
             Polymonial needed_polymonial = added_element();
             if(needed_polymonial != 0) {
-                __Formula_Base new_formula = value;
+                __Formula_Base::Formula_Factor new_formula = value;
                 new_formula *= needed_polymonial;
                 a_formulas_add.push_back(new_formula);
                 set_added_element(0);
