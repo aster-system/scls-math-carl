@@ -670,7 +670,7 @@ namespace scls {
     void __Formula_Base::__divide(__Formula_Base value) {
         // Check if values are both polymonial
         if(is_basic() && is_simple_polymonial() && value.is_simple_monomonial()) {a_polymonial.get()->__divide(value.to_monomonial());}
-        else{if(!is_basic()){sub_place();}a_fraction.get()->__divide(value);}
+        else{if(!is_simple_fraction()){sub_place();}a_fraction.get()->__divide(value);}
     };
     // Multiply a polymonial to this one
     void __Formula_Base::__multiply(__Formula_Base value) {

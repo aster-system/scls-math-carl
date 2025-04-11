@@ -693,6 +693,7 @@ namespace scls {
         // Returns if the formula is a basic formula or not
         inline bool is_basic() const {return a_applied_function.get() == 0 && a_exponent.get() == 0;};
         // Returns if the formula is a simple monomonial / polymonial or not
+        inline bool is_simple_fraction() const {return is_basic() && a_fraction.get() != 0;};
         inline bool is_simple_monomonial() const {return is_simple_polymonial() && (a_polymonial.get() == 0 || a_polymonial.get()->is_simple_monomonial());};
         inline bool is_simple_polymonial() const {return is_basic() && (a_polymonial.get() != 0 || a_fraction.get() == 0);};
         // Returns the numerator value
