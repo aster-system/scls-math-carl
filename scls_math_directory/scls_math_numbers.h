@@ -221,6 +221,10 @@ namespace scls {
     Fraction operator-(int obj_1, Fraction obj);
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const Fraction& obj);
+
+    // Function to sort a std::vector of fraction
+    void remove_duplication_sorted_fractions(std::vector<Fraction>& fractions);
+    void sort_fractions(std::vector<Fraction>& fractions);
 }
 
 //*********
@@ -233,7 +237,7 @@ namespace scls {
 namespace scls {
 
     class Complex {
-	    // Class representating a fraction
+	    // Class representating a complex number
     public:
         //*********
         //
@@ -363,6 +367,31 @@ namespace scls {
     Complex operator*(int obj_1, Complex obj);
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const Complex& obj);
+}
+
+//*********
+//
+// The Point_2D part
+//
+//*********
+
+namespace scls {
+
+    class Point_2D {
+        // Class representating a point in 2D
+    public:
+
+        // Point_2D constructor
+        Point_2D(scls::Fraction x, scls::Fraction y):a_x(x),a_y(y){};
+
+        // Getters and setters
+        inline scls::Fraction x() const {return a_x;}
+        inline scls::Fraction y() const {return a_y;};
+    private:
+        // X / Y position of the point
+        scls::Fraction a_x = 0; scls::Fraction a_y = 0;
+    };
+
 }
 
 //*********

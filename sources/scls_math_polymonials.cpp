@@ -454,6 +454,14 @@ namespace scls {
 	//
 	//*********
 
+	// Checks if the formula is well formatted
+    void __Formula_Base::check_formula() {
+        // Check if the formula is sub-placed too heavily
+        if(is_simple_fraction() && !has_denominator() && a_fraction.get()->numerator()->formulas_add().size() == 1 && a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().size() == 1) {
+            *this = (*a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().at(0).get());
+        }
+    }
+
 	// Returns the formula factor to a MathML
     std::string __Formula_Base::Formula_Factor::to_mathml() const {
         std::string to_return = "";
@@ -617,22 +625,27 @@ namespace scls {
     // Methods operators
     // Add a formula to this one
     void __Formula_Base::__add(__Formula_Base* value) {
+        // Asserts
         if(value == 0 || *value == 0) {return;}
         else if(*this == 0) {*this = *value;return;}
 
         // Check if values are both polymonial
         if(a_polymonial.get() != 0) {
-            if(!is_basic() || !value->is_simple_polymonial()){sub_place();a_fraction.get()->__add(*value);}
+            if(!is_basic()){sub_place();a_fraction.get()->__add(*value);}
+            else if(!value->is_simple_polymonial()){sub_place();a_fraction.get()->__add(*value);}
             else{a_polymonial.get()->__add(value->to_polymonial());}
         }
         else {if(!is_basic()){sub_place();}a_fraction.get()->__add(*value);}
+
+        // Finish the result
+        check_formula();
     };
     // Divide a formula to this one
     void __Formula_Base::Formula_Factor::__divide(__Formula_Base value) {basic_formula()->__divide(value);}
     // Divide a formula to this one
     void __Formula_Base::Formula_Fraction::__divide(__Formula_Base value){
         // Handle the division
-        if(!value.is_basic()) {if(a_denominator.get() == 0){a_denominator=std::make_shared<Formula_Sum>(value);}else{a_denominator.get()->__multiply(value);}}
+        if(!value.is_basic() || !is_simple_polymonial()) {if(a_denominator.get() == 0){a_denominator=std::make_shared<Formula_Sum>(value);}else{a_denominator.get()->__multiply(value);}}
         else {
             if(value.is_simple_monomonial()) {
                 // Apply a division of a simple monomonial
@@ -671,6 +684,7 @@ namespace scls {
         // Check if values are both polymonial
         if(is_basic() && is_simple_polymonial() && value.is_simple_monomonial()) {a_polymonial.get()->__divide(value.to_monomonial());}
         else{if(!is_simple_fraction()){sub_place();}a_fraction.get()->__divide(value);}
+        check_formula();
     };
     // Multiply a polymonial to this one
     void __Formula_Base::__multiply(__Formula_Base value) {
@@ -684,22 +698,8 @@ namespace scls {
             else{sub_place();a_fraction.get()->__multiply(value);}
         }
 
-        /*
-        if(value.applied_function() == 0) {
-            // The formula can be directly multiplied
-            __Formula_Base first_formula = internal_value();
-            std::vector<__Formula_Base> other_formulas;
-            first_formula.__multiply(value.added_element());
-            for(int i = 0;i<static_cast<int>(value.a_formulas_add.size());i++) {
-                __Formula_Base current_formula = internal_value();
-                for(int j = 0;j<static_cast<int>(value.a_formulas_add.at(i).a_factors.size());j++){current_formula *= *value.a_formulas_add.at(i).a_factors.at(j).get();}
-                other_formulas.push_back(current_formula);
-            }
-
-            // Set the needed formulas
-            paste(&first_formula);
-        }
-        //*/
+        // Finish the result
+        check_formula();
     };
 
     //*********
@@ -741,6 +741,25 @@ namespace scls {
         return to_return;
     }
 
+    // Returns the Interval to an std::string
+    std::string Interval::end_to_std_string()const{if(a_end_infinite){return std::string("+inf");}return a_end.to_std_string();}
+    std::string Interval::start_to_std_string()const{if(a_start_infinite){return std::string("-inf");}return a_start.to_std_string();}
+    std::string Interval::to_std_string() {
+        std::string to_return = std::string();
+
+        if(a_start_infinite||!a_start_included){to_return+=std::string("]");}
+        else{to_return+=std::string("[");}
+
+        to_return+=start_to_std_string();
+        to_return+=std::string(";");
+        to_return+=end_to_std_string();
+
+        if(a_end_infinite||!a_end_included){to_return+=std::string("[");}
+        else{to_return+=std::string("]");}
+
+        return to_return;
+    };
+
 	// Compares this definition set with another
     bool Set_Number::compare(Set_Number value) {
         // Compare size
@@ -754,15 +773,35 @@ namespace scls {
 
     // Checks the intervals / numbers
     void Set_Number::check_intervals() {
-        for(int i = 0;i<static_cast<int>(a_intervals.size() - 1);i++) {
-            if(a_intervals[i].is_empty() || a_intervals[i].start() > a_intervals[i].end()){a_intervals.erase(a_intervals.begin() + i);i--;}
-            else if(a_intervals[i + 1].start_infinite()){
-                // The interval is badly sorted
-                if(a_intervals[i].end_infinite()){a_intervals[i + 1].set_end_infinite(true);}
-                else if(a_intervals[i].end() > a_intervals[i + 1].end()){a_intervals[i + 1].set_end(a_intervals[i].end());a_intervals[i + 1].set_end_included(a_intervals[i].end_included());}
-                else if(a_intervals[i].end() == a_intervals[i + 1].end()){a_intervals[i + 1].set_end_included(a_intervals[i].end_included() && a_intervals[i + 1].end_included());}
+        // Check the end (infinite)
+        for(int i = 1;i<static_cast<int>(a_intervals.size());i++) {
+            int current_i = (a_intervals.size() - (i + 1));
+            if(a_intervals.at(current_i).end_infinite() && a_intervals.at(current_i + 1).end_infinite()) {
+                if(a_intervals.at(current_i).start_infinite() || a_intervals.at(current_i + 1).start_infinite()){a_intervals.at(current_i).set_start_infinite(true);}
+                else if(a_intervals.at(current_i).start() > a_intervals.at(current_i + 1).start()){
+                    a_intervals.at(current_i).set_start(a_intervals.at(current_i + 1).start());
+                    a_intervals.at(current_i).set_start_included(a_intervals.at(current_i + 1).start_included());
+                }
+                else if(a_intervals.at(current_i).start() == a_intervals.at(current_i + 1).start()){a_intervals.at(current_i).set_start_included(a_intervals.at(current_i).start_included() || a_intervals.at(current_i + 1).start_included());}
+                a_intervals.pop_back();i--;
+            }
+        }
+
+        // Check the start (infinite)
+        for(int i = 1;i<static_cast<int>(a_intervals.size());i++) {
+            if(a_intervals.at(i - 1).start_infinite() && a_intervals.at(i).start_infinite()) {
+                if(a_intervals.at(i - 1).end_infinite() || a_intervals.at(i).end_infinite()){a_intervals.at(i - 1).set_end_infinite(true);}
+                else if(a_intervals.at(i - 1).end() < a_intervals.at(i).end()){
+                    a_intervals.at(i - 1).set_end(a_intervals.at(i).end());
+                    a_intervals.at(i - 1).set_end_included(a_intervals.at(i).end_included());
+                }
+                else if(a_intervals.at(i - 1).end() == a_intervals.at(i).end()){a_intervals.at(i - 1).set_end_included(a_intervals.at(i - 1).end_included() || a_intervals.at(i).end_included());}
                 a_intervals.erase(a_intervals.begin() + i);i--;
             }
+        }
+
+        for(int i = 0;i<static_cast<int>(a_intervals.size() - 1);i++) {
+            if(a_intervals[i].is_empty() || (a_intervals[i].start() > a_intervals[i].end() && !a_intervals[i].start_infinite() && !a_intervals[i].end_infinite())){a_intervals.erase(a_intervals.begin() + i);i--;}
             else if(a_intervals[i].end() > a_intervals[i + 1].start() || (a_intervals[i].end() == a_intervals[i + 1].start() && (a_intervals[i].end_included() || a_intervals[i + 1].start_included()))){
                 scls::Interval new_interval = scls::Interval(a_intervals[i].start(), a_intervals[i].start_included(), a_intervals[i + 1].end(), a_intervals[i + 1].end_included());
                 // Set the start
@@ -780,6 +819,80 @@ namespace scls {
             }
         }
     }
+    // Excludes a value
+    void Set_Number::exclude(scls::Fraction number) {
+        for(int i = 0;i<static_cast<int>(a_intervals.size());i++) {
+            if(a_intervals.at(i).end() >= number || a_intervals.at(i).end_infinite()) {
+                if(a_intervals.at(i).start() <= number || a_intervals.at(i).start_infinite()) {
+                    if(a_intervals.at(i).start() != a_intervals.at(i).end() || a_intervals.at(i).end_infinite() || a_intervals.at(i).start_infinite()) {
+                        // Create a new interval
+                        a_intervals.insert(a_intervals.begin() + i + 1, a_intervals.at(i));
+
+                        // Edit the first interval
+                        a_intervals.at(i).set_end(number);
+                        a_intervals.at(i).set_end_included(false);
+                        a_intervals.at(i).set_end_infinite(false);
+
+                        // Edit the second interval
+                        a_intervals.at(i + 1).set_start(number);
+                        a_intervals.at(i + 1).set_start_included(false);
+                        a_intervals.at(i + 1).set_start_infinite(false);
+                    }
+                    else {a_intervals.erase(a_intervals.begin() + i);}
+
+                    // Checks the interval
+                    check_intervals();
+                    return;
+                }
+                else{return;}
+            }
+        }
+    }
+    void Set_Number::exclude(Interval interval) {
+        if(interval.start_infinite() && interval.end_infinite()){clear();}
+        else if(interval.start_infinite()) {
+            // Start infinite
+            for(int i = 0;i<static_cast<int>(a_intervals.size());i++) {
+                if(a_intervals.at(i).start() > interval.end() && !a_intervals.at(i).start_infinite()){break;}
+                else if(a_intervals.at(i).start() == interval.end() && !a_intervals.at(i).start_infinite()){break;}
+                else if((a_intervals.at(i).start() < interval.end() || a_intervals.at(i).start_infinite()) && (interval.end() < a_intervals.at(i).end() || a_intervals.at(i).end_infinite())){
+                    a_intervals[i].set_start(interval.end());
+                    a_intervals[i].set_start_included(!interval.end_included());
+                    a_intervals[i].set_start_infinite(false);
+                    break;
+                }
+                else{a_intervals.erase(a_intervals.begin());i--;}
+            }
+        }
+        else if(interval.end_infinite()) {
+            // End infinite
+            for(int i = 0;i<static_cast<int>(a_intervals.size());i++) {
+                int current_i = static_cast<int>(a_intervals.size()) - (i + 1);
+                if(a_intervals.at(current_i).end() < interval.start() && !a_intervals.at(current_i).end_infinite()){break;}
+                else if(a_intervals.at(current_i).end() == interval.start() && !a_intervals.at(current_i).end_infinite()){break;}
+                else if((a_intervals.at(current_i).end() > interval.start() || a_intervals.at(current_i).end_infinite()) && (a_intervals.at(current_i).start() < interval.start() || a_intervals.at(current_i).start_infinite())){
+                    a_intervals[current_i].set_end(interval.start());
+                    a_intervals[current_i].set_end_included(!interval.start_included());
+                    a_intervals[current_i].set_end_infinite(false);
+                    break;
+                }
+                else{a_intervals.pop_back();}
+            }
+        }
+        else {
+            // Go to the next interval
+            int i = 0;
+            while(i < a_intervals.size() && a_intervals.at(i).end() < interval.start()){i++;}
+            while(i < a_intervals.size() && a_intervals.at(i).start() < interval.end()){
+                if(a_intervals.at(i).start() < interval.start()){
+                    a_intervals[i].set_end(interval.start());a_intervals[i].set_end_included(interval.start_included());
+                    i++;
+                }
+                else{a_intervals.erase(a_intervals.begin() + i);}
+            }
+        }
+    }
+    void Set_Number::exclude(scls::Set_Number* set_number) {for(int i = 0;i<static_cast<int>(set_number->a_intervals.size());i++){exclude(set_number->a_intervals.at(i));}}
     // Returns the intersection between this set and an interval
     Set_Number Set_Number::intersection(Interval other) {
         Set_Number to_return;
@@ -801,10 +914,18 @@ namespace scls {
             if(!current_intersection.is_empty()){for(int j = 0;j<static_cast<int>(current_intersection.a_intervals.size());j++){to_return.add_interval(current_intersection.a_intervals.at(j));}}
         }
 
+        // Calculate all the isolated values
+        for(int i = 0;i<static_cast<int>(to_return.a_intervals.size());i++) {
+            for(int j = 0;j<static_cast<int>(a_numbers.size());j++) {
+                Set_Number current_intersection = other.intersection(a_intervals[i]);
+                if(!current_intersection.is_empty()){for(int j = 0;j<static_cast<int>(current_intersection.a_intervals.size());j++){to_return.add_interval(current_intersection.a_intervals.at(j));}}
+            }
+        }
+
         return to_return;
     }
 	// Comparaison function for the interval sorting
-    bool __sort_interval_function(const Interval& i_1, const Interval& i_2) {return i_1.start() < i_2.start();};
+    bool __sort_interval_function(const Interval& i_1, const Interval& i_2) {if(!i_1.start_infinite() && i_2.start_infinite()){return false;} return i_1.start() < i_2.start() || (i_1.start() == i_2.start() && (i_2.start_included() || !i_1.start_included()));};
 	// Comparaison function for the numbers sorting
     bool __sort_numbers_function(const Complex& i_1, const Complex& i_2) {return i_1.real() < i_2.real();};
     // Sort the intervals / numbers in the set
@@ -814,9 +935,10 @@ namespace scls {
     std::string Set_Number::to_std_string() {
         std::string to_return = "";
 
-        // Add the isoloted elements
+        // Add the isolated elements
         for(int i = 0;i<static_cast<int>(numbers().size());i++) {
             to_return += numbers().at(i).to_std_string_simple();
+            if(i < static_cast<int>(numbers().size()) - 1){to_return += std::string(";");}
         }
 
         // Add the intervals
@@ -828,6 +950,15 @@ namespace scls {
 
         return to_return;
     }
+    // Unites with an another set
+    void Set_Number::unite(Interval number) {add_interval(number);}
+    void Set_Number::unite(Set_Number* set_number) {for(int i = 0;i<static_cast<int>(set_number->a_intervals.size());i++){if(!set_number->a_intervals.at(i).is_empty()){a_intervals.push_back(set_number->a_intervals.at(i));}}__sort_interval();check_intervals();}
+
+    // Returns the complement between this sets and the real set (and another one if needed)
+    Set_Number Set_Number::complement_real(Set_Number* set_number) {return scls::Set_Number::real().exclusion(reunion(set_number));}
+    // Returns the complement between two sets
+    Set_Number Set_Number::complement_relative(Set_Number* set_number) {Set_Number to_return = *this;return to_return;}
+    Set_Number Set_Number::complement_relative_symetrical(Set_Number* set_number){return intersection(*set_number).reunion(complement_real(set_number));};
 
     //*********
 	//
@@ -1004,6 +1135,7 @@ namespace scls {
         }
 
         // Return the result
+        to_return.check_formula();
         return to_return;
     };
 

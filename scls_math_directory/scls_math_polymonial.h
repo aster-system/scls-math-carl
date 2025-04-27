@@ -356,20 +356,24 @@ namespace scls {
         Interval():Interval(Fraction(0), Fraction(0)){};
         Interval(const Interval& other):a_end(other.a_end),a_end_included(other.a_end_included),a_end_infinite(other.a_end_infinite),a_start(other.a_start),a_start_included(other.a_start_included),a_start_infinite(other.a_start_infinite){}
 
+        // Clears the interval
+        inline void clear(){a_end=0;a_end_included=false;a_end_infinite=false;a_start=0;a_start_included=false;a_start_infinite=false; }
         // Compares this definition set with another
         inline bool compare(Interval value){return ((a_end_infinite == value.a_end_infinite) && (a_end_infinite || a_end == value.a_end)) && ((a_start_infinite == value.a_start_infinite) && (a_start_infinite || a_start == value.a_start)); };
         // Returns if the interval is empty or not
         inline bool is_empty() const {return a_start == a_end && (!a_start_included || !a_end_included) && !a_start_infinite && !a_end_infinite;};
         // Returns if a value is in an interval
-        inline bool is_in(Fraction value){return ((a_end_infinite || value < a_end) && (a_start_infinite || value > a_start));};
+        inline bool is_in(Fraction value){return ((a_end_infinite || value < a_end || (value == a_end && a_end_included)) && (a_start_infinite || value > a_start || (value == a_start && a_start_included)));};
         // Returns if an interval is in an interval
         inline bool is_in(Interval* value){return (((a_end_infinite) || (!value->a_end_infinite && value->a_end <= a_end)) && ((a_start_infinite) || (!value->a_start_infinite && value->a_start >= a_start)));};
         // Returns the intersection between this interval and an another interval
         Interval intersection(Interval other);
         inline Interval intersection(Fraction needed_start, bool needed_start_included, Fraction needed_end, bool needed_end_included){return intersection(Interval(needed_start, needed_start_included, needed_end, needed_end_included));};
 
-        // Returns the Interval to an std::string
-        inline std::string to_std_string() {std::string to_return;if(a_start_infinite||!a_start_included){to_return+=std::string("]");}else{to_return+=std::string("[");}if(a_start_infinite){to_return+=std::string("-inf");}else{to_return+=a_start.to_std_string();};to_return+=std::string(";");if(a_end_infinite){to_return+=std::string("+inf");}else{to_return+=a_end.to_std_string();}if(a_end_infinite||!a_end_included){to_return+=std::string("[");}else{to_return+=std::string("]");}return to_return;};
+        // Returns the interval to an std::string
+        std::string end_to_std_string() const;
+        std::string start_to_std_string() const;
+        std::string to_std_string();
 
         // Getters and setters
         inline Fraction end() const {return a_end;};
@@ -392,13 +396,13 @@ namespace scls {
 
     private:
         // End of the interval
-        Fraction a_end;
+        Fraction a_end = 0;
         // If the end is included or not
         bool a_end_included = false;
         // If the end is + infinite or not
         bool a_end_infinite = false;
         // Start of the interval
-        Fraction a_start;
+        Fraction a_start = 0;
         // If the start is included or not
         bool a_start_included = false;
         // If the start is + infinite or not
@@ -415,13 +419,26 @@ namespace scls {
         Set_Number(const Set_Number& other):a_intervals(other.a_intervals),a_numbers(other.a_numbers){}
 
         // Add an interval to the set
-        inline void add_interval(Interval to_add) {a_intervals.push_back(to_add);__sort_interval();check_intervals();};
+        inline void add_interval(Interval to_add) {if(!to_add.is_empty()){a_intervals.push_back(to_add);__sort_interval();check_intervals();};};
         // Add a number to the set
-        inline void add_number(Complex to_add) {a_numbers.push_back(to_add);__sort_numbers();};
-        inline void add_number(Fraction to_add) {add_number(Complex(to_add));};
+        inline void add_number(Fraction to_add) {if(!is_in(to_add)){add_interval(Interval(to_add));}};
+        inline void add_number(Complex to_add) {add_number(to_add.real());};
 
+        // Clears the interval
+        inline void clear(){a_intervals.clear();a_numbers.clear();};
+        // Returns the cardinal of the set (only works for denombrable sets)
+        inline int cardinal()const{return a_intervals.size();};
         // Compares this definition set with another
         bool compare(Set_Number value);
+
+        // Set algebra
+        // Excludes a value
+        void exclude(scls::Fraction number);
+        void exclude(Interval interval);
+        void exclude(Set_Number* set_number);
+        inline Set_Number exclusion(scls::Fraction number){Set_Number temp = *this;temp.exclude(number);return temp;};
+        inline Set_Number exclusion(Interval interval){Set_Number temp = *this;temp.exclude(interval);return temp;};
+        inline Set_Number exclusion(Set_Number set_number){Set_Number temp = *this;temp.exclude(&set_number);return temp;};
         // Returns the intersection between this set and an interval
         Set_Number intersection(Interval other);
         Set_Number intersection(Set_Number other);
@@ -436,6 +453,20 @@ namespace scls {
         inline bool is_in(Interval value){return is_in_intervals(value);};
         // Returns if the set is infinite or not
         inline bool is_infinite() const {return a_intervals.size() > 0 && a_intervals.at(0).start_infinite() && a_intervals.at(0).end_infinite();};
+        // Unites with an another set
+        inline Set_Number reunion(Interval number){Set_Number temp = *this;temp.unite(number);return temp;};
+        inline Set_Number reunion(Set_Number* set_number){Set_Number temp = *this;temp.unite(set_number);return temp;};
+        inline Set_Number reunion(Set_Number set_number){return reunion(&set_number);};
+        void unite(Interval number);
+        void unite(Set_Number* set_number);
+        inline void unite(Set_Number set_number){unite(&set_number);};
+
+        // Sub-parties algebra
+        // Returns the complement between this sets and the real set (and another one if needed)
+        Set_Number complement_real(Set_Number* set_number);
+        // Returns the complement between two sets
+        Set_Number complement_relative(Set_Number* set_number);
+        Set_Number complement_relative_symetrical(Set_Number* set_number);
 
         // Returns the set in a std::string
         std::string to_std_string();
@@ -447,7 +478,14 @@ namespace scls {
         void __sort_numbers();
 
         // Predefined sets
+        // "After" set
+        static Interval after_strictly(scls::Fraction value){Interval it;it.set_start(value);it.set_start_included(false);it.set_end_infinite(true);return it;};
+        // "Before" set
+        static Interval before_strictly(scls::Fraction value){Interval it;it.set_end(value);it.set_end_included(false);it.set_start_infinite(true);return it;};
+        // "Between" set
+        static Interval between_strictly(scls::Fraction after, scls::Fraction before){if(after==before){return Interval();} Interval it;it.set_end(before);it.set_end_included(false);it.set_start(after);it.set_start_included(false);it.set_end_infinite(true);return it;};
         // Real set
+        static Set_Number real(){return set_real();};
         static Set_Number set_real() {Set_Number to_return;Interval i;i.set_end_infinite(true);i.set_start_infinite(true);to_return.add_interval(i);return to_return;};
 
         // Operators
@@ -626,7 +664,7 @@ namespace scls {
             // Returns a copy of this formula
             inline std::shared_ptr<Formula_Sum> denominator_copy()const{if(a_denominator.get()==0){return std::shared_ptr<Formula_Sum>();}return a_denominator.get()->sum_copy();};
             inline std::shared_ptr<Formula_Fraction> fraction_copy() {return std::make_shared<Formula_Fraction>(numerator_copy(), denominator_copy());};
-            inline std::shared_ptr<Formula_Sum> numerator_copy()const{return a_numerator.get()->sum_copy();};
+            inline std::shared_ptr<Formula_Sum> numerator_copy()const{if(a_numerator.get()==0){return std::shared_ptr<Formula_Sum>();} return a_numerator.get()->sum_copy();};
             // Form of the formula
             inline bool is_simple_monomonial() const {return a_denominator.get() == 0 && a_numerator.get()->is_simple_monomonial();};
             inline bool is_simple_polymonial() const {return a_denominator.get() == 0 && a_numerator.get()->is_simple_polymonial();};
@@ -665,9 +703,12 @@ namespace scls {
         __Formula_Base(Complex number):a_polymonial(std::make_shared<Polymonial>(number)){};
         __Formula_Base(__Monomonial monomonial):a_polymonial(std::make_shared<Polymonial>(monomonial)){};
         __Formula_Base(Polymonial polymonial):a_polymonial(std::make_shared<Polymonial>(polymonial)){};
-        __Formula_Base(Formula_Sum sum){set_fraction(sum);};
-        __Formula_Base(const __Formula_Base& formula):a_polymonial(formula.polymonial_copy()),a_applied_function(formula.applied_function_copy()){if(formula.a_fraction.get() != 0){a_fraction = std::make_shared<Formula_Fraction>(*formula.a_fraction.get());}};
+        __Formula_Base(Formula_Fraction frac){set_fraction(frac);};
+        __Formula_Base(Formula_Sum sum){if(sum.is_simple_polymonial()){set_polymonial(sum);}else{set_fraction(sum);}};
+        __Formula_Base(const __Formula_Base& formula):a_polymonial(formula.polymonial_copy()),a_fraction(formula.fraction_copy()),a_applied_function(formula.applied_function_copy()){};
 
+        // Checks if the formula is well formatted
+        void check_formula();
         // Clear the formula
         inline void clear() {a_applied_function.reset();a_fraction.reset();a_polymonial.reset();};
         // Pastes a formula to this one
@@ -685,9 +726,10 @@ namespace scls {
         // Returns the polymonial to std::string
         std::string to_std_string() const;
 
-        // Returns the denominator of the formula
+        // Returns the denominator / numerator of the formula
         inline std::shared_ptr<__Formula_Base> denominator()const{if(!has_denominator()){return std::shared_ptr<__Formula_Base>();}return std::make_shared<__Formula_Base>(*a_fraction.get()->denominator());};
         inline bool has_denominator()const{return a_fraction.get() != 0 && a_fraction.get()->denominator() != 0;};
+        inline std::shared_ptr<__Formula_Base> numerator()const{if(a_fraction.get() == 0){return std::shared_ptr<__Formula_Base>();}return std::make_shared<__Formula_Base>(*a_fraction.get()->numerator());};
         // Returns the internal value of the formula (without functions)
         inline __Formula_Base internal_value() const {__Formula_Base to_return = *this;to_return.clear_applied_function();return to_return;};
         // Returns if the formula is a basic formula or not
@@ -699,8 +741,12 @@ namespace scls {
         // Returns the numerator value
         inline __Formula_Base numerator_value() const {if(a_polymonial.get() != 0){return (*a_polymonial.get());} __Formula_Base to_return = *this;to_return.clear_applied_function();to_return.clear_denominator();return to_return;};
         // Sets the value of the formula with a fraction / polymonial
-        inline void set_fraction(std::shared_ptr<Formula_Sum> sum){a_fraction=std::make_shared<Formula_Fraction>(sum);a_polymonial.reset();};
+        inline void set_fraction(std::shared_ptr<Formula_Fraction> frac){a_fraction=frac;a_polymonial.reset();};
+        inline void set_fraction(Formula_Fraction frac){set_fraction(frac.fraction_copy());};
+        inline void set_fraction(std::shared_ptr<Formula_Sum> sum){set_fraction(std::make_shared<Formula_Fraction>(sum));};
         inline void set_fraction(Formula_Sum sum){set_fraction(std::make_shared<Formula_Sum>(sum));};
+        inline void set_polymonial(std::shared_ptr<Polymonial> sum){a_polymonial=sum;a_fraction.reset();};
+        inline void set_polymonial(Formula_Sum sum){set_polymonial(std::make_shared<Polymonial>(sum.to_polymonial()));};
         // Converts the formula to a polymonial / monomonial
         inline __Monomonial to_monomonial() const {return to_polymonial().monomonial();};
         inline Polymonial to_polymonial() const {if(a_polymonial.get() != 0){return *a_polymonial.get();}else if(a_fraction.get()==0){return 0;} return a_fraction.get()->to_polymonial();};

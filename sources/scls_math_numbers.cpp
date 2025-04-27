@@ -136,6 +136,11 @@ namespace scls {
     Fraction operator-(int obj_1, Fraction obj){return Fraction(obj_1)._substract_without_modification(obj);}
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const __Fraction_Base& obj){ os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; }
+
+    // Function to sort a std::vector of fraction
+    void remove_duplication_sorted_fractions(std::vector<Fraction>& fractions){for(int i = 1;i<static_cast<int>(fractions.size());i++){if(fractions.at(i)==fractions.at(i-1)){fractions.erase(fractions.begin()+i);i--;}}}
+    bool __sort_fractions(const Fraction& obj_1, const Fraction& obj_2){return obj_1 < obj_2;};
+    void sort_fractions(std::vector<Fraction>& fractions){std::sort(fractions.begin(), fractions.end(), __sort_fractions);}
 }
 
 //*********
