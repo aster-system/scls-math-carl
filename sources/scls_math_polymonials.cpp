@@ -140,9 +140,9 @@ namespace scls {
     }
 
     // Returns the monomonial to a GLSL calculation
-    std::string __Monomonial::to_glsl() const {
+    std::string __Monomonial::to_glsl(Textual_Math_Settings* settings) const {
         if(a_factor == 0){return std::string();}
-        std::string to_return = a_factor.to_std_string_simple();
+        std::string to_return = a_factor.to_std_string_simple(settings);
         // Add the unknown
         for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
             std::string current_unknow = a_unknowns.at(i).name();
@@ -154,14 +154,15 @@ namespace scls {
         return to_return;
     }
     // Returns the monomonial converted to std::string
-    std::string __Monomonial::to_std_string() const {
+    std::string __Monomonial::to_std_string(Textual_Math_Settings* settings) const {
         std::string final_unknow = "";
         for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
             final_unknow += a_unknowns.at(i).name();
-            if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1) final_unknow += "^" + a_unknowns.at(i).exponent().to_std_string_simple();
+            int real_exponent = a_unknowns.at(i).exponent().real().to_double();
+            if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1){for(int j = 1;j<real_exponent;j++){final_unknow += std::string("*") + a_unknowns.at(i).name();}}
         }
-        if(a_factor.real() == 0 || a_factor.imaginary() == 0) return a_factor.to_std_string_simple() + final_unknow;
-        return "(" + a_factor.to_std_string_simple() + ")" + final_unknow;
+        if(a_factor.real() == 0 || a_factor.imaginary() == 0) return a_factor.to_std_string_simple(settings) + final_unknow;
+        return "(" + a_factor.to_std_string_simple(settings) + ")" + final_unknow;
     };
 
     // Multiplication operator assignment
@@ -182,7 +183,7 @@ namespace scls {
     }
 
     // Stream operator overloading
-    std::ostream& operator<<(std::ostream& os, const __Monomonial& obj) { os << obj.to_std_string() ; return os; }
+    std::ostream& operator<<(std::ostream& os, const __Monomonial& obj) { os << obj.to_std_string(0) ; return os; }
 
     //*********
 	//
@@ -279,11 +280,11 @@ namespace scls {
     };
 
     // Returns the polymonial to a GLSL function
-    std::string Polymonial::to_glsl() const {
+    std::string Polymonial::to_glsl(Textual_Math_Settings* settings) const {
         std::string to_return = std::string("float poly(float x){float y = ");
         for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
             if(a_monomonials.at(i).factor() != 0) {
-                std::string to_add = a_monomonials.at(i).to_glsl();
+                std::string to_add = a_monomonials.at(i).to_glsl(settings);
                 to_return += to_add;
                 if(to_add != std::string() && i < static_cast<int>(a_monomonials.size()) - 1) {
                     to_return += " + ";
@@ -294,11 +295,11 @@ namespace scls {
         return to_return;
     }
     // Returns the polymonial to std::string
-    std::string Polymonial::to_std_string() const {
+    std::string Polymonial::to_std_string(Textual_Math_Settings* settings) const {
         std::string to_return = "";
         for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
             if(a_monomonials.at(i).factor() != 0) {
-                to_return += a_monomonials.at(i).to_std_string();
+                to_return += a_monomonials.at(i).to_std_string(settings);
                 if(i < static_cast<int>(a_monomonials.size()) - 1) {
                     to_return += " + ";
                 }
@@ -440,7 +441,7 @@ namespace scls {
     };
 
     // Stream operator overloading
-    std::ostream& operator<<(std::ostream& os, Polymonial& obj) {os << obj.to_std_string(); return os; }
+    std::ostream& operator<<(std::ostream& os, Polymonial& obj) {os << obj.to_std_string(0); return os; }
 	// Divide operator
     Polymonial operator/(__Monomonial& obj, __Monomonial const& other) {
         Polymonial to_return;
@@ -458,24 +459,25 @@ namespace scls {
     void __Formula_Base::check_formula() {
         // Check if the formula is sub-placed too heavily
         if(is_simple_fraction() && !has_denominator() && a_fraction.get()->numerator()->formulas_add().size() == 1 && a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().size() == 1) {
-            *this = (*a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().at(0).get());
+            if(a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().at(0).get() == 0){*this = 0;}
+            else{std::shared_ptr<__Formula_Base>temp=a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().at(0);paste(temp.get());}
         }
     }
 
 	// Returns the formula factor to a MathML
-    std::string __Formula_Base::Formula_Factor::to_mathml() const {
+    std::string __Formula_Base::Formula_Factor::to_mathml(Textual_Math_Settings* settings) const {
         std::string to_return = "";
 
         // Add the factors
         for(int i = 0;i<static_cast<int>(a_factors.size());i++){
             if(to_return != std::string()){to_return += std::string("<mo>*</mo>");}
-            to_return += a_factors.at(i).get()->to_mathml();
+            to_return += a_factors.at(i).get()->to_mathml(settings);
         }
 
         // Return the result
         return to_return;
     }
-	std::string __Formula_Base::to_mathml() const {
+	std::string __Formula_Base::to_mathml(Textual_Math_Settings* settings) const {
         std::string to_return = "";
 
         // Add the polymonial add
@@ -483,12 +485,12 @@ namespace scls {
             std::string current_str = std::string();
             Polymonial needed_polymonial = (*a_polymonial.get());
             if(needed_polymonial != 0) {
-                current_str = needed_polymonial.to_std_string();
+                current_str = needed_polymonial.to_std_string(settings);
                 if(current_str != "") {to_return += current_str;}
             }
             if(to_return != ""){to_return = std::string("<mi>") + to_return + std::string("</mi>");}
         }
-        else {to_return = a_fraction.get()->to_mathml();}
+        else {to_return = a_fraction.get()->to_mathml(settings);}
 
         // Add the applied function if needed
         if(a_applied_function.get() != 0) {
@@ -499,16 +501,16 @@ namespace scls {
         return to_return;
     }
     // Returns the formula factor to a std::string
-    std::string __Formula_Base::Formula_Factor::to_std_string() const {
+    std::string __Formula_Base::Formula_Factor::to_std_string(Textual_Math_Settings* settings) const {
         std::string to_return = "";
 
         // Add the factors
-        for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(to_return != std::string()){to_return += std::string("*");}to_return += a_factors.at(i).get()->to_std_string();}
+        for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(to_return != std::string()){to_return += std::string("*");}to_return += a_factors.at(i).get()->to_std_string(settings);}
 
         // Return the result
         return to_return;
     }
-	std::string __Formula_Base::to_std_string() const {
+	std::string __Formula_Base::to_std_string(Textual_Math_Settings* settings) const {
         std::string current_str = "";
         std::string to_return = "";
 
@@ -517,11 +519,11 @@ namespace scls {
             std::string current_str = std::string();
             Polymonial needed_polymonial = (*a_polymonial.get());
             if(needed_polymonial != 0) {
-                current_str = needed_polymonial.to_std_string();
+                current_str = needed_polymonial.to_std_string(settings);
                 if(current_str != "") {to_return += current_str;}
             }
         }
-        else {to_return = a_fraction.get()->to_std_string();}
+        else {to_return = a_fraction.get()->to_std_string(settings);}
 
         // Apply the function
         if(applied_function() != 0) {to_return = applied_function()->name() + "(" + to_return + ")";}
@@ -689,8 +691,8 @@ namespace scls {
     // Multiply a polymonial to this one
     void __Formula_Base::__multiply(__Formula_Base value) {
         // Check polymonial
-        if(a_polymonial.get() != 0) {
-            if(is_basic() && value.is_simple_polymonial()) {a_polymonial.get()->__multiply(value.to_polymonial());}
+        if(is_simple_polymonial()) {
+            if(value.is_simple_polymonial()) {a_polymonial.get()->__multiply(value.to_polymonial());}
             else{sub_place();a_fraction.get()->__multiply(value);}
         }
         else {
@@ -700,6 +702,14 @@ namespace scls {
 
         // Finish the result
         check_formula();
+    };
+
+    // Calculate the derivate value of the SQRT function
+    std::shared_ptr<__Formula_Base> __Sqrt_Function::derivate_value(__Formula_Base formula){
+        if(formula.applied_function() == 0){formula.set_applied_function<__Sqrt_Function>();}
+        std::shared_ptr<__Formula_Base> to_return=std::make_shared<__Formula_Base>(1);
+        to_return.get()->__divide(formula * 2);
+        return to_return;
     };
 
     //*********
@@ -742,17 +752,17 @@ namespace scls {
     }
 
     // Returns the Interval to an std::string
-    std::string Interval::end_to_std_string()const{if(a_end_infinite){return std::string("+inf");}return a_end.to_std_string();}
-    std::string Interval::start_to_std_string()const{if(a_start_infinite){return std::string("-inf");}return a_start.to_std_string();}
-    std::string Interval::to_std_string() {
+    std::string Interval::end_to_std_string(Textual_Math_Settings* settings)const{if(a_end_infinite){return std::string("+inf");}return a_end.to_std_string(settings);}
+    std::string Interval::start_to_std_string(Textual_Math_Settings* settings)const{if(a_start_infinite){return std::string("-inf");}return a_start.to_std_string(settings);}
+    std::string Interval::to_std_string(Textual_Math_Settings* settings) {
         std::string to_return = std::string();
 
         if(a_start_infinite||!a_start_included){to_return+=std::string("]");}
         else{to_return+=std::string("[");}
 
-        to_return+=start_to_std_string();
+        to_return+=start_to_std_string(settings);
         to_return+=std::string(";");
-        to_return+=end_to_std_string();
+        to_return+=end_to_std_string(settings);
 
         if(a_end_infinite||!a_end_included){to_return+=std::string("[");}
         else{to_return+=std::string("]");}
@@ -932,12 +942,12 @@ namespace scls {
     void Set_Number::__sort_interval() {std::sort(a_intervals.begin(), a_intervals.end(), __sort_interval_function);};
     void Set_Number::__sort_numbers() {std::sort(a_numbers.begin(), a_numbers.end(), __sort_numbers_function);};
     // Returns the set in a std::string
-    std::string Set_Number::to_std_string() {
+    std::string Set_Number::to_std_string(Textual_Math_Settings* settings) {
         std::string to_return = "";
 
         // Add the isolated elements
         for(int i = 0;i<static_cast<int>(numbers().size());i++) {
-            to_return += numbers().at(i).to_std_string_simple();
+            to_return += numbers().at(i).to_std_string_simple(settings);
             if(i < static_cast<int>(numbers().size()) - 1){to_return += std::string(";");}
         }
 
@@ -945,7 +955,7 @@ namespace scls {
         if(to_return != std::string()){to_return = std::string("{") + to_return + std::string("}");}
         for(int i = 0;i<static_cast<int>(intervals().size());i++) {
             if(to_return != std::string()){to_return += std::string(" U ");}
-            to_return += a_intervals.at(i).to_std_string();
+            to_return += a_intervals.at(i).to_std_string(settings);
         }
 
         return to_return;

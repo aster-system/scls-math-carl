@@ -50,6 +50,35 @@
 
 //*********
 //
+// Useful datas for textual representation of numbers
+//
+//*********
+
+namespace scls {
+
+    //*********
+    //
+    // The Textual_Math_Settings class
+    //
+    //*********
+
+    class Textual_Math_Settings {
+        // Class representating settings to textually represent mathematical objects
+    public:
+
+        // Textual_Math_Settings constructor
+        Textual_Math_Settings();
+
+        // Getters and setters
+        inline bool introduction_in_mathml() const {return a_introduction_in_mathml;};
+    private:
+        // If the introduction should be in mathml or not
+        bool a_introduction_in_mathml = true;
+    };
+}
+
+//*********
+//
 // The Rational part
 //
 //*********
@@ -105,9 +134,9 @@ namespace scls {
         // Returns the fraction to MathML
         inline std::string to_mathml(){normalize();if(a_denominator == 1){return std::string("<math><mi>") + std::to_string(numerator()) + std::string("</mi></math>");}return std::string("<math><frac><mrow>") + std::to_string(a_numerator) + "</mrow><mrow>" + std::to_string(a_denominator) + std::string("</mrow></frac></math>");};
         // Returns the fraction to std::string, in the fraction redaction
-        inline std::string to_std_string_fraction() const {if(denominator() == 1) return std::to_string(numerator()); return std::to_string(numerator()) + "/" + std::to_string(denominator());};
-        inline std::string to_std_string(unsigned int max_number_size) const {std::string from_fraction = to_std_string_fraction();if(from_fraction.size() <= max_number_size) return from_fraction;return format_number_to_text(to_double());};
-        inline std::string to_std_string() const {return to_std_string(-1);};
+        inline std::string to_std_string_fraction(Textual_Math_Settings* settings) const {if(denominator() == 1) return std::to_string(numerator()); return std::to_string(numerator()) + "/" + std::to_string(denominator());};
+        inline std::string to_std_string(unsigned int max_number_size, Textual_Math_Settings* settings) const {std::string from_fraction = to_std_string_fraction(settings);if(from_fraction.size() <= max_number_size) return from_fraction;return format_number_to_text(to_double());};
+        inline std::string to_std_string(Textual_Math_Settings* settings) const {return to_std_string(-1, settings);};
 
         // Getters and setter
         inline long long denominator() const {return a_denominator;};
@@ -222,6 +251,9 @@ namespace scls {
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const Fraction& obj);
 
+    // Returns a random fraction
+    scls::Fraction random_fraction(scls::Fraction min_value, scls::Fraction max_value, int precision);
+    scls::Fraction random_fraction(scls::Fraction min_value, scls::Fraction max_value);
     // Function to sort a std::vector of fraction
     void remove_duplication_sorted_fractions(std::vector<Fraction>& fractions);
     void sort_fractions(std::vector<Fraction>& fractions);
@@ -245,7 +277,7 @@ namespace scls {
         //
         //*********
 
-        // Dimple fraction constructor
+        // Simple fraction constructor
         Complex(Fraction real_part, Fraction imaginary) : a_imaginary(imaginary), a_real(real_part) {};
         Complex(long long real_part, long long imaginary_part) : Complex(Fraction(real_part), Fraction(imaginary_part)) {};
         Complex(long long real_part, Fraction imaginary_part) : Complex(Fraction(real_part), imaginary_part) {};
@@ -258,6 +290,8 @@ namespace scls {
 
         // Returns the module of the complex
         inline scls::Fraction module() const{return a_real * a_real + a_imaginary * a_imaginary; };
+        // Normalize the number
+        inline void normalize(int limit){a_imaginary.normalize(limit);a_real.normalize(limit);};
 
         // Getters and setter
         inline Fraction imaginary() const {return a_imaginary;};
@@ -266,8 +300,8 @@ namespace scls {
         inline void set_real(Fraction new_real) {a_real=new_real;};
 
         // Returns the Complex to a simple std::string
-        std::string to_std_string_simple(unsigned int max_number_size) const;
-        inline std::string to_std_string_simple() const {return to_std_string_simple(-1);};
+        std::string to_std_string_simple(unsigned int max_number_size, Textual_Math_Settings* settings) const;
+        inline std::string to_std_string_simple(Textual_Math_Settings* settings) const {return to_std_string_simple(-1, settings);};
 
         //*********
         //
@@ -417,7 +451,7 @@ namespace scls {
         Limit():Limit(Fraction(1)){};
 
         // Returns the limit in a std::string
-        std::string to_std_string() const;
+        std::string to_std_string(Textual_Math_Settings* settings) const;
 
         // Getters and setters
         inline bool is_error_ipi() const {return a_special_value == SCLS_MATH_NUMBER_LIMIT_ERROR_IPI;};

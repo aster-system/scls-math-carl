@@ -29,6 +29,24 @@
 
 //*********
 //
+// Useful datas for textual representation of numbers
+//
+//*********
+
+namespace scls {
+
+    //*********
+    //
+    // The Textual_Math_Settings class
+    //
+    //*********
+
+    // Textual_Math_Settings constructor
+    Textual_Math_Settings::Textual_Math_Settings(){}
+}
+
+//*********
+//
 // The Rational part
 //
 //*********
@@ -137,6 +155,9 @@ namespace scls {
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const __Fraction_Base& obj){ os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; }
 
+    // Returns a random fraction
+    Fraction random_fraction(Fraction min_value, Fraction max_value, int precision){return (min_value + (max_value - min_value) * Fraction(rand()%precision, precision)).normalized();}
+    Fraction random_fraction(Fraction min_value, Fraction max_value){return random_fraction(min_value, max_value, 1000);}
     // Function to sort a std::vector of fraction
     void remove_duplication_sorted_fractions(std::vector<Fraction>& fractions){for(int i = 1;i<static_cast<int>(fractions.size());i++){if(fractions.at(i)==fractions.at(i-1)){fractions.erase(fractions.begin()+i);i--;}}}
     bool __sort_fractions(const Fraction& obj_1, const Fraction& obj_2){return obj_1 < obj_2;};
@@ -153,17 +174,17 @@ namespace scls {
 namespace scls {
 
     // Returns the Complex to a simple std::string
-    std::string Complex::to_std_string_simple(unsigned int max_number_size) const {
+    std::string Complex::to_std_string_simple(unsigned int max_number_size, Textual_Math_Settings* settings) const {
         std::string to_return = "";
         if(real() != 0) {
-            to_return += real().to_std_string(max_number_size) + " ";
+            to_return += real().to_std_string(max_number_size, settings) + " ";
         }
         if(imaginary() != 0) {
             if(imaginary() > 0) {
-                to_return += "+ " + imaginary().to_std_string(max_number_size) + "i";
+                to_return += "+ " + imaginary().to_std_string(max_number_size, settings) + "i";
             }
             else {
-                to_return += "- " + (imaginary() * -1).to_std_string(max_number_size) + "i";
+                to_return += "- " + (imaginary() * -1).to_std_string(max_number_size, settings) + "i";
             }
         }
         while(to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
@@ -253,11 +274,11 @@ namespace scls {
     //
     //*********
 
-    std::string Limit::to_std_string() const {
+    std::string Limit::to_std_string(Textual_Math_Settings* settings) const {
         if(is_pi()) {return std::string("+infini");}
         else if(is_mi()) {return std::string("-infini");}
         else if(is_pz()) {return std::string("0+");}
         else if(is_mz()) {return std::string("0-");}
-        return value().to_std_string();
+        return value().to_std_string(settings);
     };
 }

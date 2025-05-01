@@ -76,7 +76,7 @@ namespace scls {
     public:
 
         // __Monomonial constructor
-        __Monomonial(Complex factor):a_factor(factor){};
+        __Monomonial(Complex factor):a_factor(factor){a_factor.normalize(4);};
         __Monomonial(Complex factor, std::vector<_Base_Unknown> unknowns):__Monomonial(factor){a_unknowns=unknowns;};
         __Monomonial(Complex factor, std::string unknow):__Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
         __Monomonial(Complex factor, std::string unknow, Complex exponent):__Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
@@ -113,9 +113,9 @@ namespace scls {
         inline unsigned int unknowns_number() const {unsigned int to_return = 0;for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns[i].name() != "")to_return++;}return to_return;};
 
         // Returns the monomonial to a GLSL calculation
-        std::string to_glsl() const;
+        std::string to_glsl(Textual_Math_Settings* settings) const;
         // Returns the monomonial converted to std::string
-        std::string to_std_string() const;
+        std::string to_std_string(Textual_Math_Settings* settings) const;
 
         // Operators
         // Equal operator assignment
@@ -215,9 +215,9 @@ namespace scls {
         std::vector<__Monomonial> unknown_monomonials() const;
 
         // Returns the polymonial to a GLSL function
-        std::string to_glsl() const;
+        std::string to_glsl(Textual_Math_Settings* settings) const;
         // Returns the polymonial to std::string
-        std::string to_std_string() const;
+        std::string to_std_string(Textual_Math_Settings* settings) const;
 
         // Methods operators
         // Add a polymonial to this one
@@ -371,9 +371,9 @@ namespace scls {
         inline Interval intersection(Fraction needed_start, bool needed_start_included, Fraction needed_end, bool needed_end_included){return intersection(Interval(needed_start, needed_start_included, needed_end, needed_end_included));};
 
         // Returns the interval to an std::string
-        std::string end_to_std_string() const;
-        std::string start_to_std_string() const;
-        std::string to_std_string();
+        std::string end_to_std_string(Textual_Math_Settings* settings) const;
+        std::string start_to_std_string(Textual_Math_Settings* settings) const;
+        std::string to_std_string(Textual_Math_Settings* settings);
 
         // Getters and setters
         inline Fraction end() const {return a_end;};
@@ -469,7 +469,7 @@ namespace scls {
         Set_Number complement_relative_symetrical(Set_Number* set_number);
 
         // Returns the set in a std::string
-        std::string to_std_string();
+        std::string to_std_string(Textual_Math_Settings* settings);
 
         // Checks the intervals / numbers
         void check_intervals();
@@ -554,15 +554,16 @@ namespace scls {
             Formula_Factor(const Formula_Factor& formula_factor_copy):a_factors(formula_factor_copy.a_factors){};
 
             // Returns the formula factor to a MathML / std::string
-            std::string to_mathml() const;
-            std::string to_std_string() const;
+            std::string to_mathml(Textual_Math_Settings* settings) const;
+            std::string to_std_string(Textual_Math_Settings* settings) const;
 
             // Returns the basic formula
+            inline bool basic_formula_exists()const{for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(a_factors.at(i).get()->is_basic()){return true;}}return false;};
             inline std::shared_ptr<__Formula_Base> basic_formula_shared_ptr(){for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(a_factors.at(i).get()->is_basic()){return a_factors.at(i);}}std::shared_ptr<__Formula_Base>to_add=std::make_shared<__Formula_Base>();a_factors.insert(a_factors.begin(), to_add);return a_factors.at(0);};
             inline __Formula_Base* basic_formula(){return basic_formula_shared_ptr().get();};
 
             // Returns a copy of the factor
-            inline std::shared_ptr<Formula_Factor> factor_copy(){std::shared_ptr<Formula_Factor> to_return = std::make_shared<Formula_Factor>();for(int i = 0;i<static_cast<int>(a_factors.size());i++){to_return.get()->a_factors.push_back(a_factors.at(i).get()->formula_copy_shared_ptr());}return to_return;};
+            inline std::shared_ptr<Formula_Factor> factor_copy(){std::shared_ptr<Formula_Factor> to_return = std::make_shared<Formula_Factor>();for(int i = 0;i<static_cast<int>(a_factors.size());i++){to_return.get()->a_factors.push_back(a_factors.at(i).get()->formula_copy());}return to_return;};
             // Form of the formula
             inline bool is_simple_monomonial() const {return a_factors.size() == 0 || (a_factors.size() == 1 && a_factors[0].get()->is_simple_monomonial());};
             inline bool is_simple_polymonial() const {return a_factors.size() == 0 || (a_factors.size() == 1 && a_factors[0].get()->is_simple_polymonial());};
@@ -575,7 +576,7 @@ namespace scls {
             inline void __divide(Polymonial value){__divide(__Formula_Base(value));};
             inline void __divide(__Monomonial value){__divide(__Formula_Base(value));};
             // Multiplies the factor by a polymonial
-            inline void __multiply(Polymonial value) {basic_formula()->__multiply(value);};
+            inline void __multiply(Polymonial value) {if(!basic_formula_exists()){basic_formula()->set_polymonial(value);}else{basic_formula()->__multiply(value);}};
             void __multiply(__Formula_Base value){a_factors.push_back(std::make_shared<__Formula_Base>(value));};
 
             // Returns if two numbers/formulas are equals
@@ -605,12 +606,13 @@ namespace scls {
             Formula_Sum(std::shared_ptr<Formula_Factor> base){a_formulas_add.push_back(base);};
             Formula_Sum(Formula_Factor base):Formula_Sum(std::make_shared<Formula_Factor>(base)){};
             Formula_Sum(__Formula_Base base):Formula_Sum(std::make_shared<Formula_Factor>(base)){};
+            Formula_Sum(std::shared_ptr<__Formula_Base> base):Formula_Sum(std::make_shared<Formula_Factor>(base)){};
             Formula_Sum(int base):Formula_Sum(std::make_shared<Formula_Factor>(base)){};
             Formula_Sum(const Formula_Sum& formula_factor_copy){for(int i = 0;i<static_cast<int>(formula_factor_copy.a_formulas_add.size());i++){a_formulas_add.push_back(formula_factor_copy.a_formulas_add.at(i).get()->factor_copy());}};
 
             // Returns the polymonial to mathml / std::string
-            inline std::string to_mathml() const{std::string to_return = std::string();for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){to_return+=a_formulas_add.at(i).get()->to_mathml();if(i<static_cast<int>(a_formulas_add.size())-1){to_return += std::string("<mo>+</mo>");}}return to_return;};
-            inline std::string to_std_string() const{std::string to_return = std::string();for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){to_return+=a_formulas_add.at(i).get()->to_std_string();if(i<static_cast<int>(a_formulas_add.size())-1){to_return += std::string("+");}}return to_return;};
+            inline std::string to_mathml(Textual_Math_Settings* settings) const{std::string to_return = std::string();for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){to_return+=a_formulas_add.at(i).get()->to_mathml(settings);if(i<static_cast<int>(a_formulas_add.size())-1){to_return += std::string("<mo>+</mo>");}}return to_return;};
+            inline std::string to_std_string(Textual_Math_Settings* settings) const{std::string to_return = std::string();for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){to_return+=a_formulas_add.at(i).get()->to_std_string(settings);if(i<static_cast<int>(a_formulas_add.size())-1){to_return += std::string("+");}}return to_return;};
 
             // Form of the formula
             inline bool is_simple_monomonial() const {return a_formulas_add.size() == 1 && a_formulas_add[0].get()->is_simple_monomonial();};
@@ -628,7 +630,7 @@ namespace scls {
             // Returns if two numbers/formulas are equals
             bool __is_equal(int value)const{return __is_equal(scls::Fraction(value));};
             bool __is_equal(Fraction value)const{return __is_equal(Polymonial(value));};
-            bool __is_equal(Polymonial value)const{return a_formulas_add.size() == 1 && a_formulas_add[0].get()->__is_equal(value);};
+            bool __is_equal(Polymonial value)const{return a_formulas_add.size() == 1 && a_formulas_add.at(0).get()->__is_equal(value);};
 
             // Multiply a polymonial to this one
             virtual void __multiply(Polymonial value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
@@ -652,14 +654,15 @@ namespace scls {
             Formula_Fraction(std::shared_ptr<Formula_Sum> base_1, std::shared_ptr<Formula_Sum> base_2):a_denominator(base_2),a_numerator(base_1){};
             Formula_Fraction(Formula_Sum base):Formula_Fraction(std::make_shared<Formula_Sum>(base)){};
             Formula_Fraction(__Formula_Base base):Formula_Fraction(std::make_shared<Formula_Sum>(base)){};
+            Formula_Fraction(std::shared_ptr<__Formula_Base> base):Formula_Fraction(std::make_shared<Formula_Sum>(base)){};
             Formula_Fraction(int base):Formula_Fraction(std::make_shared<Formula_Sum>(base)){};
             Formula_Fraction(const Formula_Fraction& formula_factor_copy):a_denominator(formula_factor_copy.denominator_copy()),a_numerator(formula_factor_copy.numerator_copy()){};
 
             // Cleart the denominator in the fraction
             inline void clear_denominator(){a_denominator.reset();};
             // Returns the polymonial to mathml / std::string
-            inline std::string to_mathml() const{std::string to_return = a_numerator.get()->to_mathml();if(a_denominator.get() != 0){to_return = std::string("<mfrac><mi>") + to_return + std::string("</mi><mi>") + a_denominator.get()->to_mathml() + std::string("</mi></mfrac>");}return to_return;};
-            inline std::string to_std_string() const{std::string to_return = a_numerator.get()->to_std_string();if(a_denominator.get() != 0){to_return += std::string("/") + a_denominator.get()->to_std_string();}return to_return;};
+            inline std::string to_mathml(Textual_Math_Settings* settings) const{std::string to_return = a_numerator.get()->to_mathml(settings);if(a_denominator.get() != 0){to_return = std::string("<mfrac><mi>") + to_return + std::string("</mi><mi>") + a_denominator.get()->to_mathml(settings) + std::string("</mi></mfrac>");}return to_return;};
+            inline std::string to_std_string(Textual_Math_Settings* settings) const{std::string to_return = a_numerator.get()->to_std_string(settings);if(a_denominator.get() != 0){to_return = std::string("(") + to_return + std::string(")/(") + a_denominator.get()->to_std_string(settings) + std::string(")");}return to_return;};
 
             // Returns a copy of this formula
             inline std::shared_ptr<Formula_Sum> denominator_copy()const{if(a_denominator.get()==0){return std::shared_ptr<Formula_Sum>();}return a_denominator.get()->sum_copy();};
@@ -712,19 +715,18 @@ namespace scls {
         // Clear the formula
         inline void clear() {a_applied_function.reset();a_fraction.reset();a_polymonial.reset();};
         // Pastes a formula to this one
-        virtual void paste(__Formula_Base* value){a_fraction = std::make_shared<Formula_Fraction>((*value->a_fraction.get()));a_applied_function=value->a_applied_function;};
+        virtual void paste(__Formula_Base* value){a_applied_function=value->applied_function_copy();a_fraction = value->fraction_copy();a_polymonial = value->polymonial_copy();};
         // Returns a copy of this formula
-        __Formula_Base formula_copy() {return *this;};
-        inline std::shared_ptr<__Formula_Base> formula_copy_shared_ptr() const {return std::make_shared<__Formula_Base>(*this);};
+        std::shared_ptr<__Formula_Base> formula_copy() {std::shared_ptr<__Formula_Base>to_return=std::make_shared<__Formula_Base>(*this);return to_return;};
         inline std::shared_ptr<Formula_Fraction> fraction_copy()const{if(a_fraction.get()==0){return std::shared_ptr<Formula_Fraction>();} return a_fraction.get()->fraction_copy();};
         inline std::shared_ptr<Polymonial> polymonial_copy()const{if(a_polymonial.get()==0){return std::shared_ptr<Polymonial>();}return std::make_shared<Polymonial>(*a_polymonial.get());};
         // Sub-place the current formula to a "formula add"
-        inline void sub_place(){__Formula_Base needed_copy = formula_copy();clear();a_fraction = std::make_shared<Formula_Fraction>(needed_copy);};
+        inline void sub_place(){std::shared_ptr<__Formula_Base> needed_copy = formula_copy();clear();a_fraction = std::make_shared<Formula_Fraction>(needed_copy);};
 
         // Returns the polymonial to mathml
-        std::string to_mathml() const;
+        std::string to_mathml(Textual_Math_Settings* settings) const;
         // Returns the polymonial to std::string
-        std::string to_std_string() const;
+        std::string to_std_string(Textual_Math_Settings* settings) const;
 
         // Returns the denominator / numerator of the formula
         inline std::shared_ptr<__Formula_Base> denominator()const{if(!has_denominator()){return std::shared_ptr<__Formula_Base>();}return std::make_shared<__Formula_Base>(*a_fraction.get()->denominator());};
@@ -747,6 +749,7 @@ namespace scls {
         inline void set_fraction(Formula_Sum sum){set_fraction(std::make_shared<Formula_Sum>(sum));};
         inline void set_polymonial(std::shared_ptr<Polymonial> sum){a_polymonial=sum;a_fraction.reset();};
         inline void set_polymonial(Formula_Sum sum){set_polymonial(std::make_shared<Polymonial>(sum.to_polymonial()));};
+        inline void set_polymonial(Polymonial polymonial){set_polymonial(std::make_shared<Polymonial>(polymonial));};
         // Converts the formula to a polymonial / monomonial
         inline __Monomonial to_monomonial() const {return to_polymonial().monomonial();};
         inline Polymonial to_polymonial() const {if(a_polymonial.get() != 0){return *a_polymonial.get();}else if(a_fraction.get()==0){return 0;} return a_fraction.get()->to_polymonial();};
@@ -809,11 +812,11 @@ namespace scls {
         bool __is_equal(Polymonial value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
 
         // Multiply a polymonial to this one
-        virtual void __multiply(Polymonial value) {if(a_polymonial.get() != 0){a_polymonial.get()->__multiply(value);}else{a_fraction.get()->__multiply(value);}};
-        inline void __multiply(int value){__multiply(Polymonial(value));};
-        inline void __multiply(__Monomonial value){__multiply(Polymonial(value));};
+        virtual void __multiply(Polymonial value) {__multiply(__Formula_Base(value));};
+        inline void __multiply(int value){__multiply(__Formula_Base(value));};
+        inline void __multiply(__Monomonial value){__multiply(__Formula_Base(value));};
         virtual void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
-        inline void __multiply(Complex value){__multiply(Polymonial(value));};
+        inline void __multiply(Complex value){__multiply(__Formula_Base(value));};
         // Multiply an another formula to this one
         void __multiply(__Formula_Base value);
         void __multiply(Formula_Sum value){__multiply(__Formula_Base(value));};
@@ -877,7 +880,7 @@ namespace scls {
             inline void paste(__Formula_Base* to_paste)const{a_formula.get()->paste(to_paste);};
             inline void paste(Formula to_paste)const{a_formula.get()->paste(to_paste.a_formula.get());};
             inline Polymonial to_polymonial() const {return a_formula.get()->to_polymonial();};
-            inline std::string to_std_string() const {return a_formula.get()->to_std_string();};
+            inline std::string to_std_string(Textual_Math_Settings* settings) const {return a_formula.get()->to_std_string(settings);};
 
             // Getters and setters
             inline __Formula_Base_Function* applied_function()const{return a_formula.get()->applied_function();};
@@ -991,7 +994,7 @@ namespace scls {
             // Definition set of the function
             virtual Set_Number definition_set() {Set_Number real = Set_Number();Interval it; it.set_start(0); it.set_end_infinite(true);real.add_interval(it);return real;};
             // Derivate value
-            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){std::shared_ptr<__Formula_Base> to_return=std::make_shared<__Formula_Base>(1);to_return.get()->__divide(formula * 2);return to_return;};
+            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula);
             // Real value
             virtual double real_value(__Formula_Base* formula){double value = formula->to_polymonial().known_monomonial().factor().real().to_double();return std::sqrt(value);};
             // Simplify a value with the function
