@@ -947,6 +947,25 @@ namespace scls {
         std::shared_ptr<__Formula_Base_Function> a_applied_function;
     }; typedef __Formula_Base Formula;
 
+    // Cosinus function possible for a formula
+    class __Cos_Function : public __Formula_Base::__Formula_Base_Function {
+        public:
+            // __Formula_Base_Function constructor
+            __Cos_Function():__Formula_Base_Function("cos"){};
+
+            // Definition set of the function
+            virtual Set_Number definition_set() {Set_Number real = Set_Number::real();return real;};
+            // Derivate value
+            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){};
+            // Real value
+            virtual double real_value(__Formula_Base* formula){double value = formula->to_polymonial().known_monomonial().factor().real().to_double();return std::cos(value);};
+            // Simplify a value with the function
+            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base>();};
+
+            // Copies and returns this function
+            virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Cos_Function>();};
+    };
+
     // Square root function possible for a formula
     class __Exp_Function : public __Formula_Base::__Formula_Base_Function {
         public:
@@ -983,6 +1002,25 @@ namespace scls {
 
             // Copies and returns this function
             virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Log_Function>();};
+    };
+
+    // Sinus function possible for a formula
+    class __Sin_Function : public __Formula_Base::__Formula_Base_Function {
+        public:
+            // __Sin_Function constructor
+            __Sin_Function():__Formula_Base_Function("sin"){};
+
+            // Definition set of the function
+            virtual Set_Number definition_set() {Set_Number real = Set_Number::real();return real;};
+            // Derivate value
+            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){};
+            // Real value
+            virtual double real_value(__Formula_Base* formula){double value = formula->to_polymonial().known_monomonial().factor().real().to_double();return std::sin(value);};
+            // Simplify a value with the function
+            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base>();};
+
+            // Copies and returns this function
+            virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Sin_Function>();};
     };
 
     // Square root function possible for a formula
@@ -1037,7 +1075,7 @@ namespace scls {
         // Class allowing to properly parse a std::string to a polymonial
     public:
         // String_To_Formula_Parse constructor
-        String_To_Formula_Parse(unsigned int level):a_level(level){add_function(std::string("exp"));add_function(std::string("ln"));add_function(std::string("sqrt"));};
+        String_To_Formula_Parse(unsigned int level);
         String_To_Formula_Parse():String_To_Formula_Parse(0){};
 
         // Returns if a std::string is a number or not

@@ -976,6 +976,16 @@ namespace scls {
 	//
 	//*********
 
+	// String_To_Formula_Parse constructor
+	String_To_Formula_Parse::String_To_Formula_Parse(unsigned int level):a_level(level){
+        add_function(std::string("cos"));
+        add_function(std::string("exp"));
+        add_function(std::string("ln"));
+        add_function(std::string("sin"));
+        add_function(std::string("sqrt"));
+        add_function(std::string("tan"));
+    };
+
 	// Returns a given first base string to a formula
     Formula String_To_Formula_Parse::__string_to_formula_base(std::string base, std::string used_function) {
         Formula formula;
@@ -1002,8 +1012,10 @@ namespace scls {
         }
 
         // Create the formula
-        if(used_function == "exp"){formula.add_applied_function<__Exp_Function>();}
+        if(used_function == "cos"){formula.add_applied_function<__Cos_Function>();}
+        else if(used_function == "exp"){formula.add_applied_function<__Exp_Function>();}
         else if(used_function == "ln"){formula.add_applied_function<__Log_Function>();}
+        else if(used_function == "sin"){formula.add_applied_function<__Sin_Function>();}
         else if(used_function == "sqrt"){formula.add_applied_function<__Sqrt_Function>();}
         return formula;
     };
@@ -1024,10 +1036,7 @@ namespace scls {
                 Formula current_polymonial = __string_to_formula_base(cutted[i], cutted[i - 1]);
                 to_return += current_polymonial;
             }
-        } else {
-            // No function applied
-            to_return = __string_to_formula_base(cutted[0]);
-        }
+        } else {to_return = __string_to_formula_base(cutted[0]);}
 
         // Return the result
         return to_return;
@@ -1094,13 +1103,9 @@ namespace scls {
             }//*/
             // Remove the useless ")("
             if(i > 0 && source[i] == '(') {
-                if(source[i - 1] == ')') {
-                    source.insert(i, "*");
-                    i++;
-                } else if(source[i - 1] == '-') {
-                    source.insert(i, "1*");
-                    i++;
-                } else if(!__string_is_operator(source[i - 1])) {
+                if(source[i - 1] == ')') {source.insert(i, "*");i++;}
+                else if(source[i - 1] == '-') {source.insert(i, "1*");i++;}
+                else if(!__string_is_operator(source[i - 1])) {
                     std::string total_function = std::string();
                     int current_pos = i - 1;
                     while(current_pos >= 0 && (!__string_is_operator(source[current_pos]) && source[current_pos]!='(' && source[current_pos]!=')')){total_function=source[current_pos]+total_function;current_pos--;}
