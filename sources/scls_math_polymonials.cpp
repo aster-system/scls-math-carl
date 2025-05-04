@@ -712,6 +712,10 @@ namespace scls {
         return to_return;
     };
 
+    // Calculate the derivate value of the COS and SIN function
+    std::shared_ptr<__Formula_Base> __Cos_Function::derivate_value(__Formula_Base formula){formula.set_applied_function<__Sin_Function>();formula*=-1;return std::make_shared<__Formula_Base>(formula);}
+    std::shared_ptr<__Formula_Base> __Sin_Function::derivate_value(__Formula_Base formula){formula.set_applied_function<__Cos_Function>();return std::make_shared<__Formula_Base>(formula);}
+
     //*********
 	//
 	// The sets class

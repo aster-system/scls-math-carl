@@ -825,6 +825,7 @@ namespace scls {
         // With int
         bool operator==(int value) {return __is_equal(value);};
         __Formula_Base operator*(int value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
+        __Formula_Base& operator*=(int value) {__multiply(value);return*this;};
         // With fractions
         bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
@@ -891,6 +892,7 @@ namespace scls {
 
             // With int
             bool operator==(int value) {return a_formula.get()->__is_equal(value);};
+            Formula& operator*=(int value) {__Formula_Base temp=value;a_formula.get()->__multiply(temp);return*this;};
             // With complex
             Formula& operator*=(Complex value) {__Formula_Base temp=value;a_formula.get()->__multiply(temp);return*this;};
             Formula& operator+=(Complex value) {__Formula_Base temp=value;a_formula.get()->__add(&temp);return*this;};
@@ -956,7 +958,7 @@ namespace scls {
             // Definition set of the function
             virtual Set_Number definition_set() {Set_Number real = Set_Number::real();return real;};
             // Derivate value
-            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){};
+            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula);
             // Real value
             virtual double real_value(__Formula_Base* formula){double value = formula->to_polymonial().known_monomonial().factor().real().to_double();return std::cos(value);};
             // Simplify a value with the function
@@ -1013,7 +1015,7 @@ namespace scls {
             // Definition set of the function
             virtual Set_Number definition_set() {Set_Number real = Set_Number::real();return real;};
             // Derivate value
-            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula){};
+            virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula);
             // Real value
             virtual double real_value(__Formula_Base* formula){double value = formula->to_polymonial().known_monomonial().factor().real().to_double();return std::sin(value);};
             // Simplify a value with the function
