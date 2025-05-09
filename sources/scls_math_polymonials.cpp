@@ -49,6 +49,7 @@ namespace scls {
         new_monomonial.set_factor(Complex(1) / new_monomonial.factor());
         // Reverse each unknowns
         for(int i = 0;i<static_cast<int>(new_monomonial.a_unknowns.size());i++) {
+            std::cout << "S " << new_monomonial.a_unknowns[i].exponent().to_std_string_simple(0) << std::endl;
             new_monomonial.a_unknowns[i].set_exponent(new_monomonial.a_unknowns[i].exponent() * -1);
         } return new_monomonial;
     };
@@ -380,7 +381,8 @@ namespace scls {
             // Create the good value
             Polymonial final_to_add = new_value;
             int needed_exponent = static_cast<int>(exponent.real().to_double());
-            for(int i = 1;i<needed_exponent;i++) {final_to_add *= new_value;}
+            if(needed_exponent > 0) {for(int i = 1;i<needed_exponent;i++) {final_to_add *= new_value;}}
+            else{final_to_add=1;for(int i = 0;i<-needed_exponent;i++) {final_to_add.__divide(&new_value);}}
             final_polymonial *= final_to_add;
         } else {
             // The unknown is not a multiplication of the base value
@@ -684,11 +686,22 @@ namespace scls {
     }
     void __Formula_Base::__divide(__Formula_Base value) {
         // Check if values are both polymonial
-        if(is_basic() && is_simple_polymonial() && value.is_simple_monomonial()) {a_polymonial.get()->__divide(value.to_monomonial());}
-        else{if(!is_simple_fraction()){sub_place();}a_fraction.get()->__divide(value);}
+        if(is_basic() && is_simple_polymonial() && value.is_simple_monomonial()) {
+            std::cout << "E " << value.to_std_string(0) << std::endl;
+            a_polymonial.get()->__divide(value.to_monomonial());
+            std::cout << "F " << a_polymonial.get()->to_std_string(0) << std::endl;
+        }
+        else {
+            if(!is_simple_fraction()){sub_place();}
+            a_fraction.get()->__divide(value);
+        }
         check_formula();
     };
     // Multiply a polymonial to this one
+    void __Formula_Base::Formula_Factor::__multiply(__Formula_Base value){
+        if(value.is_simple_polymonial()){__multiply(value.to_polymonial());}
+        else{a_factors.push_back(std::make_shared<__Formula_Base>(value));}
+    }
     void __Formula_Base::__multiply(__Formula_Base value) {
         // Check polymonial
         if(is_simple_polymonial()) {

@@ -223,7 +223,7 @@ namespace scls {
         // Add a polymonial to this one
         void __add(Polymonial value);
         // Divide a monomonial to this void
-        inline void __divide(__Monomonial value) {__Monomonial used_inverse = value.inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
+        inline void __divide(__Monomonial value) {__Monomonial used_inverse = value.inverse();std::cout << "R " << used_inverse.to_std_string(0) << std::endl; for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
         inline void __divide(Complex value) {__divide(__Monomonial(value));};
         inline void __divide(Fraction value) {__divide(__Monomonial(value));};
         void __divide(Polymonial* value);
@@ -577,7 +577,7 @@ namespace scls {
             inline void __divide(__Monomonial value){__divide(__Formula_Base(value));};
             // Multiplies the factor by a polymonial
             inline void __multiply(Polymonial value) {if(!basic_formula_exists()){basic_formula()->set_polymonial(value);}else{basic_formula()->__multiply(value);}};
-            void __multiply(__Formula_Base value){a_factors.push_back(std::make_shared<__Formula_Base>(value));};
+            void __multiply(__Formula_Base value);
 
             // Returns if two numbers/formulas are equals
             bool __is_equal(int value)const{return __is_equal(scls::Fraction(value));};
@@ -634,6 +634,7 @@ namespace scls {
 
             // Multiply a polymonial to this one
             virtual void __multiply(Polymonial value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
+            virtual void __multiply(__Formula_Base value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
 
             // Returns the final value of the formula
             scls::Complex value(scls::Fraction current_value);
@@ -685,6 +686,7 @@ namespace scls {
             bool __is_equal(Polymonial value)const{return a_numerator.get() == 0 && a_numerator.get()->__is_equal(value);};
             // Multiply a polymonial to this one
             virtual void __multiply(Polymonial value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}};
+            virtual void __multiply(__Formula_Base value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}};
 
             // Returns the final value of the formula
             scls::Complex value(scls::Fraction current_value);
