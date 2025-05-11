@@ -169,37 +169,14 @@ namespace scls {
     //*********
 
     // Normalizes a 3D vector
-    static void normalize_3d(double& vector_x, double& vector_y, double& vector_z) {
-        double distance_xz = vector_x * vector_x + vector_z * vector_z;
-        double distance = std::sqrt(distance_xz + vector_y * vector_y);
-
-        // Calculate the proportionality constant
-        double divisor = 1.0 / distance;
-        divisor = sqrt(divisor);
-        vector_x *= divisor;
-        vector_y *= divisor;
-        vector_z *= divisor;
-    };
+    void normalize_3d(double& vector_x, double& vector_y, double& vector_z);
 
     // Returns the angle in radians for a vector 3D
-    static double vector_2d_angle(double vector_x, double vector_y) {
-        // Calculate the first XZ angle
-        double total_length = std::sqrt(vector_x * vector_x + vector_y * vector_y);
-        double to_add = 0;
-        if(total_length > 0){to_add = std::asin(std::abs(vector_y) / total_length);}
-        // Get the current angle
-        double current_angle = 0;
-        if(vector_y >= 0 && vector_x >= 0) {current_angle = to_add;}
-        else if (vector_x < 0 && vector_y >= 0) {current_angle = 3.1415 - to_add;}
-        else if(vector_x < 0 && vector_y < 0) {current_angle = 3.1415 + to_add;}
-        else {current_angle = 3.1415 * 2.0 - to_add;}
-
-        return current_angle;
-    }
+    double vector_2d_angle(double vector_x, double vector_y);
 
     // Returns a point 3D with an angle (on y axis)
-    static Point_3D vector_with_angle(double angle){return scls::Point_3D(cos(angle), 0, sin(angle));};
-    static Point_3D vector_with_angle_degrees(double angle){angle *= SCLS_PI/180.0; return scls::Point_3D(cos(angle), 0, sin(angle));};
+    Point_3D vector_with_angle(double angle);
+    Point_3D vector_with_angle_degrees(double angle);
 
     class Transform_Object_3D {
         // Class representing a 3D object transform

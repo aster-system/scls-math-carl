@@ -37,21 +37,15 @@ namespace scls {
 	//*********
 
 	// Returns the comparaison between two unknows
-    bool _Base_Unknown::compare_unknown(_Base_Unknown other) const {
-        if(a_conjugate == other.a_conjugate && a_exponent == other.a_exponent && a_name == other.a_name) {
-            return Unknown_Comparaison::UC_EQUAL;
-        } return Unknown_Comparaison::UC_DIFFERENT;
-    };
+    bool _Base_Unknown::compare_unknown(_Base_Unknown other) const {if(a_conjugate == other.a_conjugate && a_exponent == other.a_exponent && a_name == other.a_name) {return Unknown_Comparaison::UC_EQUAL;}return Unknown_Comparaison::UC_DIFFERENT;};
 
     // Returns the inverse the monomonial
     __Monomonial __Monomonial::inverse() const {
         __Monomonial new_monomonial(*this);
         new_monomonial.set_factor(Complex(1) / new_monomonial.factor());
         // Reverse each unknowns
-        for(int i = 0;i<static_cast<int>(new_monomonial.a_unknowns.size());i++) {
-            std::cout << "S " << new_monomonial.a_unknowns[i].exponent().to_std_string_simple(0) << std::endl;
-            new_monomonial.a_unknowns[i].set_exponent(new_monomonial.a_unknowns[i].exponent() * -1);
-        } return new_monomonial;
+        for(int i = 0;i<static_cast<int>(new_monomonial.a_unknowns.size());i++) {new_monomonial.a_unknowns[i].set_exponent(new_monomonial.a_unknowns[i].exponent() * -1);}
+        return new_monomonial;
     };
     // Returns the special limit of the monomonial for an unknown
     scls::Limit __Monomonial::limit_special(Limit needed_limit, std::string unknown_name) {
@@ -124,12 +118,12 @@ namespace scls {
         return final_monomonial;
     };
     // Returns if two monomonials has the same unknowns
-    bool __Monomonial::same_unknowns(__Monomonial monomonial) {
+    bool __Monomonial::same_unknowns(__Monomonial monomonial) const {
         std::vector<_Base_Unknown> unknows_1 = a_unknowns;
         std::vector<_Base_Unknown> unknows_2 = monomonial.a_unknowns;
 
         if(unknows_1.size() != unknows_2.size()){return false;}int i = 0;
-        while(i < unknows_1.size()) {
+        while(i < static_cast<int>(unknows_1.size())) {
             if(unknows_1.at(i) == unknows_2.at(0)) {
                 unknows_1.erase(unknows_1.begin() + i);
                 unknows_2.erase(unknows_2.begin());
@@ -160,7 +154,10 @@ namespace scls {
         for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
             final_unknow += a_unknowns.at(i).name();
             int real_exponent = a_unknowns.at(i).exponent().real().to_double();
-            if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1){for(int j = 1;j<real_exponent;j++){final_unknow += std::string("*") + a_unknowns.at(i).name();}}
+            if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1){
+                if(real_exponent > 0){for(int j = 1;j<real_exponent;j++){final_unknow += std::string("*") + a_unknowns.at(i).name();}}
+                else{final_unknow += std::string("^") + std::to_string(real_exponent);}
+            }
         }
         if(a_factor.real() == 0 || a_factor.imaginary() == 0) return a_factor.to_std_string_simple(settings) + final_unknow;
         return "(" + a_factor.to_std_string_simple(settings) + ")" + final_unknow;
@@ -431,7 +428,7 @@ namespace scls {
         for(int i = 0;i<static_cast<int>(monomonials_1.size());i++){if(monomonials_1.at(i).factor() == 0){monomonials_1.erase(monomonials_1.begin() + i);}}
         for(int i = 0;i<static_cast<int>(monomonials_2.size());i++){if(monomonials_2.at(i).factor() == 0){monomonials_2.erase(monomonials_2.begin() + i);}}
         if(monomonials_1.size() != monomonials_2.size()){return false;}int i = 0;
-        while(i < monomonials_1.size()) {
+        while(i < static_cast<int>(monomonials_1.size())) {
             if(monomonials_1.at(i) == monomonials_2.at(0)) {
                 monomonials_1.erase(monomonials_1.begin() + i);
                 monomonials_2.erase(monomonials_2.begin());
@@ -558,7 +555,8 @@ namespace scls {
             __Formula_Base final_to_add = new_value;
             int needed_exponent = static_cast<int>(exponent.real().to_double());
             final_formula = new_value;
-            for(int i = 1;i<needed_exponent;i++) {final_formula *= new_value;}
+            if(needed_exponent > 0){for(int i = 1;i<needed_exponent;i++) {final_formula *= new_value;}}
+            else{final_formula = 1;for(int i = 0;i<-needed_exponent;i++) {final_formula /= new_value;}}
             final_formula *= used_monomonial;
         }
         else {final_formula = used_monomonial;}
@@ -686,11 +684,7 @@ namespace scls {
     }
     void __Formula_Base::__divide(__Formula_Base value) {
         // Check if values are both polymonial
-        if(is_basic() && is_simple_polymonial() && value.is_simple_monomonial()) {
-            std::cout << "E " << value.to_std_string(0) << std::endl;
-            a_polymonial.get()->__divide(value.to_monomonial());
-            std::cout << "F " << a_polymonial.get()->to_std_string(0) << std::endl;
-        }
+        if(is_basic() && is_simple_polymonial() && value.is_simple_monomonial()) {a_polymonial.get()->__divide(value.to_monomonial());}
         else {
             if(!is_simple_fraction()){sub_place();}
             a_fraction.get()->__divide(value);
@@ -909,8 +903,8 @@ namespace scls {
         else {
             // Go to the next interval
             int i = 0;
-            while(i < a_intervals.size() && a_intervals.at(i).end() < interval.start()){i++;}
-            while(i < a_intervals.size() && a_intervals.at(i).start() < interval.end()){
+            while(i < static_cast<int>(a_intervals.size()) && a_intervals.at(i).end() < interval.start()){i++;}
+            while(i < static_cast<int>(a_intervals.size()) && a_intervals.at(i).start() < interval.end()){
                 if(a_intervals.at(i).start() < interval.start()){
                     a_intervals[i].set_end(interval.start());a_intervals[i].set_end_included(interval.start_included());
                     i++;

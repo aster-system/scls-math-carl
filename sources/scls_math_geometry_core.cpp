@@ -27,12 +27,6 @@
 // Include the good header file
 #include "../scls_math.h"
 
-//*********
-//
-// The Rational part
-//
-//*********
-
 // The namespace "scls" is used to simplify the all.
 namespace scls {
     // Rotate a 3D vector
@@ -228,4 +222,43 @@ namespace scls {
         datas.crossed_in_segment = (on_first_segment || !check_third_and_fourth_point) && (on_second_segment || !check_first_and_second_point);
         return datas;
     };
+
+    //*********
+    //
+    // The Transform_Object_3D class
+    //
+    //*********
+
+    // Normalizes a 3D vector
+    void normalize_3d(double& vector_x, double& vector_y, double& vector_z) {
+        double distance_xz = vector_x * vector_x + vector_z * vector_z;
+        double distance = std::sqrt(distance_xz + vector_y * vector_y);
+
+        // Calculate the proportionality constant
+        double divisor = 1.0 / distance;
+        divisor = sqrt(divisor);
+        vector_x *= divisor;
+        vector_y *= divisor;
+        vector_z *= divisor;
+    };
+
+    // Returns the angle in radians for a vector 3D
+    double vector_2d_angle(double vector_x, double vector_y) {
+        // Calculate the first XZ angle
+        double total_length = std::sqrt(vector_x * vector_x + vector_y * vector_y);
+        double to_add = 0;
+        if(total_length > 0){to_add = std::asin(std::abs(vector_y) / total_length);}
+        // Get the current angle
+        double current_angle = 0;
+        if(vector_y >= 0 && vector_x >= 0) {current_angle = to_add;}
+        else if (vector_x < 0 && vector_y >= 0) {current_angle = 3.1415 - to_add;}
+        else if(vector_x < 0 && vector_y < 0) {current_angle = 3.1415 + to_add;}
+        else {current_angle = 3.1415 * 2.0 - to_add;}
+
+        return current_angle;
+    }
+
+    // Returns a point 3D with an angle (on y axis)
+    Point_3D vector_with_angle(double angle){return scls::Point_3D(cos(angle), 0, sin(angle));};
+    Point_3D vector_with_angle_degrees(double angle){angle *= SCLS_PI/180.0; return scls::Point_3D(cos(angle), 0, sin(angle));};
 }

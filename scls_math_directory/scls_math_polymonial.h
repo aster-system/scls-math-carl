@@ -106,7 +106,7 @@ namespace scls {
         // Returns this monomonial where an unknown is replaced by an another unknown
         __Monomonial replace_unknown(std::string unknown, __Monomonial new_value);
         // Returns if two monomonials has the same unknowns
-        bool same_unknowns(__Monomonial monomonial);
+        bool same_unknowns(__Monomonial monomonial) const;
         // Unknows of the monomonial
         inline _Base_Unknown* unknown(){if(unknowns().size()>0){if(unknowns()[0].name()==std::string()){if(unknowns().size()>1){return &unknowns()[1];}}else{return &unknowns()[0];}}return 0;};
         inline std::vector<_Base_Unknown>& unknowns() {return a_unknowns;};
@@ -119,7 +119,7 @@ namespace scls {
 
         // Operators
         // Equal operator assignment
-        bool operator==(__Monomonial const& obj) {return a_factor == obj.a_factor && same_unknowns(obj); }
+        bool operator==(__Monomonial const& obj) const {return a_factor == obj.a_factor && same_unknowns(obj); }
         // Minus operator assignment
         __Monomonial& operator-=(__Monomonial const& obj) { a_factor -= obj.a_factor; return *this; }
         // Plus operator assignment
@@ -223,7 +223,7 @@ namespace scls {
         // Add a polymonial to this one
         void __add(Polymonial value);
         // Divide a monomonial to this void
-        inline void __divide(__Monomonial value) {__Monomonial used_inverse = value.inverse();std::cout << "R " << used_inverse.to_std_string(0) << std::endl; for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
+        inline void __divide(__Monomonial value) {__Monomonial used_inverse = value.inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
         inline void __divide(Complex value) {__divide(__Monomonial(value));};
         inline void __divide(Fraction value) {__divide(__Monomonial(value));};
         void __divide(Polymonial* value);
