@@ -583,6 +583,7 @@ namespace scls {
             bool __is_equal(int value)const{return __is_equal(scls::Fraction(value));};
             bool __is_equal(Fraction value)const{return a_factors.size() == 1 && a_factors[0].get()->__is_equal(value);};
             bool __is_equal(Polymonial value)const{return a_factors.size() == 1 && a_factors[0].get()->__is_equal(value);};
+            bool __is_equal(__Formula_Base value)const{return a_factors.size() == 1 && a_factors.at(0).get()->__is_equal(value);};
 
             // Replaces unknowns in the formula
             __Formula_Base replace_unknown(std::string unknown, __Formula_Base new_value) const;
@@ -631,10 +632,11 @@ namespace scls {
             bool __is_equal(int value)const{return __is_equal(scls::Fraction(value));};
             bool __is_equal(Fraction value)const{return __is_equal(Polymonial(value));};
             bool __is_equal(Polymonial value)const{return a_formulas_add.size() == 1 && a_formulas_add.at(0).get()->__is_equal(value);};
+            bool __is_equal(__Formula_Base value)const{return a_formulas_add.size() == 1 && a_formulas_add.at(0).get()->__is_equal(value);};
 
             // Multiply a polymonial to this one
             virtual void __multiply(Polymonial value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
-            virtual void __multiply(__Formula_Base value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
+            virtual void __multiply(__Formula_Base value) {std::cout << "J " << value.to_std_string(0) << std::endl; for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
 
             // Returns the final value of the formula
             scls::Complex value(scls::Fraction current_value);
@@ -686,7 +688,7 @@ namespace scls {
             bool __is_equal(Polymonial value)const{return a_numerator.get() == 0 && a_numerator.get()->__is_equal(value);};
             // Multiply a polymonial to this one
             virtual void __multiply(Polymonial value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}};
-            virtual void __multiply(__Formula_Base value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}};
+            virtual void __multiply(__Formula_Base value) {std::cout << "I " << value.to_std_string(0) << " " << a_numerator.get() << std::endl;if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){std::cout << "P1" << std::endl;a_denominator.reset();}else{std::cout << "P2" << std::endl;a_numerator.get()->__multiply(value);}};
 
             // Returns the final value of the formula
             scls::Complex value(scls::Fraction current_value);
@@ -812,6 +814,7 @@ namespace scls {
         bool __is_equal(int value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);} return a_fraction.get()->__is_equal(value);};
         bool __is_equal(Fraction value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
         bool __is_equal(Polymonial value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
+        bool __is_equal(__Formula_Base value)const{return a_applied_function.get()->name() == value.a_applied_function.get()->name() && a_fraction.get()->__is_equal(value.internal_value());};
 
         // Multiply a polymonial to this one
         virtual void __multiply(Polymonial value) {__multiply(__Formula_Base(value));};
@@ -976,6 +979,8 @@ namespace scls {
             // __Exp_Function constructor
             __Exp_Function():__Formula_Base_Function("exp"){};
 
+            // Creates a formula with this function
+            static __Formula_Base create_formula(__Formula_Base base){base.add_applied_function<__Exp_Function>();return base;};
             // Definition set of the function
             virtual Set_Number definition_set() {Set_Number real = Set_Number();real.set_real();return real;};
             // Derivate value
@@ -1033,6 +1038,8 @@ namespace scls {
             // __Formula_Base_Function constructor
             __Sqrt_Function():__Formula_Base_Function("sqrt"){};
 
+            // Creates a formula with this function
+            static __Formula_Base create_formula(__Formula_Base base){base.add_applied_function<__Sqrt_Function>();return base;};
             // Definition set of the function
             virtual Set_Number definition_set() {Set_Number real = Set_Number();Interval it; it.set_start(0); it.set_end_infinite(true);real.add_interval(it);return real;};
             // Derivate value

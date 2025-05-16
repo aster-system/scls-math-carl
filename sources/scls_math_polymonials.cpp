@@ -992,12 +992,25 @@ namespace scls {
         add_function(std::string("cos"));
         add_function(std::string("exp"));
         add_function(std::string("ln"));
+        add_function(std::string("normal"));
         add_function(std::string("sin"));
         add_function(std::string("sqrt"));
         add_function(std::string("tan"));
     };
 
 	// Returns a given first base string to a formula
+	void __string_to_formula_function(Formula& formula, std::string used_function){
+        if(used_function == "cos"){formula.add_applied_function<__Cos_Function>();}
+        else if(used_function == "exp"){formula.add_applied_function<__Exp_Function>();}
+        else if(used_function == "ln"){formula.add_applied_function<__Log_Function>();}
+        else if(used_function == "normal"){
+            formula = 1;
+            formula /= __Sqrt_Function::create_formula(2);
+            formula *= __Exp_Function::create_formula(__Monomonial(-1, "x", 2));
+        }
+        else if(used_function == "sin"){formula.add_applied_function<__Sin_Function>();}
+        else if(used_function == "sqrt"){formula.add_applied_function<__Sqrt_Function>();}
+	}
     Formula String_To_Formula_Parse::__string_to_formula_base(std::string base, std::string used_function) {
         Formula formula;
 
@@ -1016,18 +1029,15 @@ namespace scls {
             Polymonial current_polymonial;
             current_polymonial.add_monomonial(to_add);
             formula = current_polymonial;
-        } else {
+        }
+        else {
             // Parenthesis form
             String_To_Formula_Parse new_parser(level() + 1);
             formula = new_parser.string_to_formula(base.substr(1, base.size() - 2));
         }
 
         // Create the formula
-        if(used_function == "cos"){formula.add_applied_function<__Cos_Function>();}
-        else if(used_function == "exp"){formula.add_applied_function<__Exp_Function>();}
-        else if(used_function == "ln"){formula.add_applied_function<__Log_Function>();}
-        else if(used_function == "sin"){formula.add_applied_function<__Sin_Function>();}
-        else if(used_function == "sqrt"){formula.add_applied_function<__Sqrt_Function>();}
+        __string_to_formula_function(formula, used_function);
         return formula;
     };
 
