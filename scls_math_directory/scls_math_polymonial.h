@@ -514,6 +514,31 @@ namespace scls {
         // Class representating the base of a mathematical formula
     public:
 
+        // Container of unknowns
+        struct Unknown{std:: string name = std::string();std::shared_ptr<__Formula_Base> value = std::make_shared<__Formula_Base>();void set_value(__Formula_Base formula){value = formula.formula_copy();};};;
+        class Unknowns_Container {
+        public:
+            // Unknowns_Container constructor
+            Unknowns_Container(__Formula_Base value):a_default_value(std::make_shared<__Formula_Base>(value)){};
+            Unknowns_Container(){};
+
+            // Handle unknown
+            // Creates a unknown
+            Unknown* create_unknown(std::string name){return create_unknown_shared_ptr(name).get();};
+            std::shared_ptr<Unknown> create_unknown_shared_ptr(std::string name){std::shared_ptr<Unknown> unknown=unknown_shared_ptr_by_name(name);if(unknown.get()!=0){return unknown;}unknown=std::make_shared<Unknown>();a_unknowns.push_back(unknown);unknown.get()->name=name;return unknown;};
+            // Returns an unknown by its name
+            Unknown* unknown_by_name(std::string name)const{return unknown_shared_ptr_by_name(name).get();};
+            std::shared_ptr<Unknown> unknown_shared_ptr_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns.at(i).get()->name == name){return a_unknowns.at(i);}} return std::shared_ptr<Unknown>();};
+
+            // Returns a value by its name
+            __Formula_Base* value_by_name(std::string name){Unknown*temp=unknown_by_name(name);if(temp!=0){return temp->value.get();}return a_default_value.get();};
+        private:
+            // Default value for an unknown
+            std::shared_ptr<__Formula_Base> a_default_value = std::make_shared<__Formula_Base>();
+            // Unknowns
+            std::vector<std::shared_ptr<Unknown>> a_unknowns;
+        };
+
         // Function possible for a formula
         class __Formula_Base_Function {
             public:
@@ -592,7 +617,7 @@ namespace scls {
             Formula_Factor& operator*=(__Formula_Base value) {__multiply(value);return*this;};
 
             // Returns the final value of the formula
-            scls::Complex value(scls::Fraction current_value);
+            scls::Complex value(__Formula_Base::Unknowns_Container* values);
 
             // Factors
             std::vector<std::shared_ptr<__Formula_Base>> a_factors;
@@ -639,7 +664,7 @@ namespace scls {
             virtual void __multiply(__Formula_Base value) {std::cout << "J " << value.to_std_string(0) << std::endl; for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
 
             // Returns the final value of the formula
-            scls::Complex value(scls::Fraction current_value);
+            scls::Complex value(__Formula_Base::Unknowns_Container* values);
 
             // Getters and setters
             inline std::vector<std::shared_ptr<Formula_Factor>>& formulas_add(){return a_formulas_add;};
@@ -691,7 +716,7 @@ namespace scls {
             virtual void __multiply(__Formula_Base value) {std::cout << "I " << value.to_std_string(0) << " " << a_numerator.get() << std::endl;if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){std::cout << "P1" << std::endl;a_denominator.reset();}else{std::cout << "P2" << std::endl;a_numerator.get()->__multiply(value);}};
 
             // Returns the final value of the formula
-            scls::Complex value(scls::Fraction current_value);
+            scls::Complex value(__Formula_Base::Unknowns_Container* values);
 
             // Getters and setters
             Formula_Sum* denominator(){return a_denominator.get();};
@@ -803,6 +828,7 @@ namespace scls {
 
         // Methods operators
         virtual void __add(__Formula_Base* value);
+        inline void __add(scls::Fraction value){__Formula_Base temp=value;__add(&temp);};
         inline void __substract(__Formula_Base* value){__Formula_Base temp(*value);temp.__multiply(-1);__add(&temp);};
 
         // Divide a formula to this one
@@ -834,6 +860,7 @@ namespace scls {
         // With fractions
         bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
+        __Formula_Base& operator+=(Fraction value) {__add(value);return*this;};
         // With complex
         __Formula_Base operator*(Complex value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
         __Formula_Base& operator*=(Complex value) {__multiply(value);return *this;};
@@ -934,7 +961,8 @@ namespace scls {
         Formula replace_unknown(std::string unknown, __Formula_Base new_value) const;
         Formula replace_unknown(std::string unknown, Formula new_value) const;
         // Returns the final value of the formula
-        scls::Complex value(scls::Fraction current_value);
+        scls::Complex value(Unknowns_Container* values);
+        scls::Complex value(scls::Fraction current_value){Unknowns_Container temp = Unknowns_Container(current_value);return value(&temp);};
         inline scls::Fraction value_to_fraction(scls::Fraction current_value){return value(current_value).real();};
         inline scls::Fraction value_to_fraction(){return value(1).real();};
         inline double value_to_double(scls::Fraction current_value){return value(current_value).real().to_double();};

@@ -39,6 +39,9 @@
 #define SCLS_3D_SOLID_MAP_CHUNK_X 0
 #define SCLS_3D_SOLID_MAP_CHUNK_Z 1
 
+// Include the good header file
+#include "scls_math_geometry_core.h"
+
 // The namespace "scls" is used to simplify the all.
 namespace scls {
     //*********
@@ -46,13 +49,6 @@ namespace scls {
     // The Point_3D class
     //
     //*********
-
-    // Convert degrees to radians
-    inline double degrees_to_radians(double degrees) {return (degrees / 180.0) * SCLS_PI;};
-
-    // Rotates a 3D vector and returns it normalized
-    double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z);
-    inline double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z){return __rotate_vector_3d(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
 
     class Point_3D {
         // Class representing a 3D point
@@ -154,29 +150,15 @@ namespace scls {
         double a_z = 0;
     }; typedef Point_3D Vector_3D;
 
-    // Returns the datas point of two crossing lines
-    struct Crossing_Datas {bool crossed = false;double crossing_x = 0;double crossing_y = 0;bool same_lines = false;};
-    Crossing_Datas check_crossing(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y);
-
-    // Returns the datas point of two crossing segments
-    struct Crossing_Datas_Segment {bool crossed_in_segment = false;Crossing_Datas crossing_datas;};
-    Crossing_Datas_Segment check_crossing_segment(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true);
+    // Returns a point 3D with an angle (on y axis)
+    Point_3D vector_with_angle(double angle);
+    Point_3D vector_with_angle_degrees(double angle);
 
     //*********
     //
     // The Transform_Object_3D class
     //
     //*********
-
-    // Normalizes a 3D vector
-    void normalize_3d(double& vector_x, double& vector_y, double& vector_z);
-
-    // Returns the angle in radians for a vector 3D
-    double vector_2d_angle(double vector_x, double vector_y);
-
-    // Returns a point 3D with an angle (on y axis)
-    Point_3D vector_with_angle(double angle);
-    Point_3D vector_with_angle_degrees(double angle);
 
     class Transform_Object_3D {
         // Class representing a 3D object transform

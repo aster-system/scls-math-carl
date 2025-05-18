@@ -73,6 +73,8 @@
 
 // Root of SCLS Math
 #include "scls_math_directory/scls_math_numbers.h"
+// Geometry in SCLS Math
+#include "scls_math_directory/scls_math_geometry_core.h"
 
 // Function handling (indev)
 #ifdef __ASTER_DEV

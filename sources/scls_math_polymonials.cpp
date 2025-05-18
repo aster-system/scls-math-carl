@@ -223,15 +223,14 @@ namespace scls {
             __Monomonial& needed_monomonial = a_monomonials[0];
             _Base_Unknown* unknown = needed_monomonial.contains_unknown(unknown_name);
             if(unknown != 0) {
-                if(needed_limit.is_special()) {
-                    // Use the __Monomonial method for special limit
-                    to_return = needed_monomonial.limit_special(needed_limit, unknown_name);
-                } else {
+                if(needed_limit.is_special()) {to_return = needed_monomonial.limit_special(needed_limit, unknown_name);}
+                else {
                     // Other value limit
                     Polymonial modified = replace_unknown(unknown_name, needed_limit.value());
                     if(modified.a_monomonials.size() > 0) to_return = modified.a_monomonials.at(0).factor().real();
                 }
-            } else {to_return = needed_monomonial.factor().real();}
+            }
+            else {to_return = needed_monomonial.factor().real();}
         }
         return to_return;
     };
@@ -263,10 +262,9 @@ namespace scls {
     __Monomonial Polymonial::monomonial(std::string unknown, Complex exponent) {
         for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
             _Base_Unknown* result = a_monomonials.at(i).only_contains_unknown(unknown, exponent);
-            if(result != 0) {
-                return a_monomonials.at(i);
-            }
-        } __Monomonial to_return(0); to_return.add_unknown(unknown, exponent); return to_return;
+            if(result != 0) {return a_monomonials.at(i);}
+        }
+        __Monomonial to_return(0); to_return.add_unknown(unknown, exponent); return to_return;
     };
     // Returns a list of unknowns monomonials
     std::vector<__Monomonial> Polymonial::unknown_monomonials() const {
@@ -410,7 +408,8 @@ namespace scls {
                 poly.a_monomonials.erase(poly.a_monomonials.begin() + i);
                 i--;
             }
-        } return poly;
+        }
+        return poly;
     };
 
     // Operators
@@ -598,26 +597,26 @@ namespace scls {
     };
     __Formula_Base::Formula __Formula_Base::replace_unknown(std::string unknown, __Formula_Base::Formula new_value) const{return replace_unknown(unknown, *new_value.formula_base());}
     // Returns the final value of the formula
-    scls::Complex __Formula_Base::Formula_Factor::value(scls::Fraction current_value){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(a_factors.size());i++){to_return*=a_factors.at(i).get()->value(current_value);}return to_return;}
-    scls::Complex __Formula_Base::Formula_Sum::value(scls::Fraction current_value){scls::Complex to_return = scls::Complex(0);for(int i=0;i<static_cast<int>(a_formulas_add.size());i++){to_return+=a_formulas_add.at(i).get()->value(current_value);}return to_return;}
-    scls::Complex __Formula_Base::Formula_Fraction::value(scls::Fraction current_value){scls::Complex to_return = numerator()->value(current_value);if(denominator() != 0){to_return._divide(denominator()->value(current_value));}return to_return;}
-    scls::Complex __Formula_Base::value(scls::Fraction current_value) {
+    scls::Complex __Formula_Base::Formula_Factor::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(a_factors.size());i++){to_return*=a_factors.at(i).get()->value(values);}return to_return;}
+    scls::Complex __Formula_Base::Formula_Sum::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = scls::Complex(0);for(int i=0;i<static_cast<int>(a_formulas_add.size());i++){to_return+=a_formulas_add.at(i).get()->value(values);}return to_return;}
+    scls::Complex __Formula_Base::Formula_Fraction::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = numerator()->value(values);if(denominator() != 0){to_return._divide(denominator()->value(values));}return to_return;}
+    scls::Complex __Formula_Base::value(__Formula_Base::Unknowns_Container* values) {
         // Get the needed datas
         __Formula_Base::Formula current_formula_complete_base = internal_value();
         __Formula_Base current_formula = (*current_formula_complete_base.formula_base());
         std::vector<std::string> unknowns = all_unknowns();
 
         // Get the needed value
-        for(int i = 0;i<static_cast<int>(unknowns.size());i++) {current_formula = (*current_formula.replace_unknown(unknowns[i], current_value).formula_base());}
+        for(int i = 0;i<static_cast<int>(unknowns.size());i++) {current_formula = (*current_formula.replace_unknown(unknowns[i], *values->value_by_name(unknowns[i])).formula_base());}
 
         // Get the final formula
         __Formula_Base::Formula final_formula;
         if(current_formula.a_polymonial.get() != 0){final_formula = (*current_formula.a_polymonial.get());}
-        else if(current_formula.a_fraction.get() != 0){final_formula = current_formula_complete_base.formula_base()->a_fraction.get()->value(current_value);}
+        else if(current_formula.a_fraction.get() != 0){final_formula = current_formula_complete_base.formula_base()->a_fraction.get()->value(values);}
 
         // Apply the function
         scls::Complex to_return = scls::Complex(0);
-        if(applied_function() != 0){final_formula = final_formula.formula_base()->value(current_value);to_return = applied_function()->real_value(final_formula.formula_base());}
+        if(applied_function() != 0){final_formula = final_formula.formula_base()->value(values);to_return = applied_function()->real_value(final_formula.formula_base());}
         else{to_return = final_formula.to_polymonial().known_monomonial().factor();}
 
         // Returns the value

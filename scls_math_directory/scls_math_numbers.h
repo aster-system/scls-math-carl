@@ -109,6 +109,8 @@ namespace scls {
         // Fraction copy constructor
         __Fraction_Base(const __Fraction_Base& to_copy) : a_denominator(to_copy.a_denominator), a_normalized(to_copy.a_normalized), a_numerator(to_copy.a_numerator) {normalize();};
 
+        // Returns the absolute value of the fraction
+        inline __Fraction_Base abs() const{if(to_double() >= 0){return *this;}return (*this) * -1;};
         // Returns a fraction from a double
         static __Fraction_Base from_double(double result);
         // Returns a fraction from a std::string
@@ -242,6 +244,9 @@ namespace scls {
         Fraction& operator+=(__Fraction_Base obj) { _add(obj); return *this; }
 	};
 
+	// Comparaison operator
+    bool operator>(double obj_1, __Fraction_Base obj);
+    bool operator<(double obj_1, __Fraction_Base obj);
 	// Multiplication operator
     __Fraction_Base operator*(int obj_1, __Fraction_Base obj);
     Fraction operator*(int obj_1, Fraction obj);
@@ -401,31 +406,6 @@ namespace scls {
     Complex operator*(int obj_1, Complex obj);
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const Complex& obj);
-}
-
-//*********
-//
-// The Point_2D part
-//
-//*********
-
-namespace scls {
-
-    class Point_2D {
-        // Class representating a point in 2D
-    public:
-
-        // Point_2D constructor
-        Point_2D(scls::Fraction x, scls::Fraction y):a_x(x),a_y(y){};
-
-        // Getters and setters
-        inline scls::Fraction x() const {return a_x;}
-        inline scls::Fraction y() const {return a_y;};
-    private:
-        // X / Y position of the point
-        scls::Fraction a_x = 0; scls::Fraction a_y = 0;
-    };
-
 }
 
 //*********

@@ -146,6 +146,9 @@ namespace scls {
         return new_fraction;
     };
 
+    // Comparaison operator
+    bool operator>(double obj_1, __Fraction_Base obj){return obj_1 > obj.to_double();};
+    bool operator<(double obj_1, __Fraction_Base obj){return obj_1 < obj.to_double();};
 	// Multiplication operator
     __Fraction_Base operator*(int obj_1, __Fraction_Base obj){return obj._multiply_without_modification(obj_1);}
     Fraction operator*(int obj_1, Fraction obj){return obj._multiply_without_modification(obj_1);}
@@ -154,6 +157,7 @@ namespace scls {
     Fraction operator-(int obj_1, Fraction obj){return Fraction(obj_1)._substract_without_modification(obj);}
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const __Fraction_Base& obj){ os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; }
+    std::ostream& operator<<(std::ostream& os, const Fraction& obj){ os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; }
 
     // Returns a random fraction
     Fraction random_fraction(Fraction min_value, Fraction max_value, int precision){return (min_value + (max_value - min_value) * Fraction(rand()%precision, precision)).normalized();}

@@ -241,8 +241,20 @@ namespace scls {
         vector_y *= divisor;
         vector_z *= divisor;
     };
+    void normalize_3d(scls::Fraction& vector_x, scls::Fraction& vector_y, scls::Fraction& vector_z) {
+        double distance_xz = (vector_x.to_double() * vector_x.to_double() + vector_z.to_double() * vector_z.to_double());
+        double distance = std::sqrt(distance_xz + vector_y.to_double() * vector_y.to_double());
+
+        // Calculate the proportionality constant
+        double divisor_double = 1.0 / distance;divisor_double = sqrt(divisor_double);
+        scls::Fraction divisor = scls::Fraction::from_double(sqrt(divisor_double));
+        vector_x *= divisor;
+        vector_y *= divisor;
+        vector_z *= divisor;
+    }
 
     // Returns the angle in radians for a vector 3D
+    double vector_2d_angle(Point_2D vector){return vector_2d_angle(vector.x().to_double(), vector.y().to_double());}
     double vector_2d_angle(double vector_x, double vector_y) {
         // Calculate the first XZ angle
         double total_length = std::sqrt(vector_x * vector_x + vector_y * vector_y);
