@@ -283,11 +283,13 @@ namespace scls {
         //*********
 
         // Simple fraction constructor
+        Complex(__Fraction_Base real_part, __Fraction_Base imaginary) : a_imaginary(imaginary), a_real(real_part) {};
         Complex(Fraction real_part, Fraction imaginary) : a_imaginary(imaginary), a_real(real_part) {};
         Complex(long long real_part, long long imaginary_part) : Complex(Fraction(real_part), Fraction(imaginary_part)) {};
         Complex(long long real_part, Fraction imaginary_part) : Complex(Fraction(real_part), imaginary_part) {};
         Complex(Fraction real_part, long long imaginary_part) : Complex(real_part, Fraction(imaginary_part)) {};
         // Most simple fraction constructor
+        Complex(__Fraction_Base real_part) : Complex(real_part, __Fraction_Base(0)) {};
         Complex(Fraction real_part) : Complex(real_part, Fraction(0)) {};
         Complex(double real_part) : Complex(Fraction(real_part)) {};
         // Complex copy constructor

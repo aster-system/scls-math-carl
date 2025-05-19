@@ -522,6 +522,9 @@ namespace scls {
             Unknowns_Container(__Formula_Base value):a_default_value(std::make_shared<__Formula_Base>(value)){};
             Unknowns_Container(){};
 
+            // Clears the container
+            void clear();
+
             // Handle unknown
             // Creates a unknown
             Unknown* create_unknown(std::string name){return create_unknown_shared_ptr(name).get();};
@@ -534,7 +537,7 @@ namespace scls {
             __Formula_Base* value_by_name(std::string name){Unknown*temp=unknown_by_name(name);if(temp!=0){return temp->value.get();}return a_default_value.get();};
         private:
             // Default value for an unknown
-            std::shared_ptr<__Formula_Base> a_default_value = std::make_shared<__Formula_Base>();
+            std::shared_ptr<__Formula_Base> a_default_value;
             // Unknowns
             std::vector<std::shared_ptr<Unknown>> a_unknowns;
         };
@@ -832,6 +835,7 @@ namespace scls {
         inline void __substract(__Formula_Base* value){__Formula_Base temp(*value);temp.__multiply(-1);__add(&temp);};
 
         // Divide a formula to this one
+        void __divide(Fraction value){__divide(__Formula_Base(value));};
         void __divide(Polymonial value){__divide(__Formula_Base(value));};
         void __divide(Complex value){__divide(__Formula_Base(value));};
         virtual void __divide(__Formula_Base value);
@@ -860,6 +864,7 @@ namespace scls {
         // With fractions
         bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
+        __Formula_Base& operator/=(Fraction value) {__divide(value);return*this;};
         __Formula_Base& operator+=(Fraction value) {__add(value);return*this;};
         // With complex
         __Formula_Base operator*(Complex value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
@@ -952,7 +957,7 @@ namespace scls {
         };
 
         // Returns all the unknowns in the formula
-        std::vector<std::string> all_unknowns();
+        std::vector<std::string> all_unknowns() const;
         // Returns a formula from a monomonial where the unknows has been replaced
         static Formula formula_from_modified_monomonial_unknows(__Monomonial used_monomonial, std::string unknown, __Formula_Base new_value);
         // Returns a formula from a polymonial where the unknows has been replaced
@@ -960,11 +965,14 @@ namespace scls {
         // Returns a monomonial where an unkown is replaced by an another unknown
         Formula replace_unknown(std::string unknown, __Formula_Base new_value) const;
         Formula replace_unknown(std::string unknown, Formula new_value) const;
+        Formula replace_unknowns(Unknowns_Container* values) const;
         // Returns the final value of the formula
         scls::Complex value(Unknowns_Container* values);
-        scls::Complex value(scls::Fraction current_value){Unknowns_Container temp = Unknowns_Container(current_value);return value(&temp);};
+        scls::Complex value(scls::Fraction current_value);
+        inline scls::Fraction value_to_fraction(Unknowns_Container* values){return value(values).real();};
         inline scls::Fraction value_to_fraction(scls::Fraction current_value){return value(current_value).real();};
         inline scls::Fraction value_to_fraction(){return value(1).real();};
+        inline double value_to_double(Unknowns_Container* values){return value(values).real().to_double();};
         inline double value_to_double(scls::Fraction current_value){return value(current_value).real().to_double();};
         inline double value_to_double(){return value(1).real().to_double();};
 
