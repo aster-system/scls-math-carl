@@ -100,8 +100,8 @@ namespace scls {
         // Returns the norm of the vector
         inline double norm() const {return std::sqrt(std::pow(a_x.to_double(), 2) + std::pow(a_y.to_double(), 2));};
         // Normalizes the vector
-        inline void normalize() {scls::Fraction divisor = scls::Fraction(1) / Fraction::from_double(norm());a_x *= divisor;a_y *= divisor;};
-        inline Point_2D normalized() {scls::Fraction divisor = scls::Fraction(1) / Fraction::from_double(norm());return Point_2D(a_x * divisor, a_y * divisor);};
+        inline void normalize() {scls::Fraction divisor = Fraction::from_double(norm());a_x /= divisor;a_y /= divisor;};
+        inline Point_2D normalized() {scls::Fraction divisor = Fraction::from_double(norm());return Point_2D(a_x / divisor, a_y / divisor);};
 
         // Applies a rotation to the point
         inline Point_2D rotated(double rotation) const {
