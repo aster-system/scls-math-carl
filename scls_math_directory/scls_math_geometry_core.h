@@ -340,6 +340,7 @@ namespace scls {
 
         // Getters and setters
         inline Point_2D position() const {return a_position;};
+        inline Point_2D position(int normalize) const {return Point_2D(a_position.x().normalized(normalize), a_position.y().normalized(normalize));};
         inline Point_2D raw_velocity() const {return a_raw_velocity;};
         inline void set_position(scls::Fraction new_x, scls::Fraction new_y){a_position.set_x(new_x);a_position.set_y(new_y);a_moved_during_this_frame = true;};
         inline void set_position(Point_2D new_position){a_position.set_x(new_position.x());a_position.set_y(new_position.y());a_moved_during_this_frame = true;};
@@ -350,6 +351,7 @@ namespace scls {
         inline void set_velocity_x(scls::Fraction new_x){a_velocity.set_x(new_x);};
         inline void set_velocity_y(scls::Fraction new_y){a_velocity.set_y(new_y);};
         inline Point_2D velocity() const {return a_velocity;};
+        inline Point_2D velocity(int normalize) const {return Point_2D(a_velocity.x().normalized(normalize), a_velocity.y().normalized(normalize));};
         inline scls::Fraction x() const {return a_position.x();};
         inline scls::Fraction y() const {return a_position.y();};
 
