@@ -223,6 +223,26 @@ namespace scls {
         return datas;
     };
 
+    // Returns the point of an orthogonal projection of a point on a line
+    Point_2D orthogonal_projection(Point_2D point_line_1, Point_2D point_line_2, Point_2D point_to_project) {
+        // Fast part
+        if(point_line_1.x() == point_line_2.x()){return Point_2D(point_line_1.x(), point_to_project.y());}
+
+        scls::Point_2D line_vector = point_line_2 - point_line_1;
+        double line_vector_angle = scls::vector_2d_angle(line_vector);
+        scls::Point_2D position_to_vector = point_to_project - point_line_1;
+        double position_to_vector_angle = scls::vector_2d_angle(position_to_vector);
+        double angle = position_to_vector_angle - line_vector_angle;
+
+        // Get the contact point
+        scls::Point_2D contact_point = point_line_1 + line_vector.normalized() * std::cos(angle) * position_to_vector.norm();
+        return contact_point;
+    }
+
+    // Returns if the point is in a rect
+    bool Point_2D::in_rect(Point_2D tested_pos, Point_2D tested_scale){return in_rect(tested_pos.x(), tested_pos.y(), tested_scale.x(), tested_scale.y());}
+    bool Point_2D::in_rect(scls::Fraction tested_x, scls::Fraction tested_y, scls::Fraction tested_width, scls::Fraction tested_height){if(tested_height<0){tested_y+=tested_height;tested_height*=-1;}if(tested_width<0){tested_x+=tested_width;tested_width*=-1;}return (tested_x - x()) < SCLS_MATH_TOLERANCE && (tested_y - y())  < SCLS_MATH_TOLERANCE && (x() - (tested_x + tested_width)) < SCLS_MATH_TOLERANCE && (y() - (tested_y + tested_height)) < SCLS_MATH_TOLERANCE;}
+
     //*********
     //
     // The Transform_Object_3D class

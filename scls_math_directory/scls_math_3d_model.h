@@ -27,8 +27,6 @@
 #ifndef SCLS_MATH_3D_MODEL
 #define SCLS_MATH_3D_MODEL
 
-#define SCLS_MATH_TOLERANCE 0.00000001
-
 #include "scls_math_3d_core.h"
 
 // The namespace "scls" is used to simplify the all.

@@ -39,6 +39,8 @@
 #define SCLS_3D_SOLID_MAP_CHUNK_X 0
 #define SCLS_3D_SOLID_MAP_CHUNK_Z 1
 
+#define SCLS_MATH_TOLERANCE 0.00000001
+
 // Include the good header file
 #include "scls_math_numbers.h"
 #include "scls_math_polymonial.h"
@@ -78,6 +80,10 @@ namespace scls {
         // Point_2D position system
         //
         //*********
+
+        // Returns if the point is in a rect
+        bool in_rect(Fraction tested_x, Fraction tested_y, Fraction tested_width, Fraction tested_height);
+        bool in_rect(Point_2D tested_pos, Point_2D tested_scale);
 
         // Move easily the object
         inline void move_xy(scls::Fraction movement_x, scls::Fraction movement_y) {move_x(movement_x);move_y(movement_y);};
@@ -244,6 +250,9 @@ namespace scls {
     // Returns the datas point of two crossing segments
     struct Crossing_Datas_Segment {bool crossed_in_segment = false;Crossing_Datas crossing_datas;};
     Crossing_Datas_Segment check_crossing_segment(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y, bool check_first_and_second_point = true, bool check_third_and_fourth_point = true);
+
+    // Returns the point of an orthogonal projection of a point on a line
+    Point_2D orthogonal_projection(Point_2D point_line_1, Point_2D point_line_2, Point_2D point_to_project);
 
     //*********
     //
