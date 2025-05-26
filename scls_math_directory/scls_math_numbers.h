@@ -189,10 +189,12 @@ namespace scls {
         bool operator>=(__Fraction_Base r) const { return _equal(r) || to_double() > r.to_double(); }
         // Greater than than operator
         bool operator>(__Fraction_Base r) const { return to_double() > r.to_double(); }
+        bool operator>(double r) const { return to_double() > r;}
         // Increment operator
         __Fraction_Base& operator++(int) { _add(__Fraction_Base(1, 1)); return *this; }
         // Lesser than than operator
         bool operator<(__Fraction_Base r) const { return to_double() < r.to_double(); }
+        bool operator<(double r) const { return to_double() < r; }
         // Lesser or equal than than operator
         bool operator<=(__Fraction_Base r) const { return _equal(r) || to_double() < r.to_double(); }
         // Arithmetic operator
