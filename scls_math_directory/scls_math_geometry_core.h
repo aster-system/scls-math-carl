@@ -282,6 +282,7 @@ namespace scls {
         Transform_Object_2D(){};
         // Copy constructor
         Transform_Object_2D(Point_2D point_2d):a_position(point_2d){};
+        Transform_Object_2D(__Point_2D_Formula point_2d):Transform_Object_2D(scls::Point_2D(point_2d.x().get()->value_to_fraction(), point_2d.y().get()->value_to_fraction())){};
         // Transform_Object_2D destructor
         ~Transform_Object_2D(){if(parent() != 0){parent()->remove_child(this);}};
 
@@ -295,6 +296,7 @@ namespace scls {
         inline Transform_Object_2D* parent() const {return a_parent.lock().get();};
         inline void remove_child(Transform_Object_2D* child){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children.at(i).get()==child){a_children.erase(a_children.begin()+i);return;}};};
         inline void set_delta_time(scls::Fraction new_delta_time){a_delta_time = new_delta_time;};
+        inline void set_parent(Transform_Object_2D* new_parent){set_parent(new_parent->a_this_object.lock());};
         inline void set_parent(std::shared_ptr<Transform_Object_2D> new_parent) {
             if(parent() != 0){parent()->remove_child(this);}
             a_parent = new_parent;
