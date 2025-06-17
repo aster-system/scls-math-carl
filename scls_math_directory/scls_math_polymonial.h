@@ -76,7 +76,7 @@ namespace scls {
     public:
 
         // __Monomonial constructor
-        __Monomonial(Complex factor):a_factor(factor){a_factor.normalize(4);};
+        __Monomonial(Complex factor):a_factor(factor){};
         __Monomonial(Complex factor, std::vector<_Base_Unknown> unknowns):__Monomonial(factor){a_unknowns=unknowns;};
         __Monomonial(Complex factor, std::string unknow):__Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
         __Monomonial(Complex factor, std::string unknow, Complex exponent):__Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
@@ -184,6 +184,7 @@ namespace scls {
         // Polymonial constructor
         Polymonial(){};
         Polymonial(int number){a_monomonials.push_back(__Monomonial(Complex(number)));};
+        Polymonial(__Fraction_Base number){a_monomonials.push_back(__Monomonial(Complex(number)));};
         Polymonial(Fraction number){a_monomonials.push_back(__Monomonial(Complex(number)));};
         Polymonial(__Monomonial monomonial){a_monomonials.push_back(monomonial);};
         Polymonial(Complex factor, std::string unknow, Complex exponent):Polymonial(__Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent)))){};
@@ -712,8 +713,8 @@ namespace scls {
             void __divide(__Formula_Base value);
             // Returns if two numbers/formulas are equals
             bool __is_equal(int value)const{return __is_equal(scls::Fraction(value));};
-            bool __is_equal(Fraction value)const{return a_numerator.get() == 0 && a_numerator.get()->__is_equal(value);};
-            bool __is_equal(Polymonial value)const{return a_numerator.get() == 0 && a_numerator.get()->__is_equal(value);};
+            bool __is_equal(Fraction value)const{return a_denominator.get() == 0 && a_numerator.get() != 0 && a_numerator.get()->__is_equal(value);};
+            bool __is_equal(Polymonial value)const{return a_denominator.get() == 0 && a_numerator.get() != 0 && a_numerator.get()->__is_equal(value);};
             // Multiply a polymonial to this one
             virtual void __multiply(Polymonial value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}};
             virtual void __multiply(__Formula_Base value) {std::cout << "I " << value.to_std_string(0) << " " << a_numerator.get() << std::endl;if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){std::cout << "P1" << std::endl;a_denominator.reset();}else{std::cout << "P2" << std::endl;a_numerator.get()->__multiply(value);}};
@@ -734,6 +735,7 @@ namespace scls {
         // __Formula_Base constructor
         __Formula_Base(){};
         __Formula_Base(int number):a_polymonial(std::make_shared<Polymonial>(number)){};
+        __Formula_Base(__Fraction_Base number):a_polymonial(std::make_shared<Polymonial>(number)){};
         __Formula_Base(Fraction number):a_polymonial(std::make_shared<Polymonial>(number)){};
         __Formula_Base(Complex number):a_polymonial(std::make_shared<Polymonial>(number)){};
         __Formula_Base(__Monomonial monomonial):a_polymonial(std::make_shared<Polymonial>(monomonial)){};
@@ -831,6 +833,7 @@ namespace scls {
 
         // Methods operators
         virtual void __add(__Formula_Base* value);
+        inline void __add(scls::__Fraction_Base value){__Formula_Base temp=value;__add(&temp);};
         inline void __add(scls::Fraction value){__Formula_Base temp=value;__add(&temp);};
         inline void __substract(__Formula_Base* value){__Formula_Base temp(*value);temp.__multiply(-1);__add(&temp);};
 
@@ -865,6 +868,7 @@ namespace scls {
         bool operator==(Fraction value) {return __is_equal(value);};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
         __Formula_Base& operator/=(Fraction value) {__divide(value);return*this;};
+        __Formula_Base& operator+=(__Fraction_Base value) {__add(value);return*this;};
         __Formula_Base& operator+=(Fraction value) {__add(value);return*this;};
         // With complex
         __Formula_Base operator*(Complex value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
@@ -904,6 +908,8 @@ namespace scls {
         class Formula {
         public:
             // Formula constructor
+            Formula(__Fraction_Base number):Formula(std::make_shared<__Formula_Base>(number)){};
+            Formula(Fraction number):Formula(std::make_shared<__Formula_Base>(number)){};
             Formula(Complex number):Formula(std::make_shared<__Formula_Base>(number)){};
             Formula(std::shared_ptr<__Formula_Base> needed_formula):a_formula(needed_formula){};
             Formula(int number):Formula(std::make_shared<__Formula_Base>(number)){};
@@ -915,10 +921,21 @@ namespace scls {
             // Operations from __Formula_Base
             inline void clear()const{a_formula.get()->clear();};
             inline __Formula_Base* formula_base() const {return a_formula.get();};
+            inline std::shared_ptr<__Formula_Base> formula_base_shared_ptr() const {return a_formula;};
             inline void paste(__Formula_Base* to_paste)const{a_formula.get()->paste(to_paste);};
             inline void paste(Formula to_paste)const{a_formula.get()->paste(to_paste.a_formula.get());};
             inline Polymonial to_polymonial() const {return a_formula.get()->to_polymonial();};
             inline std::string to_std_string(Textual_Math_Settings* settings) const {return a_formula.get()->to_std_string(settings);};
+
+            // Returns the final value of the formula
+            scls::Complex value(Unknowns_Container* values) const;
+            scls::Complex value(scls::Fraction current_value) const;
+            scls::Fraction value_to_fraction(Unknowns_Container* values) const;
+            scls::Fraction value_to_fraction(scls::Fraction current_value) const;
+            scls::Fraction value_to_fraction() const;
+            double value_to_double(Unknowns_Container* values) const;
+            double value_to_double(scls::Fraction current_value) const;
+            double value_to_double() const;
 
             // Getters and setters
             inline __Formula_Base_Function* applied_function()const{return a_formula.get()->applied_function();};

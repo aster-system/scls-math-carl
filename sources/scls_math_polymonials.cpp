@@ -159,8 +159,13 @@ namespace scls {
                 else{final_unknow += std::string("^") + std::to_string(real_exponent);}
             }
         }
-        if(a_factor.real() == 0 || a_factor.imaginary() == 0) return a_factor.to_std_string_simple(settings) + final_unknow;
-        return "(" + a_factor.to_std_string_simple(settings) + ")" + final_unknow;
+        if(a_factor.imaginary() == 0){
+            if(a_factor.real().denominator() == 1 || final_unknow == std::string()){return a_factor.to_std_string_simple(settings) + final_unknow;}
+            else if(a_factor.real().numerator() == 1) {return final_unknow + std::string("/") + std::to_string(a_factor.real().denominator());}
+            else {return std::string("(") + std::to_string(a_factor.real().numerator()) + final_unknow + std::string(")/") + std::to_string(a_factor.real().denominator());}
+        }
+        else if(a_factor.real() == 0){return a_factor.to_std_string_simple(settings) + final_unknow;}
+        return std::string("(") + a_factor.to_std_string_simple(settings) + std::string(")") + final_unknow;
     };
 
     // Multiplication operator assignment
@@ -641,6 +646,16 @@ namespace scls {
         // Returns the value
         return to_return;
     }
+
+    // Returns the final value of the formula
+    scls::Complex __Formula_Base::Formula::value(Unknowns_Container* values) const {return a_formula.get()->value(values);};
+    scls::Complex __Formula_Base::Formula::value(scls::Fraction current_value) const {return a_formula.get()->value(current_value);};
+    scls::Fraction __Formula_Base::Formula::value_to_fraction(Unknowns_Container* values) const {return a_formula.get()->value_to_fraction(values);};
+    scls::Fraction __Formula_Base::Formula::value_to_fraction(scls::Fraction current_value) const {return a_formula.get()->value_to_fraction(current_value);};
+    scls::Fraction __Formula_Base::Formula::value_to_fraction() const {return a_formula.get()->value_to_fraction();};
+    double __Formula_Base::Formula::value_to_double(Unknowns_Container* values) const {return a_formula.get()->value_to_double(values);};
+    double __Formula_Base::Formula::value_to_double(scls::Fraction current_value) const {return a_formula.get()->value_to_double(current_value);};
+    double __Formula_Base::Formula::value_to_double() const {return a_formula.get()->value_to_double();};
 
     // Methods operators
     // Add a formula to this one
