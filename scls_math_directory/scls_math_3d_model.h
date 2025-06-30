@@ -1619,6 +1619,9 @@ namespace scls {
         //
         //*********
 
+        // Returns a simple regular polygon in points 2D
+        std::vector<scls::Point_2D> regular_polygon_points_2d(unsigned short side_number);
+
         // Returns a simple regular polygon
         std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number, int needed_side_number, int side_start, double y, double scale);
         std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number, double y, double scale);

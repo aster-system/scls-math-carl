@@ -336,6 +336,9 @@ namespace scls {
         double distance(Point_2D point);
         double distance(const Transform_Object_2D& object);
 
+        // Returns if a transform object touches an another
+        bool touch(Transform_Object_2D* object);
+
         // Move easily the object
         void move_x(Fraction movement);
         void move_y(Fraction movement);
@@ -515,6 +518,16 @@ namespace scls {
         // Scale of the object
         __Point_2D_Formula a_scale = __Point_2D_Formula(1, 1);
     };
+
+    //*********
+    //
+    // Other geometrical features
+    //
+    //*********
+
+    // Returns the radius of an oval at a certain angle
+    double oval_radius(double scale_x, double scale_y, double angle_in_radians);
+    double oval_radius(Fraction scale_x, Fraction scale_y, double angle_in_radians);
 }
 
 #endif // SCLS_MATH_GEOMETRY_CORE

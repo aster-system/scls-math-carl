@@ -272,6 +272,9 @@ namespace scls {
     double Transform_Object_2D::distance(Point_2D point) {return std::sqrt((pow(point.x().to_double() - absolute_x().to_double(), 2) + pow(point.y().to_double() - absolute_y().to_double(), 2))); };
     double Transform_Object_2D::distance(const Transform_Object_2D& object) {return std::sqrt((pow((object.absolute_x() - absolute_x()).to_double(), 2) + pow((object.absolute_y() - absolute_y()).to_double(), 2)));};
 
+    // Returns if a transform object touches an another
+    bool Transform_Object_2D::touch(Transform_Object_2D* object){return !((min_x() > object->max_x() || object->min_x() > max_x()) || (min_y() > object->max_y() || object->min_y() > max_y()));}
+
     // Move easily the object
     void Transform_Object_2D::move_x(Fraction movement) {set_x(x() + movement);};
     void Transform_Object_2D::move_y(Fraction movement) {set_y(y() + movement);};
@@ -375,4 +378,14 @@ namespace scls {
     // Returns a point 3D with an angle (on y axis)
     Point_3D vector_with_angle(double angle){return scls::Point_3D(cos(angle), 0, sin(angle));};
     Point_3D vector_with_angle_degrees(double angle){angle *= SCLS_PI/180.0; return scls::Point_3D(cos(angle), 0, sin(angle));};
+
+    //*********
+    //
+    // Other geometrical features
+    //
+    //*********
+
+    // Returns the radius of an oval at a certain angle
+    double oval_radius(double scale_x, double scale_y, double angle_in_radians) {return std::sqrt(std::pow(std::cos(angle_in_radians) * scale_x, 2) + std::pow(std::sin(angle_in_radians) * scale_y, 2));}
+    double oval_radius(Fraction scale_x, Fraction scale_y, double angle_in_radians) {return oval_radius(scale_x.to_double(), scale_y.to_double(), angle_in_radians);}
 }

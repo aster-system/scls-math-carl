@@ -459,6 +459,27 @@ namespace scls {
         //
         //*********
 
+        // Returns a simple regular polygon in points 2D
+        std::vector<scls::Point_2D> regular_polygon_points_2d(unsigned short side_number) {
+            // Configurate the creation
+            double angle_sum = static_cast<double>((side_number - 2) * SCLS_PI);
+            double current_angle = 0;
+            double one_angle = SCLS_PI - angle_sum / static_cast<double>(side_number);
+            std::vector<scls::Point_2D> to_return = std::vector<scls::Point_2D>(side_number);
+
+            // Calculate each positions
+            double angle_offset = -SCLS_PI / (3.0);
+            for(unsigned short i = 0;i<side_number;i++) {
+                // Calculate the position of the point
+                double x = std::cos(current_angle + angle_offset);
+                double y = std::sin(current_angle + angle_offset);
+                to_return[i] = scls::Point_2D(scls::Fraction::from_double(x), scls::Fraction::from_double(y));
+                current_angle += one_angle;
+            }
+
+            return to_return;
+        }
+
         // Returns a simple regular polygon
         std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number, int needed_side_number, int side_start, double y, double scale) {
             // Configurate the creation
