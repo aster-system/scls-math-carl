@@ -275,6 +275,8 @@ namespace scls {
     // Returns the angle in radians for a vector 3D
     double vector_2d_angle(double vector_x, double vector_y);
     double vector_2d_angle(Point_2D vector);
+    // Return the vector created by an angle
+    Point_2D vector_2d_with_angle(double angle);
 
     class Transform_Object_2D {
         // Class representing a 2D object transform
@@ -525,9 +527,19 @@ namespace scls {
     //
     //*********
 
+    // Returns the angle (between 0 and Pi) needed for a certain X value
+    double oval_angle_at_x(double needed_x, double oval_x, double oval_x_radius);
+    double oval_angle_at_x(double needed_x_proportion);
+    // Returns the Y position needed for a certain angle
+    double oval_y_at_angle(double needed_angle);
+
     // Returns the radius of an oval at a certain angle
     double oval_radius(double scale_x, double scale_y, double angle_in_radians);
     double oval_radius(Fraction scale_x, Fraction scale_y, double angle_in_radians);
+    double oval_radius_proportion_x(double scale_x, double scale_y, double angle_in_radians);
+    double oval_radius_proportion_y(double scale_x, double scale_y, double angle_in_radians);
+    Point_2D oval_vector_x(double scale_x, double scale_y, double angle_in_radians);
+    Point_2D oval_vector_y(double scale_x, double scale_y, double angle_in_radians);
 }
 
 #endif // SCLS_MATH_GEOMETRY_CORE

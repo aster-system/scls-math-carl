@@ -374,6 +374,8 @@ namespace scls {
 
         return current_angle;
     }
+    // Return the vector created by an angle
+    Point_2D vector_2d_with_angle(double angle){return Point_2D(scls::Fraction::from_double(std::cos(angle)), scls::Fraction::from_double(std::sin(angle)));}
 
     // Returns a point 3D with an angle (on y axis)
     Point_3D vector_with_angle(double angle){return scls::Point_3D(cos(angle), 0, sin(angle));};
@@ -385,7 +387,18 @@ namespace scls {
     //
     //*********
 
+    // Returns the angle needed for a certain X value
+    double oval_angle_at_x(double needed_x, double oval_x, double oval_x_radius){return std::acos((needed_x - oval_x) / oval_x_radius);}
+    double oval_angle_at_x(double needed_x){return std::acos(needed_x);}
+    double oval_angle_at_y(double needed_y){return std::asin(needed_y);}
+    // Returns the Y position needed for a certain angle
+    double oval_y_at_angle(double needed_angle){return std::sin(needed_angle);};
+
     // Returns the radius of an oval at a certain angle
+    double oval_radius_proportion_x(double scale_x, double scale_y, double angle_in_radians) {return scale_x / std::sqrt(std::pow(std::cos(angle_in_radians) * scale_x, 2) + std::pow(std::sin(angle_in_radians) * scale_y, 2));}
+    double oval_radius_proportion_y(double scale_x, double scale_y, double angle_in_radians) {return scale_y / std::sqrt(std::pow(std::cos(angle_in_radians) * scale_x, 2) + std::pow(std::sin(angle_in_radians) * scale_y, 2));}
     double oval_radius(double scale_x, double scale_y, double angle_in_radians) {return std::sqrt(std::pow(std::cos(angle_in_radians) * scale_x, 2) + std::pow(std::sin(angle_in_radians) * scale_y, 2));}
     double oval_radius(Fraction scale_x, Fraction scale_y, double angle_in_radians) {return oval_radius(scale_x.to_double(), scale_y.to_double(), angle_in_radians);}
+    Point_2D oval_vector_x(double scale_x, double scale_y, double angle_in_radians){Point_2D direction = vector_2d_with_angle(angle_in_radians);return Point_2D(direction.x(), direction.y() * (scale_y / scale_x));}
+    Point_2D oval_vector_y(double scale_x, double scale_y, double angle_in_radians){Point_2D direction = vector_2d_with_angle(angle_in_radians);return Point_2D(direction.x() * (scale_x / scale_y), direction.y());}
 }
