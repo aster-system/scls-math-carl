@@ -404,7 +404,7 @@ namespace scls {
         inline Fraction absolute_rotation() const {if(parent() == 0){return rotation();}return parent()->absolute_rotation() + rotation();};
 
         // Rotate easily the object
-        inline void rotate(scls::Fraction movement){set_rotation(movement);};
+        inline void rotate(scls::Fraction movement){set_rotation(rotation() + movement);};
 
         // Returns a vector to an object
         inline Point_2D vector_to(Point_2D object) {Point_2D to_return = position().__substract_without_modification(object);to_return.normalize();return to_return;};
