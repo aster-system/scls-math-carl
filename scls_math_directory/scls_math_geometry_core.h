@@ -71,8 +71,8 @@ namespace scls {
         //*********
 
         // Simplest Point_2D constructor
-        Point_2D(Fraction x, Fraction y):a_x(x),a_y(y){};
         Point_2D():Point_2D(0,0){};
+        Point_2D(double x, double y):a_x(x),a_y(y){};
         Point_2D(const Point_2D& point_copy):Point_2D(point_copy.a_x,point_copy.a_y){};
 
         //*********
@@ -82,19 +82,19 @@ namespace scls {
         //*********
 
         // Returns if the point is in a rect
-        bool in_rect(Fraction tested_x, Fraction tested_y, Fraction tested_width, Fraction tested_height);
+        bool in_rect(double tested_x, double tested_y, double tested_width, double tested_height);
         bool in_rect(Point_2D tested_pos, Point_2D tested_scale);
 
         // Move easily the object
-        inline void move_xy(scls::Fraction movement_x, scls::Fraction movement_y) {move_x(movement_x);move_y(movement_y);};
-        inline void move_x(scls::Fraction movement) {set_x(x() + movement);};
-        inline void move_y(scls::Fraction movement) {set_y(y() + movement);};
+        inline void move_xy(double movement_x, double movement_y) {move_x(movement_x);move_y(movement_y);};
+        inline void move_x(double movement) {set_x(x() + movement);};
+        inline void move_y(double movement) {set_y(y() + movement);};
 
         // Getters
-        inline void set_x(scls::Fraction new_x) {a_x = new_x;};
-        inline void set_y(scls::Fraction new_y) {a_y = new_y;};
-        inline scls::Fraction x() const {return a_x;};
-        inline scls::Fraction y() const {return a_y;};
+        inline void set_x(double new_x) {a_x = new_x;};
+        inline void set_y(double new_y) {a_y = new_y;};
+        inline double x() const {return a_x;};
+        inline double y() const {return a_y;};
 
         //*********
         //
@@ -103,28 +103,28 @@ namespace scls {
         //*********
 
         // Distance from another object
-        inline double distance(Point_2D point) const {return std::sqrt(std::pow((a_x - point.a_x).to_double(), 2) + std::pow((a_y - point.a_y).to_double(), 2));};
+        inline double distance(Point_2D point) const {return std::sqrt(std::pow((a_x - point.a_x), 2) + std::pow((a_y - point.a_y), 2));};
         // Returns the norm of the vector
-        inline double norm() const {return std::sqrt(std::pow(a_x.to_double(), 2) + std::pow(a_y.to_double(), 2));};
+        inline double norm() const {return std::sqrt(std::pow(a_x, 2) + std::pow(a_y, 2));};
         // Normalizes the vector
-        inline void normalize() {scls::Fraction divisor = Fraction::from_double(norm());a_x /= divisor;a_y /= divisor;};
-        inline Point_2D normalized() {scls::Fraction divisor = Fraction::from_double(norm());return Point_2D(a_x / divisor, a_y / divisor);};
+        inline void normalize() {double divisor = norm();a_x /= divisor;a_y /= divisor;};
+        inline Point_2D normalized() {double divisor = norm();return Point_2D(a_x / divisor, a_y / divisor);};
 
         // Applies a rotation to the point
         inline Point_2D rotated(double rotation) const {
-            double* rotated_point = __rotate_vector_3d(a_x.to_double(), 0, a_y.to_double(), 0, rotation, 0);
-            scls::Point_2D to_return;to_return.a_x = Fraction::from_double(rotated_point[0]); to_return.a_y = Fraction::from_double(rotated_point[2]);
-            delete rotated_point; rotated_point = 0; return to_return;
+            double* rotated_point = __rotate_vector_3d(a_x, 0, a_y, 0, rotation, 0);
+            Point_2D to_return;to_return.a_x = rotated_point[0]; to_return.a_y = rotated_point[2];
+            delete rotated_point; return to_return;
         };
-        inline void rotate(double rotation) {Point_2D new_point = rotated(rotation);a_x = new_point.a_x; a_y = new_point.a_y;};
+        inline void rotate(double rotation) {if(rotation != 0){Point_2D new_point = rotated(rotation);a_x = new_point.a_x; a_y = new_point.a_y;}};
 
         // Adds a vector to this vector with another
         inline void __add(Point_2D object) {set_x(x()+object.x());set_y(y()+object.y());};
         inline Point_2D __add_without_modification(Point_2D object) const {Point_2D to_return;to_return.set_x(x()+object.x());to_return.set_y(y()+object.y());return to_return;};
         // Divides a vector to this vector with another
-        inline void __divide(Fraction value) {set_x(x()/value);set_y(y()/value);};
+        inline void __divide(double value) {set_x(x()/value);set_y(y()/value);};
         // Multiplies a vector to this vector with another
-        inline void __multiply(Fraction value) {set_x(x()*value);set_y(y()*value);};
+        inline void __multiply(double value) {set_x(x()*value);set_y(y()*value);};
         inline void __multiply(Point_2D value) {set_x(x()*value.x());set_y(y()*value.y());};
         // Returns a substraction of this vector with another
         inline void __substract(Point_2D object) {set_x(x()-object.x());set_y(y()-object.y());};
@@ -138,12 +138,11 @@ namespace scls {
         inline Point_2D& operator-=(Point_2D object){__substract(object);return *this;};
         inline Point_2D operator*(Point_2D object){Point_2D temp(*this);temp.__multiply(object);return temp;};
         inline Point_2D& operator*=(Point_2D object){__multiply(object);return *this;};
-        inline bool operator==(Point_2D object){return object.x() == x() && object.y() == y();};
         // With fraction
-        inline Point_2D operator/(Fraction object)const{Point_2D to_return=*this;to_return.__divide(object);return to_return;};
-        inline Point_2D operator*(Fraction object)const{Point_2D to_return=*this;to_return.__multiply(object);return to_return;};
-        inline Point_2D& operator/=(Fraction object){__divide(object);return *this;};
-        inline Point_2D& operator*=(Fraction object){__multiply(object);return *this;};
+        inline Point_2D operator/(double object)const{Point_2D to_return=*this;to_return.__divide(object);return to_return;};
+        inline Point_2D operator*(double object)const{Point_2D to_return=*this;to_return.__multiply(object);return to_return;};
+        inline Point_2D& operator/=(double object){__divide(object);return *this;};
+        inline Point_2D& operator*=(double object){__multiply(object);return *this;};
     private:
         //*********
         //
@@ -152,10 +151,13 @@ namespace scls {
         //*********
 
         // X position of the point
-        scls::Fraction a_x = 0;
+        double a_x = 0;
         // Y position of the point
-        scls::Fraction a_y = 0;
+        double a_y = 0;
     }; typedef Point_2D Vector_2D;
+
+    // Operators
+    bool operator==(const Point_2D object_1, const Point_2D object_2);
 
     class __Point_2D_Formula {
         // Class representing a 2D point with formulas
@@ -168,16 +170,22 @@ namespace scls {
         //*********
 
         // Simplest __Point_2D_Formula constructor
+        __Point_2D_Formula(__Formula_Base::Formula x, __Formula_Base::Formula y):a_x(x.formula_base_shared_ptr()),a_y(y.formula_base_shared_ptr()){};
         __Point_2D_Formula(std::shared_ptr<__Formula_Base> x, std::shared_ptr<__Formula_Base> y):a_x(x),a_y(y){};
         __Point_2D_Formula(__Formula_Base x, __Formula_Base y):__Point_2D_Formula(std::make_shared<__Formula_Base>(x), std::make_shared<__Formula_Base>(y)){};
+        __Point_2D_Formula(__Fraction_Base x, __Fraction_Base y):__Point_2D_Formula(std::make_shared<__Formula_Base>(x), std::make_shared<__Formula_Base>(y)){};
         __Point_2D_Formula(Fraction x, Fraction y):__Point_2D_Formula(std::make_shared<__Formula_Base>(x), std::make_shared<__Formula_Base>(y)){};
-        __Point_2D_Formula(int x, int y):__Point_2D_Formula(std::make_shared<__Formula_Base>(x), std::make_shared<__Formula_Base>(y)){};
-        __Point_2D_Formula(Point_2D point_2d):__Point_2D_Formula(point_2d.x(),point_2d.y()){};
+        __Point_2D_Formula(double x, double y):__Point_2D_Formula(std::make_shared<__Formula_Base>(x), std::make_shared<__Formula_Base>(y)){};
+        __Point_2D_Formula(Point_2D point_2d):__Point_2D_Formula(Fraction::from_double(point_2d.x()),Fraction::from_double(point_2d.y())){};
         __Point_2D_Formula():__Point_2D_Formula(0,0){};
         __Point_2D_Formula(const __Point_2D_Formula& point_copy):__Point_2D_Formula(point_copy.a_x.get()->formula_copy(),point_copy.a_y.get()->formula_copy()){};
 
+        // Returns a copy of the __Point_2D_Formula point
+        inline __Point_2D_Formula point_copy() const {return __Point_2D_Formula(a_x.get()->formula_copy(), a_y.get()->formula_copy());};
         // Returns the __Point_2D_Formula to a Point_2D
-        inline Point_2D point_2d() const {return Point_2D(a_x.get()->value_to_fraction(0), a_y.get()->value_to_fraction(0));};
+        inline Point_2D to_point_2d(scls::__Formula_Base::Unknowns_Container* values) const {return Point_2D(a_x.get()->value_to_double(values), a_y.get()->value_to_double(values));};
+        // Returns the point to XML text
+        std::string to_xml_text();
 
         //*********
         //
@@ -191,20 +199,12 @@ namespace scls {
         inline void move_y(Fraction movement) {(*a_y.get()) += movement;};
 
         // Getters
-        inline void set_x(int new_x) {(*a_x.get()) = new_x;};
-        inline void set_x(Fraction new_x) {(*a_x.get()) = new_x;};
-        inline void set_x(__Fraction_Base new_x) {(*a_x.get()) = new_x;};
-        inline void set_x(__Formula_Base new_x) {a_x = new_x.formula_copy();};
         inline void set_x(__Formula_Base::Formula new_x) {a_x = new_x.formula_base_shared_ptr();};
         inline void set_x(std::shared_ptr<__Formula_Base> new_x) {a_x = new_x;};
-        inline void set_y(int new_y) {(*a_y.get()) = new_y;};
-        inline void set_y(Fraction new_y) {(*a_y.get()) = new_y;};
-        inline void set_y(__Fraction_Base new_y) {(*a_y.get()) = new_y;};
-        inline void set_y(__Formula_Base new_y) {a_y = new_y.formula_copy();};
         inline void set_y(__Formula_Base::Formula new_y) {a_y = new_y.formula_base_shared_ptr();};
         inline void set_y(std::shared_ptr<__Formula_Base> new_y) {a_y = new_y;};
-        inline std::shared_ptr<__Formula_Base> x() const {return a_x;};
-        inline std::shared_ptr<__Formula_Base> y() const {return a_y;};
+        inline __Formula_Base::Formula x() const {return a_x;};
+        inline __Formula_Base::Formula y() const {return a_y;};
 
         //*********
         //
@@ -213,26 +213,30 @@ namespace scls {
         //*********
 
         // Adds a vector to this vector with another
-        inline void __add(Point_2D object) {(*a_x.get())+=object.x();(*a_y.get())+=object.y();};
+        inline void __add(Point_2D value) {(*a_x.get())+=Fraction::from_double(value.x());(*a_y.get())+=Fraction::from_double(value.y());};
+        inline void __add(__Point_2D_Formula value) {x()+=value.x();y()+=value.y();};
         inline __Point_2D_Formula __add_without_modification(Point_2D object) const {__Point_2D_Formula to_return = *this;to_return.__add(object);return to_return;};
         // Divides a vector to this vector with another
         inline void __divide(Fraction value) {(*a_x.get())/=value;(*a_y.get())/=value;};
         // Multiplies a vector to this vector with another
         inline void __multiply(Fraction value) {(*a_x.get())*=value;(*a_y.get())*=value;};
-        inline void __multiply(Point_2D value) {(*a_x.get())*=value.x();(*a_y.get())*=value.y();};
+        inline void __multiply(Point_2D value) {(*a_x.get())*=Fraction::from_double(value.x());(*a_y.get())*=Fraction::from_double(value.y());};
+        inline void __multiply(__Point_2D_Formula value) {(*a_x.get())*=(*value.x().formula_base());(*a_y.get())*=(*value.y().formula_base());};
         // Returns a substraction of this vector with another
-        inline void __substract(Point_2D object) {(*a_x.get())-=object.x();(*a_y.get())-=object.y();};
+        inline void __substract(Point_2D value) {(*a_x.get())-=Fraction::from_double(value.x());(*a_y.get())-=Fraction::from_double(value.y());};
         inline __Point_2D_Formula __substract_without_modification(Point_2D object) const {__Point_2D_Formula to_return = *this;to_return.__substract(object);return to_return;};
 
         // Built-in operators
-        // With __Point_2D_Formula
+        // With __Point_2D_Formula or Point_2D
         inline __Point_2D_Formula operator-(Point_2D object)const{return __substract_without_modification(object);};
         inline __Point_2D_Formula operator+(Point_2D object)const{return __add_without_modification(object);};
         inline __Point_2D_Formula& operator+=(Point_2D object){__add(object);return *this;};
+        inline __Point_2D_Formula& operator+=(__Point_2D_Formula object){__add(object);return *this;};
         inline __Point_2D_Formula& operator-=(Point_2D object){__substract(object);return *this;};
         inline __Point_2D_Formula operator*(Point_2D object){__Point_2D_Formula temp = *this;temp.__multiply(object);return temp;};
+        inline __Point_2D_Formula operator*(__Point_2D_Formula object){__Point_2D_Formula temp = *this;temp.__multiply(object);return temp;};
         inline __Point_2D_Formula& operator*=(Point_2D object){__multiply(object);return *this;};
-        inline bool operator==(Point_2D object){return object.x() == (*x().get()) && object.y() == (*y().get());};
+        inline bool operator==(Point_2D object){return object.x() == x().value_to_double(0) && object.y() == y().value_to_double(0);};
         // With fraction
         inline __Point_2D_Formula operator/(Fraction object)const{__Point_2D_Formula to_return = *this;to_return.__divide(object);return to_return;};
         inline __Point_2D_Formula operator*(Fraction object)const{__Point_2D_Formula to_return = *this;to_return.__multiply(object);return to_return;};
@@ -249,7 +253,7 @@ namespace scls {
         std::shared_ptr<__Formula_Base> a_x = std::make_shared<__Formula_Base>();
         // Y position of the point
         std::shared_ptr<__Formula_Base> a_y = std::make_shared<__Formula_Base>();
-    };
+    }; typedef __Point_2D_Formula Point_2D_Formula;
 
     // Returns the datas point of two crossing lines
     struct Crossing_Datas {bool crossed = false;double crossing_x = 0;double crossing_y = 0;bool same_lines = false;};
@@ -270,7 +274,7 @@ namespace scls {
 
     // Normalizes a 3D vector
     void normalize_3d(double& vector_x, double& vector_y, double& vector_z);
-    void normalize_3d(scls::Fraction& vector_x, scls::Fraction& vector_y, scls::Fraction& vector_z);
+    void normalize_3d(Fraction& vector_x, Fraction& vector_y, Fraction& vector_z);
 
     // Returns the angle in radians for a vector 3D
     double vector_2d_angle(double vector_x, double vector_y);
@@ -289,24 +293,24 @@ namespace scls {
         //*********
 
         // Transform_Object_2D constructor
-        Transform_Object_2D(){};
+        Transform_Object_2D();
         // Copy constructor
-        Transform_Object_2D(Point_2D point_2d):a_position(point_2d){};
-        Transform_Object_2D(__Point_2D_Formula point_2d):Transform_Object_2D(scls::Point_2D(point_2d.x().get()->value_to_fraction(), point_2d.y().get()->value_to_fraction())){};
+        Transform_Object_2D(Point_2D point_2d);
+        Transform_Object_2D(__Point_2D_Formula point_2d);
         // Transform_Object_2D destructor
-        ~Transform_Object_2D(){if(parent() != 0){parent()->remove_child(this);}};
+        ~Transform_Object_2D();
 
         // Soft reset the transform
         inline void soft_reset(){a_moved_during_this_frame = false;};
 
         // Getters and setters
         inline std::vector<std::shared_ptr<Transform_Object_2D>>& children() {return a_children;};
-        inline scls::Fraction delta_time() const {return a_delta_time;};
+        inline Fraction delta_time() const {return a_delta_time;};
         inline unsigned int id() const {return a_id;};
         inline bool moved_during_this_frame() const {return a_moved_during_this_frame;};
         inline Transform_Object_2D* parent() const {return a_parent.lock().get();};
         inline void remove_child(Transform_Object_2D* child){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children.at(i).get()==child){a_children.erase(a_children.begin()+i);return;}};};
-        inline void set_delta_time(scls::Fraction new_delta_time){a_delta_time = new_delta_time;};
+        inline void set_delta_time(Fraction new_delta_time){a_delta_time = new_delta_time;};
         inline void set_parent(Transform_Object_2D* new_parent){set_parent(new_parent->a_this_object.lock());};
         inline void set_parent(std::shared_ptr<Transform_Object_2D> new_parent) {
             if(parent() != 0){parent()->remove_child(this);}
@@ -326,13 +330,20 @@ namespace scls {
         // Absolute position handling
         // Returns the absolute X position
         Point_2D absolute_position() const;
-        Fraction absolute_x() const;
-        Fraction absolute_y() const;
+        double absolute_x() const;
+        __Formula_Base::Formula absolute_x_formula() const;
+        double absolute_y() const;
+        __Formula_Base::Formula absolute_y_formula() const;
 
         // Accelerates the object
-        void accelerate(scls::Point_2D acceleration);
-        void accelerate_x(scls::Fraction acceleration);
-        void accelerate_y(scls::Fraction acceleration);
+        void accelerate(Point_2D_Formula acceleration);
+        void accelerate(Point_2D acceleration);
+        void accelerate_x(double acceleration);
+        void accelerate_y(double acceleration);
+
+        // Adds a value to x / y
+        void add_x(double x_to_add);
+        void add_y(double y_to_add);
 
         // Returns the distance from an another object
         double distance(Point_2D point);
@@ -346,53 +357,49 @@ namespace scls {
         void move_y(Fraction movement);
 
         // Extremums
-        Fraction max_x() const;
-        Fraction max_y() const;
-        Fraction min_x() const;
-        Fraction min_y() const;
+        double max_absolute_x() const;
+        double max_absolute_y() const;
+        double min_absolute_x() const;
+        double min_absolute_y() const;
+        double max_x() const;
+        double max_y() const;
+        double min_x() const;
+        double min_y() const;
 
         // Precise next movement
-        scls::Fraction max_x_next() const;
-        scls::Fraction max_y_next() const;
-        scls::Fraction min_x_next() const;
-        scls::Fraction min_y_next() const;
-        scls::Point_2D position_next() const;
+        double max_x_next() const;
+        double max_y_next() const;
+        double min_x_next() const;
+        double min_y_next() const;
+        Point_2D position_next() const;
         // Next movement generated by the velocity
-        scls::Fraction next_movement_x()const;
-        scls::Fraction next_movement_y()const;
+        double next_movement_x()const;
+        double next_movement_y()const;
         // Next position
-        scls::Fraction x_next() const;
-        scls::Fraction y_next() const;
+        double x_next() const;
+        double y_next() const;
 
         // Update the raw velocity
         void update_raw_velocity();
 
         // Getters and setters
         Point_2D position() const;
-        Point_2D position(int normalize) const;
+        Point_2D_Formula position_formula() const;
         Point_2D raw_velocity() const;
-        void set_position(scls::Fraction new_x, scls::Fraction new_y);
-        void set_position(Point_2D new_position);
+        void set_position(Fraction new_x, Fraction new_y);
+        void set_position(Point_2D_Formula new_position);
         void set_raw_velocity(Point_2D new_raw_velocity);
-        void set_x(int new_x);
-        void set_x(scls::Fraction new_x);
-        void set_x(scls::__Fraction_Base new_x);
-        virtual void set_x(scls::__Formula_Base new_x);
-        virtual void set_x(scls::__Formula_Base::Formula new_x);
-        void set_y(int new_y);
-        void set_y(scls::Fraction new_y);
-        void set_y(scls::__Fraction_Base new_y);
-        virtual void set_y(scls::__Formula_Base new_y);
-        virtual void set_y(scls::__Formula_Base::Formula new_y);
-        void set_velocity(Point_2D new_velocity);
-        void set_velocity_x(scls::Fraction new_x);
-        void set_velocity_y(scls::Fraction new_y);
+        virtual void set_x(__Formula_Base::Formula new_x);
+        virtual void set_y(__Formula_Base::Formula new_y);
+        void set_velocity(Point_2D_Formula new_velocity);
+        void set_velocity_x(Fraction new_x);
+        void set_velocity_y(Fraction new_y);
         Point_2D velocity() const;
-        Point_2D velocity(int normalize) const;
-        scls::Fraction x() const;
-        scls::__Formula_Base::Formula x_formula() const;
-        scls::Fraction y() const;
-        scls::__Formula_Base::Formula y_formula() const;
+        Point_2D_Formula velocity_formula() const;
+        double x() const;
+        __Formula_Base::Formula x_formula() const;
+        double y() const;
+        __Formula_Base::Formula y_formula() const;
 
         //*********
         //
@@ -401,18 +408,19 @@ namespace scls {
         //*********
 
         // Returns the absolute X rotation of the object
-        inline Fraction absolute_rotation() const {if(parent() == 0){return rotation();}return parent()->absolute_rotation() + rotation();};
+        inline double absolute_rotation() const {if(parent() == 0){return rotation();}return parent()->absolute_rotation() + rotation();};
 
         // Rotate easily the object
-        inline void rotate(scls::Fraction movement){set_rotation(rotation() + movement);};
+        inline void rotate(Fraction movement){set_rotation(rotation() + movement.to_double());};
 
         // Returns a vector to an object
         inline Point_2D vector_to(Point_2D object) {Point_2D to_return = position().__substract_without_modification(object);to_return.normalize();return to_return;};
         inline Point_2D vector_to(Transform_Object_2D object) {return vector_to(object.position());};
 
         // Getters
-        inline Fraction rotation() const {return a_rotation.value_to_fraction(a_unknowns.get());};
-        inline Formula::Formula rotation_formula() const {return a_rotation;};
+        inline double rotation() const {return a_rotation.value_to_double(a_unknowns.get());};
+        inline __Formula_Base::Formula rotation_formula() const {return a_rotation;};
+        inline void set_rotation(double new_rotation){a_rotation = new_rotation;};
         inline void set_rotation(__Fraction_Base new_rotation){a_rotation = new_rotation;};
         inline void set_rotation(Fraction new_rotation){a_rotation = new_rotation;};
         inline void set_rotation(__Formula_Base::Formula new_rotation){a_rotation = new_rotation;};
@@ -427,22 +435,25 @@ namespace scls {
 
         // Returns the absolute X scale
         inline Point_2D absolute_scale() const {return Point_2D(absolute_scale_x(), absolute_scale_y());};
-        inline Fraction absolute_scale_x() const {if(parent() == 0){return scale_x();}else return parent()->absolute_scale_x() * scale_x();};
-        inline Fraction absolute_scale_y() const {if(parent() == 0){return scale_y();}else return parent()->absolute_scale_y() * scale_y();};
+        inline Point_2D_Formula absolute_scale_formula() const {return Point_2D_Formula(absolute_scale_x_formula(), absolute_scale_y_formula());};
+        inline double absolute_scale_x() const {if(parent() == 0){return scale_x();}else return parent()->absolute_scale_x() * scale_x();};
+        inline __Formula_Base::Formula absolute_scale_x_formula() const {if(parent() == 0){return scale_x_formula().formula_copy();} return parent()->absolute_scale_x_formula() * scale_x_formula();};
+        inline double absolute_scale_y() const {if(parent() == 0){return scale_y();}else return parent()->absolute_scale_y() * scale_y();};
+        inline __Formula_Base::Formula absolute_scale_y_formula() const {if(parent() == 0){return scale_y_formula().formula_copy();} return parent()->absolute_scale_y_formula() * scale_y_formula();};
 
         // Getters
-        inline Point_2D scale() const {return a_scale.point_2d();};
-        inline Fraction scale_x() const {return a_scale.x().get()->value_to_fraction(a_unknowns.get());};
-        inline std::shared_ptr<scls::__Formula_Base> scale_x_formula_shared_ptr() const {return a_scale.x();};
-        inline Fraction scale_y() const {return a_scale.y().get()->value_to_fraction(a_unknowns.get());};
-        inline std::shared_ptr<scls::__Formula_Base> scale_y_formula_shared_ptr() const {return a_scale.y();};
+        inline Point_2D scale() const {return a_scale.to_point_2d(a_unknowns.get());};
+        inline double scale_x() const {return a_scale.x().value_to_double(a_unknowns.get());};
+        inline __Formula_Base::Formula scale_x_formula() const {return a_scale.x();};
+        inline double scale_y() const {return a_scale.y().value_to_double(a_unknowns.get());};
+        inline __Formula_Base::Formula scale_y_formula() const {return a_scale.y();};
         inline void set_scale(Fraction new_scale_x, Fraction new_scale_y) {set_scale_x(new_scale_x);set_scale_y(new_scale_y);};
         inline void set_scale(Fraction new_scale) {set_scale_x(new_scale);set_scale_y(new_scale);};
         inline void set_scale(Point_2D new_scale) {a_scale = new_scale;};
         inline void set_scale_x(Fraction new_scale_x) {a_scale.set_x(new_scale_x);};
-        inline void set_scale_x(std::shared_ptr<__Formula_Base> new_scale_x) {a_scale.set_x(new_scale_x);};
+        inline void set_scale_x(__Formula_Base::Formula new_scale_x) {a_scale.set_x(new_scale_x);};
         inline void set_scale_y(Fraction new_scale_y) {a_scale.set_y(new_scale_y);};
-        inline void set_scale_y(std::shared_ptr<__Formula_Base> new_scale_y) {a_scale.set_y(new_scale_y);};
+        inline void set_scale_y(__Formula_Base::Formula new_scale_y) {a_scale.set_y(new_scale_y);};
 
         //*********
         //
@@ -476,7 +487,7 @@ namespace scls {
         //*********
 
         // Delta time
-        scls::Fraction a_delta_time = scls::Fraction(1, 100);
+        Fraction a_delta_time = Fraction(1, 100);
         // If the transform has been moved during this frame
         bool a_moved_during_this_frame = false;
 
@@ -499,8 +510,8 @@ namespace scls {
         __Point_2D_Formula a_position;
 
         // Velocity (and raw velocity) of the object
-        Point_2D a_raw_velocity;
-        Point_2D a_velocity;
+        Point_2D_Formula a_raw_velocity;
+        Point_2D_Formula a_velocity;
 
         //*********
         //
@@ -528,10 +539,11 @@ namespace scls {
     //*********
 
     // Returns the angle (between 0 and Pi) needed for a certain X value
-    double oval_angle_at_x(double needed_x, double oval_x, double oval_x_radius);
-    double oval_angle_at_x(double needed_x_proportion);
+    double circle_angle_at_x(double needed_x, double oval_x, double oval_x_radius);
+    double circle_angle_at_x(double needed_x_proportion);
+    double oval_angle_at_x(double oval_x, double oval_y, double needed_x);
     // Returns the Y position needed for a certain angle
-    double oval_y_at_angle(double needed_angle);
+    double oval_y_at_angle(double oval_x, double oval_y, double needed_angle);
 
     // Returns the radius of an oval at a certain angle
     double oval_radius(double scale_x, double scale_y, double angle_in_radians);

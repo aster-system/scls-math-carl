@@ -313,7 +313,9 @@ namespace scls {
     // Methods operators
     // Add a polymonial to this one
     void Polymonial::__add(Polymonial value) {
+        // Asserts / speed
         if(value.monomonials().size() <= 0 || (value.monomonials().size() == 1 && value.monomonials().at(0).factor() == 0)){return;}
+        if(value.monomonials().size() == 1 && monomonials().size() == 1 && value.monomonials().at(0).is_known() && monomonials().at(0).is_known()){monomonials()[0].add_to_factor(value.monomonials().at(0).factor());return;}
 
         // Add the monomonial
         for(int i = 0;i<static_cast<int>(value.a_monomonials.size());i++) {
@@ -326,6 +328,11 @@ namespace scls {
             }
         }
     };
+
+    // Divide a monomonial to this void
+    void Polymonial::__divide(__Monomonial value) {__Monomonial used_inverse = value.inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
+    void Polymonial::__divide(Complex value) {__divide(__Monomonial(value));};
+    void Polymonial::__divide(Fraction value) {__divide(__Monomonial(value));};
 
     // Divide the polymonial by an another polymonial
     void Polymonial::__divide(Polymonial* value) {
@@ -426,8 +433,9 @@ namespace scls {
         return (a_monomonials.size() == 1 && a_monomonials.at(0).factor().real() == value);
     };
     // With polymonial
-    bool Polymonial::__is_equal(Polymonial value) const {
-        std::vector<__Monomonial> monomonials_1 = value.a_monomonials;
+    bool Polymonial::__is_equal(Polymonial value) const {return __is_equal(&value);}
+    bool Polymonial::__is_equal(Polymonial* value) const {
+        std::vector<__Monomonial> monomonials_1 = value->a_monomonials;
         std::vector<__Monomonial> monomonials_2 = a_monomonials;
         for(int i = 0;i<static_cast<int>(monomonials_1.size());i++){if(monomonials_1.at(i).factor() == 0){monomonials_1.erase(monomonials_1.begin() + i);}}
         for(int i = 0;i<static_cast<int>(monomonials_2.size());i++){if(monomonials_2.at(i).factor() == 0){monomonials_2.erase(monomonials_2.begin() + i);}}
@@ -614,6 +622,7 @@ namespace scls {
         for(int i = 0;i<static_cast<int>(unknowns.size());i++) {__Formula_Base* needed_value=values->value_by_name(unknowns[i]);if(needed_value!=0){current_formula = (*current_formula.replace_unknown(unknowns[i], *needed_value).formula_base());}}
 
         // Return the result
+        if(a_applied_function.get() != 0){current_formula.set_applied_function(a_applied_function.get()->function_copy());}
         return current_formula;
     };
     // Returns the final value of the formula
@@ -623,7 +632,7 @@ namespace scls {
     scls::Complex __Formula_Base::value(scls::Fraction current_value){Unknowns_Container temp = Unknowns_Container(current_value);return value(&temp);};
     scls::Complex __Formula_Base::value(__Formula_Base::Unknowns_Container* values) {
         // Simpler models
-        if(is_simple_monomonial()){__Monomonial needed_monomonial = a_polymonial.get()->monomonial();if(needed_monomonial.is_known()){return needed_monomonial.factor();}}
+        if(is_simple_monomonial() && is_basic()){__Monomonial needed_monomonial = a_polymonial.get()->monomonial();if(needed_monomonial.is_known()){return needed_monomonial.factor();}}
 
         // Get the needed datas
         __Formula_Base::Formula current_formula_complete_base = internal_value();
@@ -665,12 +674,8 @@ namespace scls {
         else if(*this == 0) {*this = *value;return;}
 
         // Check if values are both polymonial
-        if(a_polymonial.get() != 0) {
-            if(!is_basic()){sub_place();a_fraction.get()->__add(*value);}
-            else if(!value->is_simple_polymonial()){sub_place();a_fraction.get()->__add(*value);}
-            else{a_polymonial.get()->__add(value->to_polymonial());}
-        }
-        else {if(!is_basic()){sub_place();}a_fraction.get()->__add(*value);}
+        if(is_simple_polymonial() && value->is_simple_polymonial()){a_polymonial.get()->__add(value->to_polymonial());}
+        else {if(!is_basic() || is_simple_polymonial()){sub_place();}a_fraction.get()->__add(*value);}
 
         // Finish the result
         check_formula();
@@ -723,6 +728,16 @@ namespace scls {
             a_fraction.get()->__divide(value);
         }
         check_formula();
+    };
+    // Returns if two numbers/formulas are equals
+    bool __Formula_Base::__is_equal(int value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);} return a_fraction.get()->__is_equal(value);};
+    bool __Formula_Base::__is_equal(Fraction value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
+    bool __Formula_Base::__is_equal(Polymonial value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
+    bool __Formula_Base::__is_equal(__Formula_Base value)const{
+        if(!((a_applied_function.get() == 0 && value.a_applied_function.get() == 0) || (a_applied_function.get() != 0 && value.a_applied_function.get() != 0 && a_applied_function.get()->name() == value.a_applied_function.get()->name()))){return false;}
+        if(a_fraction.get() == 0 && value.a_fraction.get() == 0) {return a_polymonial.get()->__is_equal(value.a_polymonial.get());}
+        else if((a_fraction.get() != 0 && value.a_fraction.get() == 0) || (a_fraction.get() == 0 && value.a_fraction.get() != 0)){return false;}
+        return a_fraction.get()->__is_equal(value.internal_value());
     };
     // Multiply a polymonial to this one
     void __Formula_Base::Formula_Factor::__multiply(__Formula_Base value){

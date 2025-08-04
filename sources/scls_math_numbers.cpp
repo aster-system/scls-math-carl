@@ -83,8 +83,8 @@ namespace scls {
     __Fraction_Base __Fraction_Base::from_std_string(std::string content) {
         std::vector<std::string> cutted = cut_string(content, "/");
         if(cutted.size() <= 0) return Fraction(0);
-        else if(cutted.size() == 1) {if(cutted[0]=="-")return Fraction(-1);return Fraction(std::stoi(cutted[0]));}
-        else{return Fraction(std::stoi(cutted[0]), std::stoi(cutted[1]));}
+        else if(cutted.size() == 1) {if(cutted[0]=="-")return Fraction(-1);return Fraction(std::stoll(cutted[0]));}
+        else{return Fraction(std::stoll(cutted[0]), std::stoll(cutted[1]));}
     };
 
     // Normalize the fraction
@@ -293,6 +293,9 @@ namespace scls {
 
     // Divides the Complex with a Complex
     Complex Complex::_divide_without_modification(Complex const& obj) const {
+        // Simplifications
+        if(a_imaginary == 0 && obj.a_imaginary == 0){return Complex(a_real / obj.a_real);}
+
         Complex new_complex = Complex(a_real, a_imaginary);
         new_complex._multiply(obj.conjugate());
         Complex real_denominateur = obj * obj.conjugate();

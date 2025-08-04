@@ -94,8 +94,6 @@ namespace scls {
         bool compare_unknown(__Monomonial other);
         // Returns if the monomonial contains an unkwnown
         inline _Base_Unknown* contains_unknown(std::string unknown_name) {for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {if(a_unknowns.at(i).name() == unknown_name) {return &a_unknowns[i];}} return 0;};
-        // Returns the factor of the monomonial
-        inline Complex factor() const {return a_factor;};
         // Deletes the monomonial unkwnown
         inline void delete_unknown(std::string unknown_name) {for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {if(a_unknowns[i].name() == unknown_name) {a_unknowns.erase(a_unknowns.begin() + i); return;}}};
         inline void delete_unknown(_Base_Unknown* unknown_to_delete) {delete_unknown(unknown_to_delete->name());};
@@ -131,7 +129,11 @@ namespace scls {
         // Convert the monomonial to a complex
         operator Complex() const {return a_factor;};
 
+        // Adds a value to the factor
+        void add_to_factor(Complex value){a_factor += value;};
+
         // Getters and setters
+        inline Complex factor() const {return a_factor;};
         inline void set_factor(Complex new_factor) {a_factor = new_factor;};
 
     private:
@@ -183,7 +185,7 @@ namespace scls {
 
         // Polymonial constructor
         Polymonial(){};
-        Polymonial(int number){a_monomonials.push_back(__Monomonial(Complex(number)));};
+        Polymonial(double number){a_monomonials.push_back(__Monomonial(Complex(number)));};
         Polymonial(__Fraction_Base number){a_monomonials.push_back(__Monomonial(Complex(number)));};
         Polymonial(Fraction number){a_monomonials.push_back(__Monomonial(Complex(number)));};
         Polymonial(__Monomonial monomonial){a_monomonials.push_back(monomonial);};
@@ -224,15 +226,16 @@ namespace scls {
         // Add a polymonial to this one
         void __add(Polymonial value);
         // Divide a monomonial to this void
-        inline void __divide(__Monomonial value) {__Monomonial used_inverse = value.inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials[i] *= used_inverse;}};
-        inline void __divide(Complex value) {__divide(__Monomonial(value));};
-        inline void __divide(Fraction value) {__divide(__Monomonial(value));};
+        void __divide(__Monomonial value);
+        void __divide(Complex value);
+        void __divide(Fraction value);
         void __divide(Polymonial* value);
         // Returns if two values are equals or not
         inline bool __is_equal(int value) const{return __is_equal(Complex(value));};
         inline bool __is_equal(Fraction value) const{return __is_equal(Complex(value));};
         bool __is_equal(Complex value) const;
         bool __is_equal(Polymonial value) const;
+        bool __is_equal(Polymonial* value) const;
         // Multiply a polymonial to this one
         void __multiply(Polymonial value);
         inline void __multiply(Complex value){Polymonial temp; temp.add_monomonial(value);__multiply(temp);};
@@ -665,7 +668,7 @@ namespace scls {
 
             // Multiply a polymonial to this one
             virtual void __multiply(Polymonial value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
-            virtual void __multiply(__Formula_Base value) {std::cout << "J " << value.to_std_string(0) << std::endl; for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
+            virtual void __multiply(__Formula_Base value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}};
 
             // Returns the final value of the formula
             scls::Complex value(__Formula_Base::Unknowns_Container* values);
@@ -717,7 +720,7 @@ namespace scls {
             bool __is_equal(Polymonial value)const{return a_denominator.get() == 0 && a_numerator.get() != 0 && a_numerator.get()->__is_equal(value);};
             // Multiply a polymonial to this one
             virtual void __multiply(Polymonial value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}};
-            virtual void __multiply(__Formula_Base value) {std::cout << "I " << value.to_std_string(0) << " " << a_numerator.get() << std::endl;if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){std::cout << "P1" << std::endl;a_denominator.reset();}else{std::cout << "P2" << std::endl;a_numerator.get()->__multiply(value);}};
+            virtual void __multiply(__Formula_Base value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){std::cout << "P1" << std::endl;a_denominator.reset();}else{std::cout << "P2" << std::endl;a_numerator.get()->__multiply(value);}};
 
             // Returns the final value of the formula
             scls::Complex value(__Formula_Base::Unknowns_Container* values);
@@ -734,7 +737,7 @@ namespace scls {
 
         // __Formula_Base constructor
         __Formula_Base(){};
-        __Formula_Base(int number):a_polymonial(std::make_shared<Polymonial>(number)){};
+        __Formula_Base(double number):a_polymonial(std::make_shared<Polymonial>(number)){};
         __Formula_Base(__Fraction_Base number):a_polymonial(std::make_shared<Polymonial>(number)){};
         __Formula_Base(Fraction number):a_polymonial(std::make_shared<Polymonial>(number)){};
         __Formula_Base(Complex number):a_polymonial(std::make_shared<Polymonial>(number)){};
@@ -844,15 +847,16 @@ namespace scls {
         virtual void __divide(__Formula_Base value);
 
         // Returns if two numbers/formulas are equals
-        bool __is_equal(int value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);} return a_fraction.get()->__is_equal(value);};
-        bool __is_equal(Fraction value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
-        bool __is_equal(Polymonial value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
-        bool __is_equal(__Formula_Base value)const{return a_applied_function.get()->name() == value.a_applied_function.get()->name() && a_fraction.get()->__is_equal(value.internal_value());};
+        bool __is_equal(int value) const;
+        bool __is_equal(Fraction value) const;
+        bool __is_equal(Polymonial value) const;
+        bool __is_equal(__Formula_Base value) const;
 
         // Multiply a polymonial to this one
         virtual void __multiply(Polymonial value) {__multiply(__Formula_Base(value));};
         inline void __multiply(int value){__multiply(__Formula_Base(value));};
         inline void __multiply(__Monomonial value){__multiply(__Formula_Base(value));};
+        inline void __multiply(__Fraction_Base value) {Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
         virtual void __multiply(Fraction value) {Polymonial temp;temp.add_monomonial(__Monomonial(value));__multiply(temp);};
         inline void __multiply(Complex value){__multiply(__Formula_Base(value));};
         // Multiply an another formula to this one
@@ -866,6 +870,9 @@ namespace scls {
         __Formula_Base& operator*=(int value) {__multiply(value);return*this;};
         // With fractions
         bool operator==(Fraction value) {return __is_equal(value);};
+        __Formula_Base operator*(__Fraction_Base value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
+        __Formula_Base operator*(Fraction value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
+        __Formula_Base& operator*=(__Fraction_Base value) {__multiply(value);return*this;};
         __Formula_Base& operator*=(Fraction value) {__multiply(value);return*this;};
         __Formula_Base& operator/=(Fraction value) {__divide(value);return*this;};
         __Formula_Base& operator+=(__Fraction_Base value) {__add(value);return*this;};
@@ -877,6 +884,8 @@ namespace scls {
         // With monomonial
         __Formula_Base& operator+=(__Monomonial value) {__Formula_Base temp=value;__add(&temp);return*this;};
         __Formula_Base& operator*=(__Monomonial value) {__multiply(value);return*this;};
+        // With polymonial
+        __Formula_Base& operator/=(Polymonial value) {__divide(value);return *this;};
         // With formulas
         __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);value*=Fraction(-1);to_return.__add(&value);return to_return;};
         __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(&value);return*this;};
@@ -912,7 +921,7 @@ namespace scls {
             Formula(Fraction number):Formula(std::make_shared<__Formula_Base>(number)){};
             Formula(Complex number):Formula(std::make_shared<__Formula_Base>(number)){};
             Formula(std::shared_ptr<__Formula_Base> needed_formula):a_formula(needed_formula){};
-            Formula(int number):Formula(std::make_shared<__Formula_Base>(number)){};
+            Formula(double number):Formula(std::make_shared<__Formula_Base>(number)){};
             Formula(__Monomonial monomonial):Formula(std::make_shared<__Formula_Base>(monomonial)){};
             Formula(Polymonial polymonial):Formula(std::make_shared<__Formula_Base>(polymonial)){};
             Formula(__Formula_Base needed_formula):Formula(std::make_shared<__Formula_Base>(needed_formula)){};
@@ -922,6 +931,7 @@ namespace scls {
             inline void clear()const{a_formula.get()->clear();};
             inline __Formula_Base* formula_base() const {return a_formula.get();};
             inline std::shared_ptr<__Formula_Base> formula_base_shared_ptr() const {return a_formula;};
+            inline Formula formula_copy()const{return Formula(a_formula.get()->formula_copy());};
             inline void paste(__Formula_Base* to_paste)const{a_formula.get()->paste(to_paste);};
             inline void paste(Formula to_paste)const{a_formula.get()->paste(to_paste.a_formula.get());};
             inline Polymonial to_polymonial() const {return a_formula.get()->to_polymonial();};
@@ -944,9 +954,23 @@ namespace scls {
 
             // Operators
 
+            // Comparaisons
+            bool operator<(int value) {return value_to_double(0) < value;};
+
+            // Operations
             // With int
             bool operator==(int value) {return a_formula.get()->__is_equal(value);};
             Formula& operator*=(int value) {__Formula_Base temp=value;a_formula.get()->__multiply(temp);return*this;};
+            Formula operator*(int value) {return ((*a_formula.get()) * value);};
+            // With fractions
+            Formula operator+(__Fraction_Base value) {return ((*a_formula.get()) + value);};
+            Formula& operator+=(__Fraction_Base value) {__Formula_Base temp=value;a_formula.get()->__add(&temp);return*this;};
+            Formula operator+(Fraction value) {return ((*a_formula.get()) + value);};
+            Formula& operator+=(Fraction value) {__Formula_Base temp=value;a_formula.get()->__add(&temp);return*this;};
+            Formula operator*(__Fraction_Base value) {return ((*a_formula.get()) * value);};
+            Formula& operator*=(__Fraction_Base value) {__Formula_Base temp=value;a_formula.get()->__multiply(temp);return*this;};
+            Formula operator*(Fraction value) {return ((*a_formula.get()) * value);};
+            Formula& operator*=(Fraction value) {__Formula_Base temp=value;a_formula.get()->__multiply(temp);return*this;};
             // With complex
             Formula& operator*=(Complex value) {__Formula_Base temp=value;a_formula.get()->__multiply(temp);return*this;};
             Formula& operator+=(Complex value) {__Formula_Base temp=value;a_formula.get()->__add(&temp);return*this;};
@@ -954,6 +978,8 @@ namespace scls {
             // With monomonial
             Formula& operator+=(__Monomonial value) {__Formula_Base temp=value;a_formula.get()->__add(&temp);return*this;};
             Formula& operator*=(__Monomonial value) {a_formula.get()->__multiply(value);return*this;};
+            // With polymonial
+            Formula& operator*=(Polymonial value) {a_formula.get()->__divide(value);return*this;};
             // With __Formula_Base
             Formula operator-(__Formula_Base value) const {Formula to_return(*a_formula.get());value*=Fraction(-1);to_return -= value;return to_return;};
             Formula& operator-=(__Formula_Base value) {value*=Fraction(-1);a_formula.get()->__add(&value);return*this;};
@@ -964,8 +990,13 @@ namespace scls {
             Formula operator/(__Formula_Base value) const {Formula other(*a_formula.get());other /= value;return other;};
             Formula& operator/=(__Formula_Base value) {a_formula.get()->__divide(value);return*this;};
             // With Formula
+            Formula operator+(Formula value) {return (*value.a_formula.get() + *a_formula.get());};
             Formula& operator+=(Formula value) {a_formula.get()->__add(value.a_formula.get());return*this;};
+            Formula operator-(Formula value) {return (*a_formula.get() - *value.a_formula.get());};
+            Formula& operator-=(Formula value) {a_formula.get()->__substract(value.a_formula.get());return*this;};
+            Formula operator*(Formula value) {return (*value.a_formula.get() * *a_formula.get());};
             Formula& operator*=(Formula value) {a_formula.get()->__multiply(*value.a_formula.get());return*this;};
+            Formula operator/(Formula value) {return (*a_formula.get() / *value.a_formula.get());};
             Formula& operator/=(Formula value) {a_formula.get()->__divide(*value.a_formula.get());return*this;};
 
         private:

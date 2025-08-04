@@ -326,6 +326,7 @@ namespace scls {
             inline std::vector<std::shared_ptr<Point>>& exclusion_points() {if(a_exclusion_points.size() <= 0) a_exclusion_points.push_back(std::vector<std::shared_ptr<Point>>()); return a_exclusion_points[0];};
             inline std::vector<std::shared_ptr<Point>>& points() {return a_points;};
             inline std::vector<std::shared_ptr<Point>>& points_for_rendering() {return a_points_for_rendering;};
+            inline std::vector<int>& points_for_rendering_index() {return a_points_for_rendering_index;};
 
             //*********
             //
@@ -401,217 +402,29 @@ namespace scls {
                 bool finished = false;
                 // Copy of the points for a triangulation
                 std::vector<std::shared_ptr<model_maker::Point>> points_copy = std::vector<std::shared_ptr<model_maker::Point>>();
+                std::vector<int> points_index = std::vector<int>();
+                // Inner points index in the triangulation
+                std::vector<int> inner_points_index = std::vector<int>();
             };
 
-            void __triangulation_arrange_exclusion_points(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy) {
-                for(int i = 0;i<static_cast<int>(exclusion_points_copy.size());i++) {
-                    // Find the index of the nearest point
-                    bool position_found = false;
-                    bool reverse_current_exclusion = false;
-                    unsigned int start_position = 0;
-                    while(!position_found) {
-                        // Check the current point
-                        for(int j = 0;j<static_cast<int>(points_copy.size() - 1);j++) {
-                            if(!__triangulation_check_line_wrong(points_copy, points_copy[j], exclusion_points_copy[i][0])) {
-                                set_can_print(true);
-                                if(!__triangulation_check_line_wrong(points_copy, points_copy[j], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1]) &&
-                                   !__triangulation_check_line_wrong(points_copy, points_copy[j + 1], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1]) &&
-                                   !__check_crossing_segment(points_copy[j], exclusion_points_copy[i][0], points_copy[j + 1], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1]).crossed_in_segment &&
-                                   __check_triangle_opposed(points_copy[j], exclusion_points_copy[i][0], points_copy[j + 1], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1])) {
-                                    reverse_current_exclusion = false;
-                                }
-                                else if(!__triangulation_check_line_wrong(points_copy, points_copy[j], exclusion_points_copy[i][1]) &&
-                                        !__triangulation_check_line_wrong(points_copy, points_copy[j + 1], exclusion_points_copy[i][1]) &&
-                                        !__check_crossing_segment(points_copy[j], exclusion_points_copy[i][0], points_copy[j + 1], exclusion_points_copy[i][1]).crossed_in_segment &&
-                                        __check_triangle_opposed(points_copy[j], exclusion_points_copy[i][0], points_copy[j + 1], exclusion_points_copy[i][1])) {
-                                    reverse_current_exclusion = true;
-                                }
-                                else continue;
-                                position_found = true;
-                                start_position = j;
-                                break;
-                            }
-                        }
-
-                        // Change the point if necessary
-                        if(!position_found) {
-                            exclusion_points_copy[i].push_back(exclusion_points_copy[i][0]);
-                            exclusion_points_copy[i].erase(exclusion_points_copy[i].begin());
-                        }
-                    }
-
-                    // Add the exclusion point
-                    std::shared_ptr<Point> base_point = points_copy[start_position];start_position++;
-                    if(reverse_current_exclusion) {
-                        points_copy.insert(points_copy.begin() + start_position, exclusion_points_copy[i][0]);
-                        start_position++;
-                    }
-                    for(int j = 0;j<static_cast<int>(exclusion_points_copy[i].size());j++) {
-                        int real_j = j;
-                        if(reverse_current_exclusion) real_j = exclusion_points_copy[i].size() - (j + 1);
-                        points_copy.insert(points_copy.begin() + start_position + j, exclusion_points_copy[i][real_j]);
-                    }
-                    if(!reverse_current_exclusion) {
-                        points_copy.insert(points_copy.begin() + exclusion_points_copy[i].size() + start_position, exclusion_points_copy[i][0]);
-                        start_position++;
-                    }
-                    points_copy.insert(points_copy.begin() + exclusion_points_copy[i].size() + start_position, base_point);
-                }
-                exclusion_points_copy.clear();
-            };
-            bool __triangulation_check_line_wrong(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point) {
-                // Normal Check
-                char on_boundary = __triangulation_cross_boundary(first_point, second_point);
-                if(on_boundary != 0) {return true; }
-                bool in_shape = __triangulation_check_shape_content(points_copy, (second_point.get()->x() + first_point.get()->x()) / 2.0, (second_point.get()->z() + first_point.get()->z()) / 2.0);
-                if(!in_shape) {return true; }
-                return false;
-            };
-            bool __triangulation_check_shape_content(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, double point_to_test_x, double point_to_test_y) {
-                // Check the main shape
-                if(!__check_shape_content(points_copy, point_to_test_x, point_to_test_y)) return false;
-                // Check each out shape
-                for(int i = 0;i<static_cast<int>(a_exclusion_points.size());i++) {
-                    if(__check_shape_content(a_exclusion_points[i], point_to_test_x, point_to_test_y)) return false;
-                }
-                return true;
-            };
-            char __triangulation_cross_boundary(std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point) {
-                // Check the main shape
-                if(__cross_boundary(points(), first_point, second_point)) return 1;
-                // Check each out shape
-                for(int i = 0;i<static_cast<int>(a_exclusion_points.size());i++) {if(__cross_boundary(a_exclusion_points[i], first_point, second_point)) return 2;}
-                return 0;
-            };
+            // Triangulation helper
+            void __triangulation_arrange_exclusion_points(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy);
+            bool __triangulation_check_line_wrong(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point);
+            bool __triangulation_check_shape_content(std::vector<std::shared_ptr<model_maker::Point>>& points_copy, double point_to_test_x, double point_to_test_y);
+            char __triangulation_cross_boundary(std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point);
             // Do a triangulation of a face
-            void triangulate() {
-                // Get the start datas
-                std::shared_ptr<__Triangulation_Datas> datas = triangulate_start_datas();
-
-                // Do the triangulation
-                while(!datas.get()->finished) {
-                    triangulation_step(datas);
-                }
-            };
+            std::shared_ptr<__Triangulation_Datas> triangulate();
             // Returns the needed datas to start a triangulation
-            std::shared_ptr<__Triangulation_Datas> triangulate_start_datas() {
-                std::shared_ptr<__Triangulation_Datas> to_return = std::make_shared<__Triangulation_Datas>();
-                to_return.get()->exclusion_points_copy = a_exclusion_points;
-                to_return.get()->points_copy = points();
-
-                // Remove the useless points
-                for(int i = 0;i<static_cast<int>(to_return.get()->points_copy.size());i++) {
-                    if(to_return.get()->points_copy[i].get() == 0) {to_return.get()->points_copy.erase(to_return.get()->points_copy.begin() + i);i--;}
-                }
-                for(int i = 0;i<static_cast<int>(to_return.get()->exclusion_points_copy.size());i++) {
-                    for(int j = 0;j<static_cast<int>(to_return.get()->exclusion_points_copy[i].size());j++) {
-                        if(to_return.get()->exclusion_points_copy[i][j].get() == 0) {to_return.get()->exclusion_points_copy[i].erase(to_return.get()->exclusion_points_copy[i].begin() + j);j--;}
-                    }
-                    if(to_return.get()->exclusion_points_copy[i].size() <= 0) {to_return.get()->exclusion_points_copy.erase(to_return.get()->exclusion_points_copy.begin() + i);i--;}
-                }
-
-                // Do the triangulation
-                points_for_rendering().clear();
-                __triangulation_arrange_exclusion_points(to_return.get()->points_copy, to_return.get()->exclusion_points_copy);
-
-                return to_return;
-            };
+            std::shared_ptr<__Triangulation_Datas> triangulate_start_datas();
             // Check a step of triangulation and returns if a step occurs
-            bool triangulation_step(std::shared_ptr<__Triangulation_Datas> triangulation_datas) {
-                std::vector<std::shared_ptr<Point>>& created_sides = triangulation_datas.get()->created_sides;
-                unsigned int& current_i = triangulation_datas.get()->current_i;
-                // std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy = triangulation_datas.get()->exclusion_points_copy;
-                std::vector<std::shared_ptr<model_maker::Point>>& points_copy = triangulation_datas.get()->points_copy;
-                if(points_copy.size() > 3) {
-                    // Get the point to test
-                    std::shared_ptr<model_maker::Point> current_point = points_copy[current_i];;
-                    std::shared_ptr<model_maker::Point> current_point_1 = points_copy[current_i + 1];
-                    std::shared_ptr<model_maker::Point> current_point_2 = points_copy[current_i + 2];
-
-                    // Check if the points are the same
-                    if(current_point.get() == current_point_1.get() || current_point_1.get() == current_point_2.get()) {
-                        points_copy.erase(points_copy.begin() + current_i + 1);
-                        return false;
-                    }
-
-                    // Check if the out points are in the triangle
-                    if(__triangulation_check_line_wrong(points_copy, current_point, current_point_2)) {
-                        current_i++;
-                        return false;
-                    }
-                    // Check if the line is not already existing
-                    bool must_continue = false;
-                    for(int i = 0;i<static_cast<int>(created_sides.size() - 1);i+=2){
-                        if(current_point.get()==created_sides[i].get()&&current_point_2.get()==created_sides[i + 1].get()){must_continue=true;break;}
-                        else if(current_point.get()==created_sides[i + 1].get()&&current_point_2.get()==created_sides[i].get()){must_continue=true;break;}
-                    }
-                    if(must_continue){current_i++;return false;}
-                    // Add the point to the rendering
-                    created_sides.push_back(current_point); created_sides.push_back(current_point_2);
-                    points_copy.erase(points_copy.begin() + current_i + 1);
-                    points_for_rendering().push_back(current_point);
-                    points_for_rendering().push_back(current_point_1);
-                    points_for_rendering().push_back(current_point_2);
-                    current_i = 0;
-                }
-                else {
-                    // Trace the last triangle
-                    points_for_rendering().push_back(points_copy[0]);
-                    points_for_rendering().push_back(points_copy[1]);
-                    points_for_rendering().push_back(points_copy[2]);
-
-                    triangulation_datas.get()->finished = true;
-                }
-                return true;
-            };
+            bool triangulation_step(std::shared_ptr<__Triangulation_Datas> triangulation_datas);
 
             // Do a triangulation of a convex face
-            void triangulate_convex() {
-                // Add each points for rendering
-                points_for_rendering().clear();
-                for(unsigned short i = 0;i<points().size() - 2;i++) {
-                    points_for_rendering().push_back(points()[0]);
-                    points_for_rendering().push_back(points()[i + 1]);
-                    points_for_rendering().push_back(points()[i + 2]);
-                }
-            };
+            void triangulate_convex();
 
             // Do a triangulation of a full face
-            void __triangulate_full(std::vector<std::shared_ptr<model_maker::Point>> points_copy, bool last_point_is_first_point = true) {
-                points_for_rendering().clear();
-
-                // Trace each triangles
-                unsigned int current_i = 0;
-                unsigned int erase_offset = 0;
-                for(int i = 0;i<static_cast<int>(points_copy.size());i++) {
-                    if(points_copy[i].get() == 0) {points_copy.erase((points_copy.begin() + i) - erase_offset);erase_offset++;}
-                }
-                // Check each points
-                int limit = 3; if(!last_point_is_first_point) limit = 4;
-                while(static_cast<int>(points_copy.size()) > limit) {
-                    // Get the point to test
-                    std::shared_ptr<model_maker::Point> current_point = points_copy[current_i];
-                    std::shared_ptr<model_maker::Point> current_point_1 = points_copy[current_i + 1];
-                    std::shared_ptr<model_maker::Point> current_point_2 = points_copy[current_i + 2];
-
-                    // Check if the out points are in the triangle
-                    bool in_shape = __check_shape_content(points_copy, (current_point_2.get()->x() + current_point.get()->x()) / 2.0, (current_point_2.get()->z() + current_point.get()->z()) / 2.0, last_point_is_first_point);
-                    if(__cross_boundary(points_copy, current_point, current_point_2, last_point_is_first_point) || !in_shape) {
-                        current_i++;
-                        continue;
-                    }
-                    points_copy.erase(points_copy.begin() + current_i + 1);
-                    points_for_rendering().push_back(current_point);
-                    points_for_rendering().push_back(current_point_1);
-                    points_for_rendering().push_back(current_point_2);
-                    current_i = 0;
-                }
-                // Trace the last triangle
-                points_for_rendering().push_back(points_copy[0]);
-                points_for_rendering().push_back(points_copy[1]);
-                points_for_rendering().push_back(points_copy[2]);
-            };
-            void triangulate_full() {__triangulate_full(points());};
+            void __triangulate_full(std::vector<std::shared_ptr<model_maker::Point>> points_copy, bool last_point_is_first_point = true);
+            void triangulate_full();
 
             //*********
             //
@@ -672,6 +485,7 @@ namespace scls {
             std::vector<std::shared_ptr<Point>> a_points = std::vector<std::shared_ptr<Point>>();
             // Each points position in the face for rendering
             std::vector<std::shared_ptr<Point>> a_points_for_rendering = std::vector<std::shared_ptr<Point>>();
+            std::vector<int> a_points_for_rendering_index = std::vector<int>();
 
             //*********
             //
