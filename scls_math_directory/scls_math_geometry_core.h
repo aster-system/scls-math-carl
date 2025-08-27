@@ -282,7 +282,36 @@ namespace scls {
     // Return the vector created by an angle
     Point_2D vector_2d_with_angle(double angle);
 
-    class Transform_Object_2D {
+    class __Transform_Object_2D_Base {
+        // Class representing the base of a 2D transfort
+    public:
+
+        //*********
+        //
+        // Transform_Object_2D main members
+        //
+        //*********
+
+        // Transform_Object_2D constructor
+        __Transform_Object_2D_Base();
+
+        //*********
+        //
+        // Transform_Object_2D position system
+        //
+        //*********
+
+        // Get the absolute position
+        Point_2D absolute_position() const;
+        virtual double absolute_x() const = 0;
+        virtual double absolute_y() const = 0;
+        // Get the position
+        Point_2D position() const;
+        virtual double x() const = 0;
+        virtual double y() const = 0;
+    };
+
+    class Transform_Object_2D : public __Transform_Object_2D_Base {
         // Class representing a 2D object transform
     public:
 
@@ -329,10 +358,9 @@ namespace scls {
 
         // Absolute position handling
         // Returns the absolute X position
-        Point_2D absolute_position() const;
-        double absolute_x() const;
+        virtual double absolute_x() const;
         __Formula_Base::Formula absolute_x_formula() const;
-        double absolute_y() const;
+        virtual double absolute_y() const;
         __Formula_Base::Formula absolute_y_formula() const;
 
         // Accelerates the object
@@ -383,7 +411,6 @@ namespace scls {
         void update_raw_velocity();
 
         // Getters and setters
-        Point_2D position() const;
         Point_2D_Formula position_formula() const;
         Point_2D raw_velocity() const;
         void set_position(Fraction new_x, Fraction new_y);
@@ -392,13 +419,15 @@ namespace scls {
         virtual void set_x(__Formula_Base::Formula new_x);
         virtual void set_y(__Formula_Base::Formula new_y);
         void set_velocity(Point_2D_Formula new_velocity);
-        void set_velocity_x(Fraction new_x);
-        void set_velocity_y(Fraction new_y);
+        void set_velocity_x(__Formula_Base::Formula new_x);
+        void set_velocity_y(__Formula_Base::Formula new_y);
         Point_2D velocity() const;
         Point_2D_Formula velocity_formula() const;
-        double x() const;
+        double velocity_x() const;
+        double velocity_y() const;
+        virtual double x() const;
         __Formula_Base::Formula x_formula() const;
-        double y() const;
+        virtual double y() const;
         __Formula_Base::Formula y_formula() const;
 
         //*********

@@ -477,6 +477,8 @@ namespace scls {
             else{std::shared_ptr<__Formula_Base>temp=a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().at(0);paste(temp.get());}
         }
     }
+    // Soft_resets the formula
+    void __Formula_Base::soft_reset(){a_to_double.clear();a_to_double_containers.clear();}
 
 	// Returns the formula factor to a MathML
     std::string __Formula_Base::Formula_Factor::to_mathml(Textual_Math_Settings* settings) const {
@@ -655,6 +657,47 @@ namespace scls {
         // Returns the value
         return to_return;
     }
+    // Returns the value to a fraction
+    scls::Fraction __Formula_Base::value_to_fraction(Unknowns_Container* values){return value(values).real();};
+    scls::Fraction __Formula_Base::value_to_fraction(scls::Fraction current_value){return value(current_value).real();};
+    scls::Fraction __Formula_Base::value_to_fraction(){return value(1).real();};
+    // Returns the value to a double
+    double* __Formula_Base::calculated_to_double(Unknowns_Container* container){
+        for(int i = 0;i<static_cast<int>(a_to_double_containers.size());i++){
+            if(a_to_double_containers.at(i)==container){return &a_to_double[i];}
+        }
+        return 0;
+    }
+    double __Formula_Base::value_to_double(Unknowns_Container* values){
+        // TEMP
+        return value(values).real().to_double();
+
+        // TO EDIT
+        double* calculated = calculated_to_double(values);
+        if(calculated == 0){
+            double new_to_double = value(values).real().to_double();
+            a_to_double.push_back(new_to_double);
+            a_to_double_containers.push_back(values);
+            calculated = &a_to_double[a_to_double.size() - 1];
+        }
+
+        return *calculated;
+    };
+    double __Formula_Base::value_to_double(scls::Fraction current_value){
+        if(current_value == 1) {
+            double* calculated = calculated_to_double(0);
+            if(calculated == 0){
+                double new_to_double=value(1).real().to_double();
+                a_to_double.push_back(new_to_double);
+                a_to_double_containers.push_back(0);
+                calculated = &a_to_double[a_to_double.size() - 1];
+            }
+            return *calculated;
+        }
+
+        return value(current_value).real().to_double();
+    }
+    double __Formula_Base::value_to_double(){return value_to_double(1);}
 
     // Returns the final value of the formula
     scls::Complex __Formula_Base::Formula::value(Unknowns_Container* values) const {return a_formula.get()->value(values);};
@@ -679,6 +722,7 @@ namespace scls {
 
         // Finish the result
         check_formula();
+        soft_reset();
     };
     // Divide a formula to this one
     void __Formula_Base::Formula_Factor::__divide(__Formula_Base value) {basic_formula()->__divide(value);}
@@ -727,7 +771,10 @@ namespace scls {
             if(!is_simple_fraction()){sub_place();}
             a_fraction.get()->__divide(value);
         }
+
+        // Finish the result
         check_formula();
+        soft_reset();
     };
     // Returns if two numbers/formulas are equals
     bool __Formula_Base::__is_equal(int value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);} return a_fraction.get()->__is_equal(value);};
@@ -757,6 +804,7 @@ namespace scls {
 
         // Finish the result
         check_formula();
+        soft_reset();
     };
 
     // Calculate the derivate value of the SQRT function

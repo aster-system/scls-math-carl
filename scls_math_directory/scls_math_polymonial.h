@@ -757,6 +757,8 @@ namespace scls {
         std::shared_ptr<__Formula_Base> formula_copy() {std::shared_ptr<__Formula_Base>to_return=std::make_shared<__Formula_Base>(*this);return to_return;};
         inline std::shared_ptr<Formula_Fraction> fraction_copy()const{if(a_fraction.get()==0){return std::shared_ptr<Formula_Fraction>();} return a_fraction.get()->fraction_copy();};
         inline std::shared_ptr<Polymonial> polymonial_copy()const{if(a_polymonial.get()==0){return std::shared_ptr<Polymonial>();}return std::make_shared<Polymonial>(*a_polymonial.get());};
+        // Soft_resets the formula
+        void soft_reset();
         // Sub-place the current formula to a "formula add"
         inline void sub_place(){std::shared_ptr<__Formula_Base> needed_copy = formula_copy();clear();a_fraction = std::make_shared<Formula_Fraction>(needed_copy);};
 
@@ -906,8 +908,8 @@ namespace scls {
         inline void clear_denominator(){a_fraction.get()->clear_denominator();};
         inline Formula_Fraction* fraction()const{return a_fraction.get();};
         //inline __Formula_Base* denominator() const {return a_fraction.get()->denominator();};
-        template<typename T> inline void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;if(a_applied_function.get()!=0){std::shared_ptr<__Formula_Base>f=a_applied_function.get()->simplify(this);if(f.get()!=0){paste(f.get());}}};
-        template<typename T> inline void set_applied_function() {set_applied_function(std::make_shared<T>());};
+        template<typename T> void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;if(a_applied_function.get()!=0){std::shared_ptr<__Formula_Base>f=a_applied_function.get()->simplify(this);if(f.get()!=0){paste(f.get());}}soft_reset();};
+        template<typename T> void set_applied_function() {set_applied_function(std::make_shared<T>());};
 
         //*********
         // Unknown handling
@@ -1015,14 +1017,14 @@ namespace scls {
         Formula replace_unknown(std::string unknown, Formula new_value) const;
         Formula replace_unknowns(Unknowns_Container* values) const;
         // Returns the final value of the formula
-        scls::Complex value(Unknowns_Container* values);
-        scls::Complex value(scls::Fraction current_value);
-        inline scls::Fraction value_to_fraction(Unknowns_Container* values){return value(values).real();};
-        inline scls::Fraction value_to_fraction(scls::Fraction current_value){return value(current_value).real();};
-        inline scls::Fraction value_to_fraction(){return value(1).real();};
-        inline double value_to_double(Unknowns_Container* values){return value(values).real().to_double();};
-        inline double value_to_double(scls::Fraction current_value){return value(current_value).real().to_double();};
-        inline double value_to_double(){return value(1).real().to_double();};
+        Complex value(Unknowns_Container* values);
+        Complex value(scls::Fraction current_value);
+        Fraction value_to_fraction(Unknowns_Container* values);
+        Fraction value_to_fraction(scls::Fraction current_value);
+        Fraction value_to_fraction();
+        double value_to_double(Unknowns_Container* values);
+        double value_to_double(scls::Fraction current_value);
+        double value_to_double();
 
     private:
         // Each parts of the formula are in order
@@ -1036,6 +1038,11 @@ namespace scls {
         std::shared_ptr<__Formula_Base> a_exponent;
         // Applied function to the ENTIRE formula
         std::shared_ptr<__Formula_Base_Function> a_applied_function;
+
+        // Already calculated parts
+        std::vector<double> a_to_double = std::vector<double>();
+        std::vector<Unknowns_Container*> a_to_double_containers = std::vector<Unknowns_Container*>();
+        double* calculated_to_double(Unknowns_Container* container);
     }; typedef __Formula_Base Formula;
 
     // Cosinus function possible for a formula

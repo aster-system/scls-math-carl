@@ -366,23 +366,11 @@ namespace scls {
             };
 
             // Returns if a side of points cross the boundary or not
-            bool cross_boundary(std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point) {return __cross_boundary(points(), first_point, second_point);}
+            bool cross_boundary(std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point);
             // Returns if a side of points cross the boundary of the exclusion part or not
-            bool __cross_exclusion_boundary(std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy, std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point) {
-                for(int i = 0;i<static_cast<int>(exclusion_points_copy.size());i++) {
-                    if(__cross_boundary(exclusion_points_copy[i], first_point, second_point)) return true;
-                }
-                return false;
-            };
+            bool __cross_exclusion_boundary(std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy, std::shared_ptr<model_maker::Point> first_point, std::shared_ptr<model_maker::Point> second_point);
             // Returns if a point is in the exclusion part
-            bool __in_exclusion_part(std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy, double x_to_check, double y_to_check) {
-                for(int i = 0;i<static_cast<int>(exclusion_points_copy.size());i++) {
-                    if(__check_shape_content(exclusion_points_copy[i], x_to_check, y_to_check)) {
-                        return true;
-                    }
-                }
-                return false;
-            };
+            bool __in_exclusion_part(std::vector<std::vector<std::shared_ptr<Point>>>& exclusion_points_copy, double x_to_check, double y_to_check);
 
             //*********
             //
@@ -396,12 +384,14 @@ namespace scls {
                 std::vector<std::shared_ptr<Point>> created_sides = std::vector<std::shared_ptr<Point>>();
                 // Current position of the triangulation
                 unsigned int current_i = 0;
+                unsigned int offset_i = 0;
                 // Exclusion points in a triangulation
                 std::vector<std::vector<std::shared_ptr<model_maker::Point>>> exclusion_points_copy = std::vector<std::vector<std::shared_ptr<model_maker::Point>>>();
                 // If the triangulation is finished or not
                 bool finished = false;
                 // Copy of the points for a triangulation
                 std::vector<std::shared_ptr<model_maker::Point>> points_copy = std::vector<std::shared_ptr<model_maker::Point>>();
+                std::vector<std::shared_ptr<Point>> points_for_rendering = std::vector<std::shared_ptr<Point>>();
                 std::vector<int> points_index = std::vector<int>();
                 // Inner points index in the triangulation
                 std::vector<int> inner_points_index = std::vector<int>();
@@ -417,6 +407,7 @@ namespace scls {
             // Returns the needed datas to start a triangulation
             std::shared_ptr<__Triangulation_Datas> triangulate_start_datas();
             // Check a step of triangulation and returns if a step occurs
+            int __triangulation_step_test(std::shared_ptr<model_maker::Face::__Triangulation_Datas> triangulation_datas, std::shared_ptr<model_maker::Point> current_point, std::shared_ptr<model_maker::Point> current_point_1, std::shared_ptr<model_maker::Point> current_point_2);
             bool triangulation_step(std::shared_ptr<__Triangulation_Datas> triangulation_datas);
 
             // Do a triangulation of a convex face

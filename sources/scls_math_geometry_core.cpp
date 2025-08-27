@@ -256,7 +256,14 @@ namespace scls {
     //*********
 
     // Transform_Object_2D constructor
-    Transform_Object_2D::Transform_Object_2D(){};
+    __Transform_Object_2D_Base::__Transform_Object_2D_Base(){};
+
+    // Position system
+    Point_2D __Transform_Object_2D_Base::absolute_position() const{return Point_2D(absolute_x(), absolute_y());}
+    Point_2D __Transform_Object_2D_Base::position() const{return Point_2D(x(), y());}
+
+    // Transform_Object_2D constructor
+    Transform_Object_2D::Transform_Object_2D():__Transform_Object_2D_Base(){};
     // Copy constructor
     Transform_Object_2D::Transform_Object_2D(Point_2D point_2d):Transform_Object_2D(__Point_2D_Formula(point_2d)){};
     Transform_Object_2D::Transform_Object_2D(__Point_2D_Formula point_2d):a_position(point_2d){};
@@ -265,7 +272,6 @@ namespace scls {
 
     // Absolute position handling
     // Returns the absolute X position
-    Point_2D Transform_Object_2D::absolute_position() const{return Point_2D(absolute_x(), absolute_y());};
     double Transform_Object_2D::absolute_x() const {
         if(parent() == 0){return x();}
         Point_2D current_position = position() * parent()->absolute_scale();
@@ -339,7 +345,6 @@ namespace scls {
     void Transform_Object_2D::update_raw_velocity(){a_raw_velocity = a_velocity;};
 
     // Getters and setters
-    Point_2D Transform_Object_2D::position() const {return a_position.to_point_2d(a_unknowns.get());}
     Point_2D_Formula Transform_Object_2D::position_formula() const{return a_position;}
     Point_2D Transform_Object_2D::raw_velocity() const {return a_raw_velocity.to_point_2d(a_unknowns.get());}
     void Transform_Object_2D::set_position(scls::Fraction new_x, scls::Fraction new_y){a_position.set_x(new_x);a_position.set_y(new_y);a_moved_during_this_frame = true;}
@@ -348,10 +353,12 @@ namespace scls {
     void Transform_Object_2D::set_x(scls::__Formula_Base::Formula new_x){a_position.set_x(new_x);a_moved_during_this_frame = true;}
     void Transform_Object_2D::set_y(scls::__Formula_Base::Formula new_y){a_position.set_y(new_y);a_moved_during_this_frame = true;}
     void Transform_Object_2D::set_velocity(Point_2D_Formula new_velocity){a_velocity.set_x(new_velocity.x());a_velocity.set_y(new_velocity.y());}
-    void Transform_Object_2D::set_velocity_x(scls::Fraction new_x){a_velocity.set_x(new_x);}
-    void Transform_Object_2D::set_velocity_y(scls::Fraction new_y){a_velocity.set_y(new_y);}
+    void Transform_Object_2D::set_velocity_x(__Formula_Base::Formula new_x){a_velocity.set_x(new_x);}
+    void Transform_Object_2D::set_velocity_y(__Formula_Base::Formula new_y){a_velocity.set_y(new_y);}
     Point_2D Transform_Object_2D::velocity() const {return a_velocity.to_point_2d(a_unknowns.get());}
     Point_2D_Formula Transform_Object_2D::velocity_formula() const{return a_velocity;}
+    double Transform_Object_2D::velocity_x() const {return velocity().x();}
+    double Transform_Object_2D::velocity_y() const {return velocity().y();}
     double Transform_Object_2D::x() const {return a_position.x().value_to_double(a_unknowns.get());}
     scls::__Formula_Base::Formula Transform_Object_2D::x_formula() const{return a_position.x();}
     double Transform_Object_2D::y() const {return a_position.y().value_to_double(a_unknowns.get());}
