@@ -70,6 +70,9 @@
 #ifndef SCLS_HALP_PI
 #define SCLS_HALF_PI 1.5707963267948966
 #endif // SCLS_HALP_PI
+#ifndef SCLS_RADIANS_TO_ANGLE
+#define SCLS_RADIANS_TO_ANGLE 57.2957795131
+#endif // SCLS_RADIANS_TO_ANGLE
 
 // Root of SCLS Math
 #include "scls_math_directory/scls_math_numbers.h"

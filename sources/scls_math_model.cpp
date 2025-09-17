@@ -404,8 +404,8 @@ namespace scls {
                 triangulation_datas->inner_points_index.push_back(current_point_index);
                 triangulation_datas->inner_points_index.push_back(current_point_2_index);
                 current_i = 0;
-                triangulation_datas.get()->offset_i = 0; // TEMP
-                //triangulation_datas.get()->offset_i = scls::random_int_between_included(0, points_copy.size() - 1);
+                //triangulation_datas.get()->offset_i = 0; // TEMP
+                triangulation_datas.get()->offset_i = scls::random_int_between_included(0, points_copy.size() - 1);
             }
             else {
                 // Trace the last triangle

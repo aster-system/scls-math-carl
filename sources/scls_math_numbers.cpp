@@ -43,6 +43,16 @@ namespace scls {
 
     // Textual_Math_Settings constructor
     Textual_Math_Settings::Textual_Math_Settings(){}
+
+    // Getters and setters
+    void Textual_Math_Settings::set_spaces_in_color(bool new_spaces_in_color){a_spaces_in_color = new_spaces_in_color;}
+    bool Textual_Math_Settings::spaces_in_color(){return a_spaces_in_color;}
+
+    // XML Settings
+    Textual_Math_Settings __textual_math_xml_settings;
+    bool __textual_math_xml_settings_loaded = false;
+    Textual_Math_Settings* textual_math_xml_settings(){if(!__textual_math_xml_settings_loaded){__load_textual_math_xml_settings();}return &__textual_math_xml_settings;}
+    void __load_textual_math_xml_settings(){__textual_math_xml_settings.set_spaces_in_color(false);}
 }
 
 //*********

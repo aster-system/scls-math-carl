@@ -66,10 +66,19 @@ namespace scls {
 
         // Getters and setters
         inline bool introduction_in_mathml() const {return a_introduction_in_mathml;};
+        void set_spaces_in_color(bool new_spaces_in_color);
+        bool spaces_in_color();
     private:
         // If the introduction should be in mathml or not
         bool a_introduction_in_mathml = true;
+
+        // Spaces (or not) in colors
+        bool a_spaces_in_color = true;
     };
+
+    // XML Settings
+    Textual_Math_Settings* textual_math_xml_settings();
+    void __load_textual_math_xml_settings();
 }
 
 //*********

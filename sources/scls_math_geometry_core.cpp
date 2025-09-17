@@ -243,6 +243,14 @@ namespace scls {
     bool Point_2D::in_rect(Point_2D tested_pos, Point_2D tested_scale){return in_rect(tested_pos.x(), tested_pos.y(), tested_scale.x(), tested_scale.y());}
     bool Point_2D::in_rect(double tested_x, double tested_y, double tested_width, double tested_height){if(tested_height<0){tested_y+=tested_height;tested_height*=-1;}if(tested_width<0){tested_x+=tested_width;tested_width*=-1;}return (tested_x - x()) < SCLS_MATH_TOLERANCE && (tested_y - y())  < SCLS_MATH_TOLERANCE && (x() - (tested_x + tested_width)) < SCLS_MATH_TOLERANCE && (y() - (tested_y + tested_height)) < SCLS_MATH_TOLERANCE;}
 
+    // Rotates the formula
+    __Point_2D_Formula __Point_2D_Formula::rotated(double rotation) const {
+        double* rotated_point = __rotate_vector_3d(a_x.get()->value_to_double(), 0, a_y.get()->value_to_double(), 0, rotation, 0);
+        __Point_2D_Formula to_return;(*to_return.a_x.get()) = scls::Fraction::from_double(rotated_point[0]);(*to_return.a_y.get()) = scls::Fraction::from_double(rotated_point[2]);
+        delete rotated_point; return to_return;
+    }
+    void __Point_2D_Formula::rotate(double rotation) {if(rotation != 0){__Point_2D_Formula new_point = rotated(rotation);a_x = new_point.a_x; a_y = new_point.a_y;}};
+
     // Returns the point to XML text
     std::string __Point_2D_Formula::to_xml_text(){std::string needed_x = x().to_std_string(0);if(needed_x==std::string()){needed_x=std::string("0");}std::string needed_y = y().to_std_string(0);if(needed_y==std::string()){needed_y=std::string("0");} return std::string("(") + needed_x + std::string(",") + needed_y + std::string(")");}
 
@@ -281,7 +289,7 @@ namespace scls {
     __Formula_Base::Formula Transform_Object_2D::absolute_x_formula() const {
         if(parent() == 0){return x_formula().formula_copy();}
         Point_2D_Formula current_position = position_formula() * parent()->absolute_scale_formula();
-        //if(parent()->absolute_rotation().to_double() != 0){current_position.rotate(parent()->absolute_rotation().to_double());}
+        if(parent()->rotation() != 0){current_position.rotate(parent()->rotation());}
         return parent()->absolute_x_formula() + current_position.x();
     }
     double Transform_Object_2D::absolute_y() const {
@@ -293,7 +301,7 @@ namespace scls {
     __Formula_Base::Formula Transform_Object_2D::absolute_y_formula() const {
         if(parent() == 0){return y_formula().formula_copy();}
         Point_2D_Formula current_position = position_formula() * parent()->absolute_scale_formula();
-        //if(parent()->absolute_rotation().to_double() != 0){current_position.rotate(parent()->absolute_rotation().to_double());}
+        if(parent()->absolute_rotation() != 0){current_position.rotate(parent()->rotation());}
         return parent()->absolute_y_formula() + current_position.y();
     }
 
@@ -396,8 +404,10 @@ namespace scls {
 
     // Returns the angle in radians for a vector 3D
     double vector_2d_angle(Point_2D needed_vector){return vector_2d_angle(needed_vector.x(), needed_vector.y());}
-    double vector_2d_angle(double vector_x, double vector_y) {
+    double vector_2d_angle(__Formula_Base::Formula vector_x_formula, __Formula_Base::Formula vector_y_formula) {
         // Calculate the first XZ angle
+        double vector_x = vector_x_formula.value_to_double();
+        double vector_y = vector_y_formula.value_to_double();
         double total_length = std::sqrt(vector_x * vector_x + vector_y * vector_y);
         double to_add = 0;
         if(total_length > 0){to_add = std::asin(std::abs(vector_y) / total_length);}

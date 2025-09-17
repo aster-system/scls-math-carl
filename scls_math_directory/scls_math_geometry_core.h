@@ -206,6 +206,10 @@ namespace scls {
         inline __Formula_Base::Formula x() const {return a_x;};
         inline __Formula_Base::Formula y() const {return a_y;};
 
+        // Rotates the formula
+        __Point_2D_Formula rotated(double rotation) const;
+        void rotate(double rotation);
+
         //*********
         //
         // __Point_2D_Formula vectorial manipulation
@@ -277,7 +281,7 @@ namespace scls {
     void normalize_3d(Fraction& vector_x, Fraction& vector_y, Fraction& vector_z);
 
     // Returns the angle in radians for a vector 3D
-    double vector_2d_angle(double vector_x, double vector_y);
+    double vector_2d_angle(__Formula_Base::Formula vector_x, __Formula_Base::Formula vector_y);
     double vector_2d_angle(Point_2D vector);
     // Return the vector created by an angle
     Point_2D vector_2d_with_angle(double angle);
