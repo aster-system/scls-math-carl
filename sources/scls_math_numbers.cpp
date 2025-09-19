@@ -93,8 +93,11 @@ namespace scls {
     __Fraction_Base __Fraction_Base::from_std_string(std::string content) {
         std::vector<std::string> cutted = cut_string(content, "/");
         if(cutted.size() <= 0) return Fraction(0);
-        else if(cutted.size() == 1) {if(cutted[0]=="-")return Fraction(-1);return Fraction(std::stoll(cutted[0]));}
-        else{return Fraction(std::stoll(cutted[0]), std::stoll(cutted[1]));}
+        else if(cutted.size() == 1) {
+            if(cutted[0]=="-")return Fraction(-1);
+            try{return Fraction(std::stoll(cutted[0]));}catch(std::exception& e){print("SCLS Math Carl", std::string("Can't convert the string \"") + cutted[0] + std::string("\" to a number."));}
+        }
+        return Fraction(std::stoll(cutted[0]), std::stoll(cutted[1]));
     };
 
     // Normalize the fraction

@@ -557,6 +557,8 @@ namespace scls {
                 virtual Set_Number definition_set() = 0;
                 // Derivate value
                 virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula) = 0;
+                // Multiply a value with the function
+                virtual std::shared_ptr<__Formula_Base> multiply(__Formula_Base* value_1, __Formula_Base* value_2){return std::shared_ptr<__Formula_Base>();};
                 // Real value
                 virtual double real_value(__Formula_Base* formula) = 0;
                 // Simplify a value with the function
@@ -868,7 +870,7 @@ namespace scls {
         // Operators
         // With int
         bool operator==(int value) {return __is_equal(value);};
-        __Formula_Base operator*(int value) {__Formula_Base to_return(*this);to_return.__multiply(value);return to_return;};
+        __Formula_Base operator*(int value) {__Formula_Base to_return = (*formula_copy().get());to_return.__multiply(value);return to_return;};
         __Formula_Base& operator*=(int value) {__multiply(value);return*this;};
         // With fractions
         bool operator==(Fraction value) {return __is_equal(value);};
@@ -889,6 +891,7 @@ namespace scls {
         // With polymonial
         __Formula_Base& operator/=(Polymonial value) {__divide(value);return *this;};
         // With formulas
+        bool operator==(__Formula_Base value) {return __is_equal(value);};
         __Formula_Base operator-(__Formula_Base value) const {__Formula_Base to_return(*this);value*=Fraction(-1);to_return.__add(&value);return to_return;};
         __Formula_Base& operator-=(__Formula_Base value) {value*=Fraction(-1);__add(&value);return*this;};
         __Formula_Base operator+(__Formula_Base value) {__Formula_Base to_return(*this);to_return.__add(&value);return to_return;};
@@ -908,8 +911,10 @@ namespace scls {
         inline void clear_denominator(){a_fraction.get()->clear_denominator();};
         inline Formula_Fraction* fraction()const{return a_fraction.get();};
         //inline __Formula_Base* denominator() const {return a_fraction.get()->denominator();};
+        inline std::string* redaction_ptr() {return a_redaction;};
         template<typename T> void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;if(a_applied_function.get()!=0){std::shared_ptr<__Formula_Base>f=a_applied_function.get()->simplify(this);if(f.get()!=0){paste(f.get());}}soft_reset();};
         template<typename T> void set_applied_function() {set_applied_function(std::make_shared<T>());};
+        inline void set_redaction(std::string* new_redaction){a_redaction = new_redaction;};
 
         //*********
         // Unknown handling
@@ -1027,6 +1032,9 @@ namespace scls {
         double value_to_double();
 
     private:
+        // Redaction text
+        std::string* a_redaction = 0;
+
         // Each parts of the formula are in order
 
         // Polymonial of the formula (fraction is ignored if a polymonial is used)
@@ -1135,6 +1143,8 @@ namespace scls {
             virtual Set_Number definition_set() {Set_Number real = Set_Number();Interval it; it.set_start(0); it.set_end_infinite(true);real.add_interval(it);return real;};
             // Derivate value
             virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula);
+            // Multiply a value with the function
+            virtual std::shared_ptr<__Formula_Base> multiply(__Formula_Base* value_1, __Formula_Base* value_2);
             // Real value
             virtual double real_value(__Formula_Base* formula){double value = formula->to_polymonial().known_monomonial().factor().real().to_double();return std::sqrt(value);};
             // Simplify a value with the function

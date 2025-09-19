@@ -121,15 +121,17 @@ namespace scls {
     bool __Monomonial::same_unknowns(__Monomonial monomonial) const {
         std::vector<_Base_Unknown> unknows_1 = a_unknowns;
         std::vector<_Base_Unknown> unknows_2 = monomonial.a_unknowns;
+        for(int i = 0;i<static_cast<int>(unknows_1.size());i++){if(unknows_1.at(i).name() == std::string()){unknows_1.erase(unknows_1.begin() + i);i--;}}
+        for(int i = 0;i<static_cast<int>(unknows_2.size());i++){if(unknows_2.at(i).name() == std::string()){unknows_2.erase(unknows_2.begin() + i);i--;}}
 
         if(unknows_1.size() != unknows_2.size()){return false;}int i = 0;
-        while(i < static_cast<int>(unknows_1.size())) {
+        while(unknows_1.size() > 0 && unknows_2.size() > 0 && i < static_cast<int>(unknows_1.size())) {
             if(unknows_1.at(i) == unknows_2.at(0)) {
                 unknows_1.erase(unknows_1.begin() + i);
                 unknows_2.erase(unknows_2.begin());
-                i++;
+                i = 0;
             }
-            else{i = 0;}
+            else{i++;}
         }
         return unknows_1.size() == 0 && unknows_2.size() == 0;
     }
@@ -437,16 +439,16 @@ namespace scls {
     bool Polymonial::__is_equal(Polymonial* value) const {
         std::vector<__Monomonial> monomonials_1 = value->a_monomonials;
         std::vector<__Monomonial> monomonials_2 = a_monomonials;
-        for(int i = 0;i<static_cast<int>(monomonials_1.size());i++){if(monomonials_1.at(i).factor() == 0){monomonials_1.erase(monomonials_1.begin() + i);}}
-        for(int i = 0;i<static_cast<int>(monomonials_2.size());i++){if(monomonials_2.at(i).factor() == 0){monomonials_2.erase(monomonials_2.begin() + i);}}
+        for(int i = 0;i<static_cast<int>(monomonials_1.size());i++){if(monomonials_1.at(i).factor() == 0){monomonials_1.erase(monomonials_1.begin() + i);i--;}}
+        for(int i = 0;i<static_cast<int>(monomonials_2.size());i++){if(monomonials_2.at(i).factor() == 0){monomonials_2.erase(monomonials_2.begin() + i);i--;}}
         if(monomonials_1.size() != monomonials_2.size()){return false;}int i = 0;
-        while(i < static_cast<int>(monomonials_1.size())) {
+        while(monomonials_1.size() > 0 && monomonials_2.size() > 0 && i < static_cast<int>(monomonials_1.size())) {
             if(monomonials_1.at(i) == monomonials_2.at(0)) {
                 monomonials_1.erase(monomonials_1.begin() + i);
                 monomonials_2.erase(monomonials_2.begin());
-                i++;
+                i = 0;
             }
-            else{i = 0;}
+            else{i++;}
         }
         return monomonials_1.size() == 0 && monomonials_2.size() == 0;
     };
@@ -521,7 +523,11 @@ namespace scls {
         std::string to_return = "";
 
         // Add the factors
-        for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(to_return != std::string()){to_return += std::string("*");}to_return += a_factors.at(i).get()->to_std_string(settings);}
+        for(int i = 0;i<static_cast<int>(a_factors.size());i++){
+            if(to_return != std::string()){to_return += std::string("*");}
+            if(static_cast<int>(a_factors.size()) > 1){to_return += std::string("(") + a_factors.at(i).get()->to_std_string(settings) + std::string(")");}
+            else{to_return += a_factors.at(i).get()->to_std_string(settings);}
+        }
 
         // Return the result
         return to_return;
@@ -535,6 +541,7 @@ namespace scls {
             std::string current_str = std::string();
             Polymonial needed_polymonial = (*a_polymonial.get());
             if(needed_polymonial != 0) {
+
                 current_str = needed_polymonial.to_std_string(settings);
                 if(current_str != "") {to_return += current_str;}
             }
@@ -716,9 +723,23 @@ namespace scls {
         if(value == 0 || *value == 0) {return;}
         else if(*this == 0) {*this = *value;return;}
 
+        // Does the redaction
+        if(a_redaction != 0) {(*a_redaction) += std::string(std::string("Nous cherchon à rajouter la formule \"") + value->to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));}
+
         // Check if values are both polymonial
-        if(is_simple_polymonial() && value->is_simple_polymonial()){a_polymonial.get()->__add(value->to_polymonial());}
-        else {if(!is_basic() || is_simple_polymonial()){sub_place();}a_fraction.get()->__add(*value);}
+        if(is_simple_polymonial() && value->is_simple_polymonial()){
+            a_polymonial.get()->__add(value->to_polymonial());
+            if(a_redaction != 0) {
+                (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple addition de polynôme."));
+            }
+        }
+        else {
+            if(!is_basic() || is_simple_polymonial()){sub_place();}
+            a_fraction.get()->__add(*value);
+            if(a_redaction != 0) {
+                (*a_redaction) += std::string(std::string("Or, il s'agit d'une addition de termes non-additionnables."));
+            }
+        }
 
         // Finish the result
         check_formula();
@@ -765,11 +786,24 @@ namespace scls {
         }
     }
     void __Formula_Base::__divide(__Formula_Base value) {
+        // Redaction
+        if(a_redaction != 0) {
+            (*a_redaction) += std::string(std::string("Nous cherchons à diviser la formule \"") + value.to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));
+        }
+
         // Check if values are both polymonial
-        if(is_basic() && is_simple_polymonial() && value.is_simple_monomonial()) {a_polymonial.get()->__divide(value.to_monomonial());}
+        if(is_basic() && is_simple_polymonial() && value.is_simple_monomonial()) {
+            a_polymonial.get()->__divide(value.to_monomonial());
+            if(a_redaction != 0) {
+                (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple division polynôme / monôme."));
+            }
+        }
         else {
             if(!is_simple_fraction()){sub_place();}
             a_fraction.get()->__divide(value);
+            if(a_redaction != 0) {
+                (*a_redaction) += std::string(std::string("Or, il s'agit de deux termes non-divisables."));
+            }
         }
 
         // Finish the result
@@ -782,7 +816,11 @@ namespace scls {
     bool __Formula_Base::__is_equal(Polymonial value)const{if(a_polymonial.get() != 0){return a_polymonial.get()->__is_equal(value);}return a_fraction.get()->__is_equal(value);};
     bool __Formula_Base::__is_equal(__Formula_Base value)const{
         if(!((a_applied_function.get() == 0 && value.a_applied_function.get() == 0) || (a_applied_function.get() != 0 && value.a_applied_function.get() != 0 && a_applied_function.get()->name() == value.a_applied_function.get()->name()))){return false;}
+
+        // Polymonial
         if(a_fraction.get() == 0 && value.a_fraction.get() == 0) {return a_polymonial.get()->__is_equal(value.a_polymonial.get());}
+
+        // Fraction
         else if((a_fraction.get() != 0 && value.a_fraction.get() == 0) || (a_fraction.get() == 0 && value.a_fraction.get() != 0)){return false;}
         return a_fraction.get()->__is_equal(value.internal_value());
     };
@@ -792,14 +830,37 @@ namespace scls {
         else{a_factors.push_back(std::make_shared<__Formula_Base>(value));}
     }
     void __Formula_Base::__multiply(__Formula_Base value) {
+        // Redaction
+        if(a_redaction != 0) {
+            (*a_redaction) += std::string(std::string("Nous cherchon à multiplier la formule \"") + value.to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));
+        }
+
         // Check polymonial
-        if(is_simple_polymonial()) {
-            if(value.is_simple_polymonial()) {a_polymonial.get()->__multiply(value.to_polymonial());}
-            else{sub_place();a_fraction.get()->__multiply(value);}
+        if(is_simple_polymonial() && value.is_simple_polymonial()) {
+            a_polymonial.get()->__multiply(value.to_polymonial());
+            if(a_redaction != 0) {
+                (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple multiplication de polynômes."));
+            }
         }
         else {
-            if(is_basic()) {a_fraction.get()->__multiply(value);}
-            else{sub_place();a_fraction.get()->__multiply(value);}
+            // Handle functions
+            bool control = false;
+            if(applied_function() != 0){
+                std::shared_ptr<__Formula_Base> new_value = applied_function()->multiply(this, &value);
+                if(new_value.get() != 0) {
+                    paste(new_value.get());
+                    control = true;
+                }
+            }
+
+            // No possible ways
+            if(!control) {
+                if(is_simple_fraction()) {a_fraction.get()->__multiply(value);}
+                else{sub_place();a_fraction.get()->__multiply(value);}
+                if(a_redaction != 0) {
+                    (*a_redaction) += std::string(std::string("Or, il s'agit de termes non-multipliables."));
+                }
+            }
         }
 
         // Finish the result
@@ -813,6 +874,25 @@ namespace scls {
         std::shared_ptr<__Formula_Base> to_return=std::make_shared<__Formula_Base>(1);
         to_return.get()->__divide(formula * 2);
         return to_return;
+    };
+
+    // Multiply a value with the function
+    std::shared_ptr<__Formula_Base> __Sqrt_Function::multiply(__Formula_Base* value_1, __Formula_Base* value_2){
+        if(value_1->applied_function()->name() == value_2->applied_function()->name()) {
+            std::shared_ptr<__Formula_Base> copied_1 = value_1->formula_copy();
+            std::shared_ptr<__Formula_Base> copied_2 = value_2->formula_copy();
+            copied_1.get()->clear_applied_function();copied_2.get()->clear_applied_function();
+
+            // Same value
+            if(*copied_1.get() == *copied_2.get()){return copied_1;}
+
+            // Normal multiplication
+            copied_1.get()->__multiply(*copied_2.get());
+            copied_1.get()->set_applied_function<__Sqrt_Function>();
+            return copied_1;
+        }
+
+        return std::shared_ptr<__Formula_Base>();
     };
 
     // Calculate the derivate value of the COS and SIN function
