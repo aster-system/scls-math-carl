@@ -1176,56 +1176,6 @@ namespace scls {
             // Copies and returns this function
             virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Sqrt_Function>();};
     };
-
-    //*********
-	//
-	// The parsers class
-	//
-	//*********
-
-	class String_To_Formula_Parse {
-        // Class allowing to properly parse a std::string to a polymonial
-    public:
-        // String_To_Formula_Parse constructor
-        String_To_Formula_Parse(unsigned int level);
-        String_To_Formula_Parse():String_To_Formula_Parse(0){};
-
-        // Returns if a std::string is a number or not
-        inline bool __string_is_number(char text) const {return (string_is_number(text) || text == '/' || text == 'i' || text == '-');};
-        inline bool __string_is_number(std::string text) const {for(int i = 0;i<static_cast<int>(text.size());i++) {if(!__string_is_number(text[i])) return false;} return true;};
-        // Returns if a std::string is an operator or not
-        inline bool __string_is_operator(char text) const {return (text == '+' || text == '-' || text == '*' || text == '/' || text == '>');};
-        // Returns a given first base string to a formula
-        Formula __string_to_formula_base(std::string base, std::string used_function = "");
-
-        // Converts a std::string to a Formula
-        Formula __string_to_formula_without_division(std::string source);
-        Formula __string_to_formula_without_multiplication(std::string source);
-        Formula __string_to_formula_without_addition(std::string source);
-        Formula string_to_formula(std::string source);
-
-        // Add a function to the defined functions
-        inline void add_function(std::string function_name) {if(!contains_function(function_name)) a_functions.push_back(function_name); };
-        // Returns if a function is defined or not
-        inline bool contains_function(std::string function_name) const {for(int i = 0;i<static_cast<int>(a_functions.size());i++) {if(a_functions.at(i) == function_name) return true; } return false;};
-        inline bool contains_function(char function_name) const {std::string str;str+=function_name;return contains_function(str);};
-        // Returns the indentation for this level
-        inline std::string level_indentation() const {std::string to_return = "";for(int i = 0;i<static_cast<int>(level()*4);i++)to_return+=" ";return to_return;};
-
-        // Getters and setters
-        inline std::vector<std::string>& functions() {return a_functions;};
-        inline unsigned int level() const {return a_level;};
-    private:
-
-        // Every defined functions in the parser
-        std::vector<std::string> a_functions;
-        // Level of the parser
-        unsigned int a_level = 0;
-    };
-
-    // Use parsers methods outside the class
-    __Formula_Base string_to_formula(std::string source);
-    __Formula_Base::Formula replace_unknown(__Formula_Base used_formula, std::string unknown, std::string new_value);
 }
 
 #endif // SCLS_MATH_POLYMONIAL

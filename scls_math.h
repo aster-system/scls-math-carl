@@ -43,52 +43,56 @@
 // Include basic C++ files
 #include <algorithm>
 
-// Define SCLS_INIT
-#ifndef SCLS_MATH_INIT
+// Ignore all this if the header is already used
+#ifndef SCLS_MATH_NUMBERS
+
+    // Define SCLS_INIT
+    #ifndef SCLS_MATH_INIT
+        // 3D Geometry handling (indev)
+        #ifndef SCLS_MATH_3D_INIT
+            #ifdef __ASTER_DEV
+                #define SCLS_MATH_3D_INIT int scls::model_maker::Point::a_points_number = 0; int scls::model_maker::Face::a_faces_number = 0; int scls::model_maker::Solid::a_solids_number = 0; int __current_point_in_grid_x = 0; int __current_point_in_grid_y = 0;
+            #else
+                #define SCLS_MATH_3D_INIT
+            #endif // __ASTER_DEV
+        #endif // SCLS_MATH_3D_INIT
+
+        #define SCLS_MATH_INIT SCLS_MATH_3D_INIT
+    #endif // SCLS_MATH_INIT
+    #ifdef SCLS_INIT
+    #undef SCLS_INIT
+    #endif // SCLS_INIT
+    #ifndef SCLS_INIT
+    #define SCLS_INIT SCLS_MATH_INIT SCLS_FOUNDATION_INIT
+    #endif // SCLS_INIT
+
+    // Define some usefull numbers
+    #ifndef SCLS_PI
+    #define SCLS_PI 3.1415926535
+    #endif // SCLS_PI
+    #ifndef SCLS_HALP_PI
+    #define SCLS_HALF_PI 1.5707963267948966
+    #endif // SCLS_HALP_PI
+    #ifndef SCLS_RADIANS_TO_ANGLE
+    #define SCLS_RADIANS_TO_ANGLE 57.2957795131
+    #endif // SCLS_RADIANS_TO_ANGLE
+
+    // Root of SCLS Math
+    #include "scls_math_directory/scls_math_numbers.h"
+    // Geometry in SCLS Math
+    #include "scls_math_directory/scls_math_geometry_core.h"
+
+    // Function handling (indev)
+    #ifdef __ASTER_DEV
+    #include "scls_math_directory/scls_math_function.h"
+    #include "scls_math_directory/scls_math_polymonial.h"
+
     // 3D Geometry handling (indev)
-    #ifndef SCLS_MATH_3D_INIT
-        #ifdef __ASTER_DEV
-            #define SCLS_MATH_3D_INIT int scls::model_maker::Point::a_points_number = 0; int scls::model_maker::Face::a_faces_number = 0; int scls::model_maker::Solid::a_solids_number = 0; int __current_point_in_grid_x = 0; int __current_point_in_grid_y = 0;
-        #else
-            #define SCLS_MATH_3D_INIT
-        #endif // __ASTER_DEV
-    #endif // SCLS_MATH_3D_INIT
+    #include "scls_math_directory/scls_math_3d_core.h"
+    #include "scls_math_directory/scls_math_3d_model.h"
+    #include "scls_math_directory/scls_math_string.h"
+    #endif // __ASTER_DEV
 
-    #define SCLS_MATH_INIT SCLS_MATH_3D_INIT
-#endif // SCLS_MATH_INIT
-#ifdef SCLS_INIT
-#undef SCLS_INIT
-#endif // SCLS_INIT
-#ifndef SCLS_INIT
-#define SCLS_INIT SCLS_MATH_INIT SCLS_FOUNDATION_INIT
-#endif // SCLS_INIT
-
-// Define some usefull numbers
-#ifndef SCLS_PI
-#define SCLS_PI 3.1415926535
-#endif // SCLS_PI
-#ifndef SCLS_HALP_PI
-#define SCLS_HALF_PI 1.5707963267948966
-#endif // SCLS_HALP_PI
-#ifndef SCLS_RADIANS_TO_ANGLE
-#define SCLS_RADIANS_TO_ANGLE 57.2957795131
-#endif // SCLS_RADIANS_TO_ANGLE
-
-// Root of SCLS Math
-#include "scls_math_directory/scls_math_numbers.h"
-// Geometry in SCLS Math
-#include "scls_math_directory/scls_math_geometry_core.h"
-
-// Function handling (indev)
-#ifdef __ASTER_DEV
-#include "scls_math_directory/scls_math_function.h"
-#include "scls_math_directory/scls_math_polymonial.h"
-#endif // __ASTER_DEV
-
-// 3D Geometry handling (indev)
-#ifdef __ASTER_DEV
-#include "scls_math_directory/scls_math_3d_core.h"
-#include "scls_math_directory/scls_math_3d_model.h"
-#endif // __ASTER_DEV
+#endif // SCLS_MATH_NUMBERS
 
 #endif // SCLS_MATH

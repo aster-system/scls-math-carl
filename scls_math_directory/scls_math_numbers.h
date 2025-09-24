@@ -27,6 +27,9 @@
 #ifndef SCLS_MATH_NUMBERS
 #define SCLS_MATH_NUMBERS
 
+// Include SCLS Math bigger header
+#include "../scls_math.h"
+
 #ifndef SCLS_MATH_NUMBER_LIMIT_ERROR_IPI
 #define SCLS_MATH_NUMBER_LIMIT_ERROR_IPI 120
 #endif // SCLS_MATH_NUMBER_LIMIT_ERROR_IPI
