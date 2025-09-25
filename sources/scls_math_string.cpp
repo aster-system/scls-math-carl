@@ -63,6 +63,7 @@ namespace scls {
         else if(used_function == "sqrt"){formula.add_applied_function<__Sqrt_Function>();}
 
         // Environment functions
+        else if(used_function == "random"){formula = random_fraction(0, 1);}
         else if(used_function == "repetition"){formula = environment->repetition(formula.value_to_double());}
 	}
     Formula String_To_Formula_Parse::__string_to_formula_base(std::string base, std::string used_function, const Math_Environment* environment) {
@@ -235,7 +236,7 @@ namespace scls {
     __Formula_Base::Formula replace_unknown(__Formula_Base used_formula, std::string unknown, std::string new_value) { return used_formula.replace_unknown(unknown, string_to_formula(new_value));};
 
     // Math_Environment constructor
-    Math_Environment::Math_Environment(){parser()->add_function("repetition");};
+    Math_Environment::Math_Environment(){parser()->add_function("random");parser()->add_function("repetition");};
 
     // Returns a formula value
     scls::__Formula_Base::Formula Math_Environment::value_formula(std::string base)const{scls::__Formula_Base formula = parser()->string_to_formula(base);return formula.replace_unknowns(a_unknowns.get());}
