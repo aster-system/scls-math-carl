@@ -882,7 +882,7 @@ namespace scls {
 
     // Multiply a value with the function
     std::shared_ptr<__Formula_Base> __Sqrt_Function::multiply(__Formula_Base* value_1, __Formula_Base* value_2){
-        if(value_1->applied_function()->name() == value_2->applied_function()->name()) {
+        if(value_1->applied_function() != 0 && value_2->applied_function() != 0 && value_1->applied_function()->name() == value_2->applied_function()->name()) {
             std::shared_ptr<__Formula_Base> copied_1 = value_1->formula_copy();
             std::shared_ptr<__Formula_Base> copied_2 = value_2->formula_copy();
             copied_1.get()->clear_applied_function();copied_2.get()->clear_applied_function();
