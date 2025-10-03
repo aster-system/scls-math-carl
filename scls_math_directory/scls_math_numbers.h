@@ -68,10 +68,15 @@ namespace scls {
         Textual_Math_Settings();
 
         // Getters and setters
+        inline bool hide_if_0() const {return a_hide_if_0;};
         inline bool introduction_in_mathml() const {return a_introduction_in_mathml;};
+        void set_hide_if_0(bool new_hide_if_0){a_hide_if_0 = new_hide_if_0;};
         void set_spaces_in_color(bool new_spaces_in_color);
         bool spaces_in_color();
     private:
+        // Hides the number if equal to "0"
+        bool a_hide_if_0 = true;
+
         // If the introduction should be in mathml or not
         bool a_introduction_in_mathml = true;
 

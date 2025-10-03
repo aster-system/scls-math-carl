@@ -299,6 +299,9 @@ namespace scls {
     }
     // Returns the polymonial to std::string
     std::string Polymonial::to_std_string(Textual_Math_Settings* settings) const {
+        // Asserts
+        if(static_cast<int>(a_monomonials.size()) == 0){return std::string("0");}
+
         std::string to_return = "";
         for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
             if(a_monomonials.at(i).factor() != 0) {
@@ -628,6 +631,7 @@ namespace scls {
         std::vector<std::string> unknowns = all_unknowns();
 
         // Get the needed value
+        if(static_cast<int>(unknowns.size()) > 0 && values == 0){print("Warning", std::string("SCLS Carl Math"), std::string("Can't use unknowns with the formula \"") + to_std_string(0) + std::string("\" : now unknown container used."));}
         for(int i = 0;i<static_cast<int>(unknowns.size());i++) {__Formula_Base* needed_value=values->value_by_name(unknowns[i]);if(needed_value!=0){current_formula = (*current_formula.replace_unknown(unknowns[i], *needed_value).formula_base());}}
 
         // Return the result

@@ -273,6 +273,9 @@ namespace scls {
 
     // Returns the Complex to a simple std::string
     std::string Complex::to_std_string_simple(unsigned int max_number_size, Textual_Math_Settings* settings) const {
+        // Asserts
+        if(real() == 0 && imaginary() == 0 && settings != 0 && !settings->hide_if_0()){return std::string("0");}
+
         std::string to_return = "";
         if(real() != 0) {
             to_return += real().to_std_string(max_number_size, settings) + " ";
