@@ -722,7 +722,7 @@ namespace scls {
             bool __is_equal(Polymonial value)const{return a_denominator.get() == 0 && a_numerator.get() != 0 && a_numerator.get()->__is_equal(value);};
             // Multiply a polymonial to this one
             virtual void __multiply(Polymonial value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}};
-            virtual void __multiply(__Formula_Base value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){std::cout << "P1" << std::endl;a_denominator.reset();}else{std::cout << "P2" << std::endl;a_numerator.get()->__multiply(value);}};
+            virtual void __multiply(__Formula_Base value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}};
 
             // Returns the final value of the formula
             scls::Complex value(__Formula_Base::Unknowns_Container* values);

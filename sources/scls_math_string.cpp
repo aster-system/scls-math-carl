@@ -87,8 +87,8 @@ namespace scls {
         }
         else {
             // Parenthesis form
-            String_To_Formula_Parse new_parser(level() + 1);
-            formula = new_parser.string_to_formula(base.substr(1, base.size() - 2));
+            String_To_Formula_Parse new_parser(level() + 1);new_parser.a_functions = a_functions;
+            formula = new_parser.string_to_formula(base.substr(1, base.size() - 2), environment);
         }
 
         // Create the formula
@@ -113,7 +113,8 @@ namespace scls {
                 Formula current_polymonial = __string_to_formula_base(cutted[i], cutted[i - 1], environment);
                 to_return += current_polymonial;
             }
-        } else {to_return = __string_to_formula_base(cutted[0]);}
+        }
+        else {to_return = __string_to_formula_base(cutted[0]);}
 
         // Return the result
         return to_return;
@@ -161,23 +162,6 @@ namespace scls {
         source = remove_space(source);
         std::string last_text_2 = std::string();std::string last_text_3 = std::string();std::string last_text_4 = std::string();
         for(int i = 0;i<static_cast<int>(source.size());i++) {
-            /*// Handle functions
-            if(i > 0) {
-                if(contains_function(source[i])) {
-                    if(!__string_is_operator(source[i - 1]) && source[i - 1] != '(') {
-                        // The part is a simple variable
-                        source.insert(i, "*");
-                        i++;
-                    }
-                }
-                else if(last_text_4.size() >= 4 && contains_function(last_text_4)) {
-                    if(!__string_is_operator(source[i - 1]) && source[i - 1] != '(') {
-                        // The part is a simple variable
-                        source.insert(i, "*");
-                        i++;
-                    }
-                }
-            }//*/
             // Remove the useless ")("
             if(i > 0 && source[i] == '(') {
                 if(source[i - 1] == ')') {source.insert(i, "*");i++;}
@@ -190,11 +174,8 @@ namespace scls {
                         // The part is a function
                         source.insert(i, ">");
                         i++;
-                    } else {
-                        // The part is a simple variable
-                        source.insert(i, "*");
-                        i++;
                     }
+                    else {source.insert(i, "*");i++;}
                 }
             }
 
@@ -236,10 +217,21 @@ namespace scls {
     __Formula_Base::Formula replace_unknown(__Formula_Base used_formula, std::string unknown, std::string new_value) { return used_formula.replace_unknown(unknown, string_to_formula(new_value));};
 
     // Math_Environment constructor
-    Math_Environment::Math_Environment(){parser()->add_function("random");parser()->add_function("repetition");};
+    Math_Environment::Math_Environment(){clear();};
+
+    // Clears the environment
+    void Math_Environment::clear(){
+        // Handle unknowns
+        if(a_unknowns.get() != 0){a_unknowns.get()->clear();}
+
+        if(parser() != 0){
+            // Handle functions
+            parser()->add_function("random");
+            parser()->add_function("repetition");}
+    };
 
     // Returns a formula value
-    scls::__Formula_Base::Formula Math_Environment::value_formula(std::string base)const{scls::__Formula_Base formula = parser()->string_to_formula(base);return formula.replace_unknowns(a_unknowns.get());}
+    scls::__Formula_Base::Formula Math_Environment::value_formula(std::string base)const{scls::__Formula_Base formula = parser()->string_to_formula(base, this);return formula.replace_unknowns(a_unknowns.get());}
     // Returns a number value
     double Math_Environment::value_double(std::string base)const{return value_number(base).to_double();}
     scls::Fraction Math_Environment::value_number(std::string base)const{scls::__Formula_Base formula = parser()->string_to_formula(base, this);return formula.value(a_unknowns.get()).real();}

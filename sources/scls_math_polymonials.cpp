@@ -543,8 +543,7 @@ namespace scls {
         if(a_polymonial.get() != 0) {
             std::string current_str = std::string();
             Polymonial needed_polymonial = (*a_polymonial.get());
-            if(needed_polymonial != 0) {
-
+            if(needed_polymonial != 0 || (settings != 0 && !settings->hide_if_0())) {
                 current_str = needed_polymonial.to_std_string(settings);
                 if(current_str != "") {to_return += current_str;}
             }
@@ -641,7 +640,7 @@ namespace scls {
     // Returns the final value of the formula
     scls::Complex __Formula_Base::Formula_Factor::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(a_factors.size());i++){to_return*=a_factors.at(i).get()->value(values);}return to_return;}
     scls::Complex __Formula_Base::Formula_Sum::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = scls::Complex(0);for(int i=0;i<static_cast<int>(a_formulas_add.size());i++){to_return+=a_formulas_add.at(i).get()->value(values);}return to_return;}
-    scls::Complex __Formula_Base::Formula_Fraction::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = numerator()->value(values);if(denominator() != 0){to_return._divide(denominator()->value(values));}return to_return;}
+    scls::Complex __Formula_Base::Formula_Fraction::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = 0;if(numerator()!=0){to_return = numerator()->value(values);}if(denominator() != 0){to_return._divide(denominator()->value(values));}return to_return;}
     scls::Complex __Formula_Base::value(scls::Fraction current_value){Unknowns_Container temp = Unknowns_Container(current_value);return value(&temp);};
     scls::Complex __Formula_Base::value(__Formula_Base::Unknowns_Container* values) {
         // Simpler models
@@ -658,7 +657,7 @@ namespace scls {
         // Get the final formula
         __Formula_Base::Formula final_formula;
         if(current_formula.a_polymonial.get() != 0){final_formula = (*current_formula.a_polymonial.get());}
-        else if(current_formula.a_fraction.get() != 0){final_formula = current_formula_complete_base.formula_base()->a_fraction.get()->value(values);}
+        else if(current_formula.a_fraction.get() != 0){final_formula = current_formula.a_fraction.get()->value(values);}
 
         // Apply the function
         scls::Complex to_return = scls::Complex(1);

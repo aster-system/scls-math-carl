@@ -49,7 +49,7 @@ namespace scls {
             Math_Environment();
 
             // Clears the environment
-            void clear(){a_unknowns.get()->clear();};
+            void clear();
 
             // Handle repetitions
             // Adds a repetition
