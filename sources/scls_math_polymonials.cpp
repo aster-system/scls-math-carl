@@ -150,6 +150,27 @@ namespace scls {
         // Returns the result
         return to_return;
     }
+    // Returns the monomonial to mathml
+    std::string __Monomonial::to_mathml(Textual_Math_Settings* settings) const {
+        // Unknowns
+        std::string final_unknow = "";
+        for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
+            final_unknow += std::string("<mi>") + a_unknowns.at(i).name() + std::string("</mi>");
+            int real_exponent = a_unknowns.at(i).exponent().real().to_double();
+            if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1){
+                final_unknow += std::string("<msup>") + std::to_string(real_exponent) + std::string("</msup>");
+            }
+        }
+
+        // Factor
+        if(a_factor.imaginary() == 0){
+            if(a_factor.real().denominator() == 1 || final_unknow == std::string()){return a_factor.to_std_string_simple(settings) + final_unknow;}
+            else if(a_factor.real().numerator() == 1) {return final_unknow + std::string("/") + std::to_string(a_factor.real().denominator());}
+            else {return std::string("(") + std::to_string(a_factor.real().numerator()) + final_unknow + std::string(")/") + std::to_string(a_factor.real().denominator());}
+        }
+        else if(a_factor.real() == 0){return a_factor.to_std_string_simple(settings) + final_unknow;}
+        return std::string("(") + a_factor.to_std_string_simple(settings) + std::string(")") + final_unknow;
+    }
     // Returns the monomonial converted to std::string
     std::string __Monomonial::to_std_string(Textual_Math_Settings* settings) const {
         std::string final_unknow = "";
@@ -295,6 +316,24 @@ namespace scls {
             }
         }
         to_return += std::string(";return y;}");
+        return to_return;
+    }
+     // Returns the polymonial to mathml
+    std::string Polymonial::to_mathml(Textual_Math_Settings* settings) const {
+        // Asserts
+        if(static_cast<int>(a_monomonials.size()) == 0){return std::string("<mi>0</mi>");}
+
+        // Generates text
+        std::string to_return = "";
+        for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+            if(a_monomonials.at(i).factor() != 0) {
+                to_return += a_monomonials.at(i).to_mathml(settings);
+                if(i < static_cast<int>(a_monomonials.size()) - 1) {
+                    to_return += std::string("<mo>+</mo>");
+                }
+            }
+        }
+        while(to_return[to_return.size() - 1] == '+' || to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
         return to_return;
     }
     // Returns the polymonial to std::string
@@ -506,10 +545,9 @@ namespace scls {
             std::string current_str = std::string();
             Polymonial needed_polymonial = (*a_polymonial.get());
             if(needed_polymonial != 0) {
-                current_str = needed_polymonial.to_std_string(settings);
+                current_str = needed_polymonial.to_mathml(settings);
                 if(current_str != "") {to_return += current_str;}
             }
-            if(to_return != ""){to_return = std::string("<mi>") + to_return + std::string("</mi>");}
         }
         else {to_return = a_fraction.get()->to_mathml(settings);}
 

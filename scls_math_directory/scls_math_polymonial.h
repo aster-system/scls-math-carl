@@ -112,6 +112,8 @@ namespace scls {
 
         // Returns the monomonial to a GLSL calculation
         std::string to_glsl(Textual_Math_Settings* settings) const;
+        // Returns the monomonial to mathml
+        std::string to_mathml(Textual_Math_Settings* settings) const;
         // Returns the monomonial converted to std::string
         std::string to_std_string(Textual_Math_Settings* settings) const;
 
@@ -219,6 +221,8 @@ namespace scls {
 
         // Returns the polymonial to a GLSL function
         std::string to_glsl(Textual_Math_Settings* settings) const;
+        // Returns the polymonial to mathml
+        std::string to_mathml(Textual_Math_Settings* settings) const;
         // Returns the polymonial to std::string
         std::string to_std_string(Textual_Math_Settings* settings) const;
 
@@ -941,6 +945,7 @@ namespace scls {
             inline Formula formula_copy()const{return Formula(a_formula.get()->formula_copy());};
             inline void paste(__Formula_Base* to_paste)const{a_formula.get()->paste(to_paste);};
             inline void paste(Formula to_paste)const{a_formula.get()->paste(to_paste.a_formula.get());};
+            inline std::string to_mathml(Textual_Math_Settings* settings) const {return a_formula.get()->to_mathml(settings);};
             inline Polymonial to_polymonial() const {return a_formula.get()->to_polymonial();};
             inline std::string to_std_string(Textual_Math_Settings* settings) const {return a_formula.get()->to_std_string(settings);};
 
