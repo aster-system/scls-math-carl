@@ -972,6 +972,7 @@ namespace scls {
             // Operations
             // With int
             bool operator==(int value) {return a_formula.get()->__is_equal(value);};
+            bool operator!=(int value) {return !a_formula.get()->__is_equal(value);};
             Formula& operator*=(int value) {__Formula_Base temp=value;a_formula.get()->__multiply(temp);return*this;};
             Formula operator*(int value) {return ((*a_formula.get()) * value);};
             // With fractions

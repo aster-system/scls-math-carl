@@ -474,7 +474,7 @@ namespace scls {
         if(value.real() == 0 && value.imaginary() == 0) {
             return (a_monomonials.size() == 0) || (a_monomonials.size() == 1 && a_monomonials.at(0).factor().real() == 0 && a_monomonials.at(0).factor().imaginary() == 0);
         }
-        return (a_monomonials.size() == 1 && a_monomonials.at(0).factor().real() == value);
+        return (a_monomonials.size() == 1 && a_monomonials.at(0).factor() == value);
     };
     // With polymonial
     bool Polymonial::__is_equal(Polymonial value) const {return __is_equal(&value);}

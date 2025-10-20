@@ -255,6 +255,9 @@ namespace scls {
         Fraction& operator*=(__Fraction_Base obj) { _multiply(obj); return *this; };
         Fraction operator+(__Fraction_Base obj) const { return _add_without_modification(obj); };
         Fraction& operator+=(__Fraction_Base obj) { _add(obj); return *this; }
+        // Comparaison operator
+        bool operator==(__Fraction_Base obj) const { return __Fraction_Base::operator==(obj); };
+        bool operator!=(__Fraction_Base obj) const { return !__Fraction_Base::operator==(obj); };
 	};
 
 	// Comparaison operator
@@ -359,6 +362,7 @@ namespace scls {
         // Operator overloading with int
         // Equality operator
         bool operator==(int obj) { return _equal(obj); }
+        bool operator!=(int obj) { return !_equal(obj); }
         // Multiplication operator
         Complex operator*(int obj) const { return _multiply_without_modification(obj); }
         // Multiplication operator
@@ -416,7 +420,7 @@ namespace scls {
 	// Returns a complex from a std::string (indev)
     Complex string_to_complex(std::string source);
 
-	// Multiplciation operator
+	// Multiplication operator
     Complex operator*(int obj_1, Complex obj);
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const Complex& obj);
