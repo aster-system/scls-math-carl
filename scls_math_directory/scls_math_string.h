@@ -111,6 +111,7 @@ namespace scls {
 
         // Converts a std::string to a Formula
         Formula __string_to_formula_without_division(std::string source, const Math_Environment* environment);
+        Formula __string_to_formula_without_exponent(std::string source, const Math_Environment* environment);
         Formula __string_to_formula_without_multiplication(std::string source, const Math_Environment* environment);
         Formula __string_to_formula_without_addition(std::string source, const Math_Environment* environment);
         Formula string_to_formula(std::string source, const Math_Environment* environment);

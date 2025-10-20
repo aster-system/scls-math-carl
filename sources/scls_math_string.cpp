@@ -98,7 +98,7 @@ namespace scls {
 
     // Converts a std::string to a Formula
     Formula String_To_Formula_Parse::string_to_formula(std::string source){return string_to_formula(source, 0);}
-    Formula String_To_Formula_Parse::__string_to_formula_without_division(std::string source, const Math_Environment* environment) {
+    Formula String_To_Formula_Parse::__string_to_formula_without_exponent(std::string source, const Math_Environment* environment) {
         // Format the text as needed
         std::vector<std::string> cutted;
 
@@ -118,6 +118,53 @@ namespace scls {
 
         // Return the result
         return to_return;
+    };
+    Formula String_To_Formula_Parse::__string_to_formula_without_division(std::string source, const Math_Environment* environment) {
+        // Format the text as needed
+        std::vector<std::string> cutted;
+
+        // Prepare the needed datas
+        Formula to_return; bool to_return_modified = false;
+
+        // Cut the text operator by ^ operator
+        cutted = cut_string_out_of_2(source, "^", "(", ")");
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            Formula current_polymonial = __string_to_formula_without_exponent(cutted[i], environment);
+            if(to_return_modified){
+                if(current_polymonial.is_simple_polymonial()){
+                    Polymonial p = current_polymonial.to_polymonial();
+                    if(p.is_known()){
+                        double r = current_polymonial.value_to_double(0);Formula f = to_return;
+                        for(int j=1;j<r;j++){f *= to_return;}to_return = f;
+                    }
+                }
+            }
+            else {to_return = current_polymonial;to_return_modified = true;}
+            //else {to_return += current_polymonial;to_return_modified=true;}
+        }
+
+        // Return the result
+        return to_return;
+
+        /*// Format the text as needed
+        std::vector<std::string> cutted;
+
+        // Prepare the needed datas
+        Formula to_return;
+
+        // Cut the text operator by > operator
+        cutted = cut_string_out_of_2(source, ">", "(", ")");
+        if(cutted.size() > 1) {
+            // At least one function applied
+            for(int i = 1;i<static_cast<int>(cutted.size());i+=2) {
+                Formula current_polymonial = __string_to_formula_base(cutted[i], cutted[i - 1], environment);
+                to_return += current_polymonial;
+            }
+        }
+        else {to_return = __string_to_formula_base(cutted[0]);}
+
+        // Return the result
+        return to_return;//*/
     };
     Formula String_To_Formula_Parse::__string_to_formula_without_multiplication(std::string source, const Math_Environment* environment) {
         // Format the text as needed
