@@ -40,6 +40,7 @@ namespace scls {
         add_function(std::string("exp"));
         add_function(std::string("ln"));
         add_function(std::string("normal"));
+        add_function(std::string("random"));
         add_function(std::string("sin"));
         add_function(std::string("sqrt"));
         add_function(std::string("tan"));
