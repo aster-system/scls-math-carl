@@ -949,6 +949,11 @@ namespace scls {
             inline Polymonial to_polymonial() const {return a_formula.get()->to_polymonial();};
             inline std::string to_std_string(Textual_Math_Settings* settings) const {return a_formula.get()->to_std_string(settings);};
 
+            // Returns if the formula is a simple monomonial / polymonial or not
+            inline bool is_simple_fraction() const {return a_formula.get()->is_simple_fraction();};
+            inline bool is_simple_monomonial() const {return a_formula.get()->is_simple_monomonial();};
+            inline bool is_simple_polymonial() const {return a_formula.get()->is_simple_polymonial();};
+
             // Returns the final value of the formula
             scls::Complex value(Unknowns_Container* values) const;
             scls::Complex value(scls::Fraction current_value) const;
