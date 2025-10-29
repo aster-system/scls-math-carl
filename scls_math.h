@@ -84,8 +84,8 @@
 
     // Function handling (indev)
     #ifdef __ASTER_DEV
-    #include "scls_math_directory/scls_math_function.h"
-    #include "scls_math_directory/scls_math_polymonial.h"
+    #include "scls_math_directory/scls_math_formula.h"
+    #include "scls_math_directory/scls_math_polynomial.h"
 
     // 3D Geometry handling (indev)
     #include "scls_math_directory/scls_math_3d_core.h"

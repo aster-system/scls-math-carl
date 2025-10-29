@@ -27,7 +27,7 @@
 #ifndef SCLS_MATH_STRING
 #define SCLS_MATH_STRING
 
-#include "scls_math_polymonial.h"
+#include "scls_math_formula.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
@@ -53,17 +53,17 @@ namespace scls {
 
             // Handle repetitions
             // Adds a repetition
-            inline void add_repetition(){a_repetitions.push_back(0);};
+            void add_repetition();
             // Returns the last repetition
-            inline int last_repetition(){if(a_repetitions.size() <= 0){return 0;}return a_repetitions.at(a_repetitions.size() - 1);}
+            int last_repetition();
             // Removes the last repetition
-            inline void remove_repetition(){if(a_repetitions.size() > 0){a_repetitions.pop_back();}};
+            void remove_repetition();
             // Repetes the last repetition
-            inline void repeat(){a_repetitions[a_repetitions.size() - 1]++;};
+            void repeat();
             // Returns a repetition
-            inline int repetition(int index) const {if(static_cast<int>(a_repetitions.size()) <= index){return 0;} return a_repetitions.at(index);};
+            int repetition(int index) const;
             // Sets the last repetition
-            inline void set_repetition(int value){if(static_cast<int>(a_repetitions.size()) > 0){a_repetitions[a_repetitions.size() - 1] = value;}};
+            void set_repetition(int value);
 
             // Handle unknowns
             // Creates a unknown
@@ -76,7 +76,7 @@ namespace scls {
             std::shared_ptr<scls::__Formula_Base::Unknown> unknown_shared_ptr_by_name(std::string name)const;
 
             // Returns a formula value
-            scls::__Formula_Base::Formula value_formula(std::string base)const;
+            virtual scls::__Formula_Base::Formula value_formula(std::string base)const;
             // Returns a number value
             double value_double(std::string base)const;
             scls::Fraction value_number(std::string base)const;

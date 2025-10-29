@@ -82,7 +82,7 @@ namespace scls {
             if(unknow_part != "" && number_part_1 == "") number = 1;
             if(number_part_2 != "") number *= string_to_complex(number_part_2);
             __Monomonial to_add(number, unknow_part);
-            Polymonial current_polymonial;
+            Polynomial current_polymonial;
             current_polymonial.add_monomonial(to_add);
             formula = current_polymonial;
         }
@@ -132,8 +132,8 @@ namespace scls {
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
             Formula current_polymonial = __string_to_formula_without_exponent(cutted[i], environment);
             if(to_return_modified){
-                if(current_polymonial.is_simple_polymonial()){
-                    Polymonial p = current_polymonial.to_polymonial();
+                if(current_polymonial.is_simple_polynomial()){
+                    Polynomial p = current_polymonial.to_polynomial();
                     if(p.is_known()){
                         double r = current_polymonial.value_to_double(0);Formula f = to_return;
                         for(int j=1;j<r;j++){f *= to_return;}to_return = f;
@@ -278,11 +278,30 @@ namespace scls {
             parser()->add_function("repetition");}
     };
 
+    // Handle repetitions
+    // Adds a repetition
+    void Math_Environment::add_repetition(){a_repetitions.push_back(0);};
+
+    // Returns the last repetition
+    int Math_Environment::last_repetition(){if(a_repetitions.size() <= 0){return 0;}return a_repetitions.at(a_repetitions.size() - 1);}
+
+    // Removes the last repetition
+    void Math_Environment::remove_repetition(){if(a_repetitions.size() > 0){a_repetitions.pop_back();}};
+
+    // Repetes the last repetition
+    void Math_Environment::repeat(){a_repetitions[a_repetitions.size() - 1]++;};
+
+    // Returns a repetition
+    int Math_Environment::repetition(int index) const {if(static_cast<int>(a_repetitions.size()) <= index){return 0;} return a_repetitions.at(index);};
+
+    // Sets the last repetition
+    void Math_Environment::set_repetition(int value){if(static_cast<int>(a_repetitions.size()) > 0){a_repetitions[a_repetitions.size() - 1] = value;}};
+
     // Returns a formula value
     scls::__Formula_Base::Formula Math_Environment::value_formula(std::string base)const{scls::__Formula_Base formula = parser()->string_to_formula(base, this);return formula.replace_unknowns(a_unknowns.get());}
     // Returns a number value
     double Math_Environment::value_double(std::string base)const{return value_number(base).to_double();}
-    scls::Fraction Math_Environment::value_number(std::string base)const{scls::__Formula_Base formula = parser()->string_to_formula(base, this);return formula.value(a_unknowns.get()).real();}
+    scls::Fraction Math_Environment::value_number(std::string base)const{return value_formula(base).value(a_unknowns.get()).real();}
 
     // Handle unknowns
     // Creates a unknown

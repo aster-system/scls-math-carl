@@ -42,8 +42,7 @@
 #define SCLS_MATH_TOLERANCE 0.00000001
 
 // Include the good header file
-#include "scls_math_numbers.h"
-#include "scls_math_polymonial.h"
+#include "scls_math_formula.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
