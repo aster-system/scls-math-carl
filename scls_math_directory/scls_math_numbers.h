@@ -91,6 +91,38 @@ namespace scls {
 
 //*********
 //
+// Useful algebrical tools
+//
+//*********
+
+namespace scls {
+
+    //*********
+    //
+    // The __Field_Element class
+    //
+    //*********
+
+    class __Field_Element {
+        // Class representating an element in a field
+    public:
+
+        // __Field_Element constructor
+        __Field_Element(){};
+        // __Field_Element destructor
+        virtual ~__Field_Element(){};
+
+        // Returns the element to a simple std::string
+        virtual std::string to_mathml(Textual_Math_Settings* settings) const = 0;
+        virtual std::string to_std_string(Textual_Math_Settings* settings) const = 0;
+
+        // Returns the inverse of this element
+        virtual std::shared_ptr<__Field_Element> inverse() = 0;
+    };
+}
+
+//*********
+//
 // The Rational part
 //
 //*********
@@ -190,10 +222,6 @@ namespace scls {
         // Operator overloading with fractions
         // Decrement operator
         __Fraction_Base& operator--(int);
-        // Divisor operator
-        __Fraction_Base operator/(__Fraction_Base obj) const;
-        // Divisor operator assignment
-        __Fraction_Base& operator/=(__Fraction_Base obj);
         // Equality operator
         bool operator==(__Fraction_Base obj) const;
         // Greater or equal than than operator
@@ -215,6 +243,8 @@ namespace scls {
         __Fraction_Base& operator*=(__Fraction_Base obj);
         __Fraction_Base operator+(__Fraction_Base obj) const;
         __Fraction_Base& operator+=(__Fraction_Base obj);
+        __Fraction_Base operator/(__Fraction_Base obj) const;
+        __Fraction_Base& operator/=(__Fraction_Base obj);
     private:
         //*********
         //
@@ -290,7 +320,7 @@ namespace scls {
 // The namespace "scls" is used to simplify the all.
 namespace scls {
 
-    class Complex {
+    class Complex : public __Field_Element {
 	    // Class representating a complex number
     public:
         //*********
@@ -300,14 +330,15 @@ namespace scls {
         //*********
 
         // Simple fraction constructor
-        Complex(__Fraction_Base real_part, __Fraction_Base imaginary) : a_imaginary(imaginary), a_real(real_part) {};
-        Complex(Fraction real_part, Fraction imaginary) : a_imaginary(imaginary), a_real(real_part) {};
+        Complex(__Fraction_Base real_part, __Fraction_Base imaginary) : __Field_Element(), a_imaginary(imaginary), a_real(real_part) {};
+        Complex(Fraction real_part, Fraction imaginary) : __Field_Element(), a_imaginary(imaginary), a_real(real_part) {};
         Complex(long long real_part, long long imaginary_part) : Complex(Fraction(real_part), Fraction(imaginary_part)) {};
         Complex(long long real_part, Fraction imaginary_part) : Complex(Fraction(real_part), imaginary_part) {};
         Complex(Fraction real_part, long long imaginary_part) : Complex(real_part, Fraction(imaginary_part)) {};
-        Complex(__Fraction_Base real_part) : Complex(real_part, __Fraction_Base(0)) {};
+        Complex(__Fraction_Base real_part) : Complex(real_part, __Fraction_Base(0)){};
         Complex(Fraction real_part) : Complex(real_part, Fraction(0)) {};
         Complex(double real_part) : Complex(Fraction::from_double(real_part)) {};
+        Complex(int real_part) : Complex(Fraction(real_part)) {};
         Complex(const Complex& to_copy) : Complex(to_copy.real(), to_copy.imaginary()) {};
 
         // Returns the module of the complex
@@ -322,8 +353,10 @@ namespace scls {
         inline void set_real(Fraction new_real) {a_real=new_real;};
 
         // Returns the Complex to a simple std::string
+        virtual std::string to_mathml(Textual_Math_Settings* settings) const;
         std::string to_std_string_simple(unsigned int max_number_size, Textual_Math_Settings* settings) const;
-        inline std::string to_std_string_simple(Textual_Math_Settings* settings) const {return to_std_string_simple(-1, settings);};
+        std::string to_std_string_simple(Textual_Math_Settings* settings) const {return to_std_string_simple(-1, settings);};
+        virtual std::string to_std_string(Textual_Math_Settings* settings) const{return to_std_string_simple(-1, settings);};
 
         //*********
         //
@@ -333,6 +366,9 @@ namespace scls {
 
         // Returns the conjugate of this Complex
         inline Complex conjugate() const {return Complex(a_real, a_imaginary * -1);};
+
+        // Returns the inverse of this element
+        virtual std::shared_ptr<__Field_Element> inverse(){return std::make_shared<Complex>(Complex(1) / (*this));};
 
         // Function to do operations with Complex
         // Adds an another Complex to this Complex

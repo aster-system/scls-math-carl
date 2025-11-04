@@ -28,6 +28,7 @@
 #define SCLS_MATH_STRING
 
 #include "scls_math_formula.h"
+#include "scls_math_geometry_core.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
@@ -77,9 +78,12 @@ namespace scls {
 
             // Returns a formula value
             virtual scls::__Formula_Base::Formula value_formula(std::string base)const;
+
             // Returns a number value
             double value_double(std::string base)const;
             scls::Fraction value_number(std::string base)const;
+            // Returns a point 2D value
+            scls::Point_2D_Formula value_point_2d(std::string base) const;
 
             // Getters and setters
             inline String_To_Formula_Parse* parser()const{return a_parser.get();};

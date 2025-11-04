@@ -316,8 +316,8 @@ namespace scls {
         inline void set_polynomial(Formula_Sum sum){set_polynomial(std::make_shared<Polynomial>(sum.to_polynomial()));};
         inline void set_polynomial(Polynomial polynomial){set_polynomial(std::make_shared<Polynomial>(polynomial));};
         // Converts the formula to a polynomial / monomonial
-        inline __Monomonial to_monomonial() const {return to_polynomial().monomonial();};
-        inline Polynomial to_polynomial() const {if(a_polynomial.get() != 0){return *a_polynomial.get();}else if(a_fraction.get()==0){return 0;} return a_fraction.get()->to_polynomial();};
+        inline __Monomonial to_monomonial() const {if(to_polynomial().monomonial() == 0){return __Monomonial(Complex(0));} return *to_polynomial().monomonial();};
+        inline Polynomial to_polynomial() const {if(a_polynomial.get() != 0){return *a_polynomial.get();}else if(a_fraction.get()==0){return Polynomial(0);} return a_fraction.get()->to_polynomial();};
         operator Polynomial() const {return to_polynomial();};
 
         // Methods operators
@@ -553,7 +553,7 @@ namespace scls {
             // Derivate value
             virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula);
             // Real value
-            virtual double real_value(__Formula_Base* formula){double value = formula->to_polynomial().known_monomonial().factor().real().to_double();return std::cos(value);};
+            virtual double real_value(__Formula_Base* formula){__Monomonial* needed_monomonial = formula->to_polynomial().known_monomonial();if(needed_monomonial == 0){return 1;}double value = needed_monomonial->factor()->real().to_double();return std::cos(value);};
             // Simplify a value with the function
             virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base>();};
 
@@ -612,7 +612,7 @@ namespace scls {
             // Derivate value
             virtual std::shared_ptr<__Formula_Base> derivate_value(__Formula_Base formula);
             // Real value
-            virtual double real_value(__Formula_Base* formula){double value = formula->to_polynomial().known_monomonial().factor().real().to_double();return std::sin(value);};
+            virtual double real_value(__Formula_Base* formula){__Monomonial* needed_monomonial = formula->to_polynomial().known_monomonial();if(needed_monomonial == 0){return 0;}double value = needed_monomonial->factor()->real().to_double();return std::sin(value);};
             // Simplify a value with the function
             virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base>();};
 
@@ -635,7 +635,7 @@ namespace scls {
             // Multiply a value with the function
             virtual std::shared_ptr<__Formula_Base> multiply(__Formula_Base* value_1, __Formula_Base* value_2);
             // Real value
-            virtual double real_value(__Formula_Base* formula){double value = formula->to_polynomial().known_monomonial().factor().real().to_double();return std::sqrt(value);};
+            virtual double real_value(__Formula_Base* formula){double value = formula->value_to_double();return std::sqrt(value);};
             // Simplify a value with the function
             virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {
                 if(value->applied_function() == 0) {
@@ -644,13 +644,13 @@ namespace scls {
                         Polynomial to_poly = inner.to_polynomial();
                         if(to_poly.is_simple_monomonial()){
                             // Simplify a simple monomonial
-                            __Monomonial needed_monomonial = to_poly.monomonial();
+                            __Monomonial needed_monomonial = *to_poly.monomonial();
                             std::vector<double> needed_exponent; bool good = true;
                             for(int i = 0;i<static_cast<int>(needed_monomonial.unknowns().size());i++){if(needed_monomonial.unknowns()[i].name()!=std::string()){needed_exponent.push_back(std::log2(needed_monomonial.unknowns()[i].exponent().real().to_double()));}}
                             for(int i = 0;i<static_cast<int>(needed_exponent.size());i++){if(needed_exponent[i]!=round(needed_exponent[i])||needed_exponent[i]==0){good=false;break;}}
                             if(good) {
                                 // Create the needed monomonial
-                                scls::Fraction value = std::sqrt(needed_monomonial.factor().real().to_double());
+                                scls::Fraction value = std::sqrt(needed_monomonial.factor()->real().to_double());
                                 scls::__Monomonial final_monomonial = needed_monomonial;
                                 final_monomonial.set_factor(value);
                                 for(int i = 0;i<static_cast<int>(final_monomonial.unknowns().size());i++){if(final_monomonial.unknowns()[i].name()!=std::string()){final_monomonial.unknowns()[i].set_exponent(final_monomonial.unknowns()[i].exponent()/2);}}

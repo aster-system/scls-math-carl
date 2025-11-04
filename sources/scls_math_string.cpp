@@ -302,6 +302,18 @@ namespace scls {
     // Returns a number value
     double Math_Environment::value_double(std::string base)const{return value_number(base).to_double();}
     scls::Fraction Math_Environment::value_number(std::string base)const{return value_formula(base).value(a_unknowns.get()).real();}
+    // Returns a Point_2D value
+    scls::Point_2D_Formula Math_Environment::value_point_2d(std::string base)const{
+        // Format the text
+        while(base.size() > 0 && base.at(0) == '('){base = base.substr(1, base.size() - 1);}
+        while(base.size() > 0 && base.at(base.size() - 1) == ')'){base = base.substr(0, base.size() - 1);}
+
+        // Get the point
+        base = scls::replace(base, std::string(";"), std::string(","));
+        std::vector<std::string> cutted = scls::cut_string(base, std::string(","));
+        if(cutted.size() != 2) {scls::print(std::string("PLEOS Text Environment"), std::string("Can't get a point 2D from \"") + base + std::string("\"."));return scls::Point_2D(0, 0);}
+        return scls::Point_2D_Formula(value_number(cutted.at(0)), value_number(cutted.at(1)));
+    };
 
     // Handle unknowns
     // Creates a unknown

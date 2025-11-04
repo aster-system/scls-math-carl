@@ -57,6 +57,24 @@ namespace scls {
 
 //*********
 //
+// Useful datas for algebra handling
+//
+//*********
+
+namespace scls {
+
+    //*********
+    //
+    // The __Field_Element class
+    //
+    //*********
+
+    // __Field_Element constructor
+
+}
+
+//*********
+//
 // The Rational part
 //
 //*********
@@ -272,6 +290,15 @@ namespace scls {
 namespace scls {
 
     // Returns the Complex to a simple std::string
+    std::string Complex::to_mathml(Textual_Math_Settings* settings) const {
+        if(imaginary() == 0){
+            if(real().denominator() == 1){return to_std_string_simple(settings);}
+            else if(real().numerator() == 1) {return std::string("/") + std::to_string(real().denominator());}
+            else {return std::string("(") + std::to_string(real().numerator()) + std::string(")/") + std::to_string(real().denominator());}
+        }
+        else if(real() == 0){return to_std_string_simple(settings);}
+        return std::string("(") + to_std_string_simple(settings) + std::string(")");
+    }
     std::string Complex::to_std_string_simple(unsigned int max_number_size, Textual_Math_Settings* settings) const {
         // Asserts
         if(real() == 0 && imaginary() == 0 && settings != 0 && !settings->hide_if_0()){return std::string("0");}

@@ -34,11 +34,11 @@ namespace scls {
 
     //*********
 	//
-	// The "__Monomonial" class
+	// The "Polynomial" class
 	//
 	//*********
 
-    class _Base_Unknown {
+	class _Base_Unknown {
         // Class representating the base of an unknow in a monomonial
     public:
         // Possible unknows comparaison
@@ -71,27 +71,22 @@ namespace scls {
         std::string a_name = "";
     };
 
-    class __Monomonial {
+    class __Monomonial_Base {
         // Class representating a monomonial in a polynomial form
     public:
 
-        // __Monomonial constructor
-        __Monomonial(Complex factor):a_factor(factor){};
-        __Monomonial(Complex factor, std::vector<_Base_Unknown> unknowns):__Monomonial(factor){a_unknowns=unknowns;};
-        __Monomonial(Complex factor, std::string unknow):__Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
-        __Monomonial(Complex factor, std::string unknow, Complex exponent):__Monomonial(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
-        // __Monomonial copy constructor
-        __Monomonial(const __Monomonial& monomonial_copy):__Monomonial(monomonial_copy.a_factor,monomonial_copy.a_unknowns){};
-
-        // Returns the inverse the monomonial
-        __Monomonial inverse() const;
-        // Returns the special limit of the monomonial for an unknown
-        scls::Limit limit_special(Limit needed_limit, std::string unknown_name);
+        // __Monomonial_Base constructor
+        __Monomonial_Base(std::shared_ptr<__Field_Element> factor):a_factor(factor){};
+        __Monomonial_Base(std::shared_ptr<__Field_Element> factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(factor){a_unknowns=unknowns;};
+        __Monomonial_Base(std::shared_ptr<__Field_Element> factor, std::string unknow):__Monomonial_Base(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
+        __Monomonial_Base(std::shared_ptr<__Field_Element> factor, std::string unknow, Complex exponent):__Monomonial_Base(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
+        // __Monomonial_Base copy constructor
+        __Monomonial_Base(const __Monomonial_Base& monomonial_copy):__Monomonial_Base(monomonial_copy.a_factor,monomonial_copy.a_unknowns){};
+        // Returns the inverse of the monomonial
+        std::shared_ptr<__Monomonial_Base> inverse() const;
 
         // Add an unknown to the monomonial
         inline void add_unknown(std::string name, Complex exponent) {_Base_Unknown unknown(name); unknown.set_exponent(exponent); a_unknowns.push_back(unknown);};
-        // Returns if a monomonial has the same unknows as this one
-        bool compare_unknown(__Monomonial other);
         // Returns if the monomonial contains an unkwnown
         inline _Base_Unknown* contains_unknown(std::string unknown_name) {for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {if(a_unknowns.at(i).name() == unknown_name) {return &a_unknowns[i];}} return 0;};
         // Deletes the monomonial unkwnown
@@ -102,12 +97,13 @@ namespace scls {
         // Returns if the monomonial only contains an unkwnown
         _Base_Unknown* only_contains_unknown(std::string unknown_name, Complex exponent);
         // Returns this monomonial where an unknown is replaced by an another unknown
-        __Monomonial replace_unknown(std::string unknown, __Monomonial new_value);
+        std::shared_ptr<__Monomonial_Base> replace_unknown(std::string unknown, __Monomonial_Base* new_value);
         // Returns if two monomonials has the same unknowns
-        bool same_unknowns(__Monomonial monomonial) const;
+        bool same_unknowns(const __Monomonial_Base* object) const;
         // Unknows of the monomonial
         inline _Base_Unknown* unknown(){if(unknowns().size()>0){if(unknowns()[0].name()==std::string()){if(unknowns().size()>1){return &unknowns()[1];}}else{return &unknowns()[0];}}return 0;};
         inline std::vector<_Base_Unknown>& unknowns() {return a_unknowns;};
+        inline const std::vector<_Base_Unknown>& unknowns_const() const {return a_unknowns;};
         inline unsigned int unknowns_number() const {unsigned int to_return = 0;for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns[i].name() != "")to_return++;}return to_return;};
 
         // Returns the monomonial to a GLSL calculation
@@ -119,44 +115,218 @@ namespace scls {
 
         // Operators
         // Equal operator assignment
-        bool operator==(__Monomonial const& obj) const {return a_factor == obj.a_factor && same_unknowns(obj); }
-        // Minus operator assignment
-        __Monomonial& operator-=(__Monomonial const& obj) { a_factor -= obj.a_factor; return *this; }
-        // Plus operator assignment
-        __Monomonial& operator+=(__Monomonial const& obj) { a_factor += obj.a_factor; return *this; }
-        // Multiplication operator assignment
-        __Monomonial& operator*=(__Monomonial const& obj);
-        // With fractions
-        inline __Monomonial& operator*=(Fraction obj){__Monomonial temp(obj);return operator*=(temp);};
-        // Convert the monomonial to a complex
-        operator Complex() const {return a_factor;};
+        bool __is_equal(const __Monomonial_Base* object) const;
+        // Operations operator
+        void __add(const __Monomonial_Base* object);
+        void __multiply(const __Field_Element* object);
+        void __multiply(const __Monomonial_Base* object);
+        void __substract(const __Monomonial_Base* object);
 
-        // Adds a value to the factor
-        void add_to_factor(Complex value){a_factor += value;};
+        // Hierarchy functions
+        // Comparaison
+        virtual bool is_equal(__Field_Element* operand_1, __Field_Element* operand_2) const = 0;
+        // Operations
+        virtual std::shared_ptr<__Field_Element> addition(__Field_Element* operand_1, __Field_Element* operand_2) = 0;
+        virtual std::shared_ptr<__Field_Element> division(__Field_Element* operand_1, __Field_Element* operand_2) = 0;
+        virtual std::shared_ptr<__Field_Element> multiplication(__Field_Element* operand_1, const __Field_Element* operand_2) = 0;
+        virtual std::shared_ptr<__Field_Element> substraction(__Field_Element* operand_1, __Field_Element* operand_2) = 0;
+        // Property
+        virtual std::shared_ptr<__Monomonial_Base> clone()const = 0;
+        virtual bool is_null(__Field_Element* operand) const = 0;
+        bool is_null()const{return is_null(__factor());};
 
         // Getters and setters
-        inline Complex factor() const {return a_factor;};
-        inline void set_factor(Complex new_factor) {a_factor = new_factor;};
+        inline __Field_Element* __factor()const {return a_factor.get();};
+        inline void __set_factor(std::shared_ptr<__Field_Element> factor){a_factor = factor;};
 
     private:
 
         // Factor of the monomonial
-        Complex a_factor = Complex(Fraction(0), Fraction(0));
+        std::shared_ptr<__Field_Element> a_factor;
 
         // Unknows of the monomonial
         std::vector<_Base_Unknown> a_unknowns;
     };
+    template <typename T> class __Monomonial_Template : public __Monomonial_Base {
+    public:
+        // __Monomonial_Template constructor
+        __Monomonial_Template(T factor):__Monomonial_Base(std::make_shared<Complex>(factor)){}
+        __Monomonial_Template(T factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(std::make_shared<T>(factor), unknowns){};
+        __Monomonial_Template(std::shared_ptr<__Field_Element> factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(factor, unknowns){};
+        __Monomonial_Template(T factor, std::string unknow):__Monomonial_Base(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
+        __Monomonial_Template(T factor, std::string unknow, Complex exponent):__Monomonial_Base(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
 
-    // Stream operator overloading
-    std::ostream& operator<<(std::ostream& os, const __Monomonial& obj);
+        // Comparaison
+        virtual bool is_equal(__Field_Element* operand_1, __Field_Element* operand_2)const{return (*(reinterpret_cast<T*>(operand_1))) == (*(reinterpret_cast<T*>(operand_2)));};
+        // Operations
+        virtual std::shared_ptr<__Field_Element> addition(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) + *(reinterpret_cast<T*>(operand_2)));};
+        virtual std::shared_ptr<__Field_Element> division(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) / *(reinterpret_cast<T*>(operand_2)));};
+        virtual std::shared_ptr<__Field_Element> multiplication(__Field_Element* operand_1, const __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) * *(reinterpret_cast<const T*>(operand_2)));};
+        virtual std::shared_ptr<__Field_Element> substraction(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) - *(reinterpret_cast<T*>(operand_2)));};
+        // Property
+        virtual std::shared_ptr<__Monomonial_Base> clone()const{return std::make_shared<__Monomonial_Template<T>>(*factor(), unknowns_const());};
+        virtual bool is_null(__Field_Element* operand)const{return (*(reinterpret_cast<T*>(operand))) == 0;};
 
-    //*********
-	//
-	// The "Polynomial" class
-	//
-	//*********
+        // Getters and setters
+        inline T* factor()const{return reinterpret_cast<T*>(__factor());};
+        inline void set_factor(T factor){__set_factor(std::make_shared<Complex>(factor));};
+    };
+    typedef __Monomonial_Template<Complex> __Monomonial;
 
-	class Polynomial {
+    class Polynomial_Base {
+        // Class representating a full polynomial form
+    public:
+
+        // Polynomial_Base constructor
+        Polynomial_Base(){};
+        Polynomial_Base(std::shared_ptr<__Monomonial_Base> monomonial){a_monomonials.push_back(monomonial);};
+        // Polynomial_Base copy constructor
+        Polynomial_Base(const Polynomial_Base& polynomial_copy);
+
+        // Add a new monomonial to the polynomial
+        void __add_monomonial(__Monomonial_Base* new_monomonial);
+        // Returns all the unknowns in the formula
+        std::vector<std::string> all_unknowns();
+        // Returns if the polynomial contains a monomonial
+        __Monomonial_Base* contains_monomonial(__Monomonial_Base* new_monomonial);
+        // Returns the maximum degree in the polynomial
+        int degree(std::string unknown_name);
+        // Returns if the polynomial is known
+        bool is_known() const;
+        // Returns if te polynomial is null
+        bool is_null() const {return a_monomonials.size() <= 0;};
+        // Returns if the polynomial is a simple monomonial
+        bool is_simple_monomonial() const;
+        // Returns the knows monomonial
+        __Monomonial_Base* __known_monomonial() const;
+        // Returns a monomonial by its unknown
+        __Monomonial_Base* __monomonial(std::string unknown, Complex exponent);
+        __Monomonial_Base* __monomonial(std::string unknown);
+        __Monomonial_Base* __monomonial();
+        // Returns the number of monomonials in the polynomial
+        int monomonials_number() const;
+        // Returns a list of unknowns monomonials
+        std::vector<__Monomonial_Base*> unknown_monomonials() const;
+
+        // Returns the polynomial to a GLSL function
+        std::string to_glsl(Textual_Math_Settings* settings) const;
+        // Returns the polynomial to mathml
+        std::string to_mathml(Textual_Math_Settings* settings) const;
+        // Returns the polynomial to std::string
+        std::string to_std_string(Textual_Math_Settings* settings) const;
+
+        // Methods operators
+        // Add a polynomial to this one
+        void __add(__Monomonial_Base* value);
+        void __add(Polynomial_Base* value);
+        // Divide a monomonial to this void
+        void __divide(__Monomonial_Base* value);
+        void __divide(Polynomial_Base* value);
+        // Returns if two values are equals or not
+        bool __is_equal(__Field_Element* value) const;
+        bool __is_equal(Polynomial_Base* value) const;
+        // Multiply a polynomial to this one
+        void __multiply(__Field_Element* value);
+        void __multiply(Polynomial_Base* value);
+
+        // Returns a polynomial from a monomonial where the unknows has been replaced
+        static std::shared_ptr<Polynomial_Base> polynomial_from_modified_monomonial_unknows(__Monomonial_Base* used_monomonial, std::string unknown, Polynomial_Base* new_value);
+        // Returns this polynomial where an unknown is replaced by an another unknown
+        std::shared_ptr<Polynomial_Base> replace_unknown(std::string unknown, Polynomial_Base* new_value) const;
+        // Simplify the polynomial
+        std::shared_ptr<Polynomial_Base> simplify() const;
+
+        // Comparaison
+        virtual bool is_equal(__Field_Element* operand_1, __Field_Element* operand_2) const = 0;
+        // Operations
+        virtual std::shared_ptr<__Field_Element> addition(__Field_Element* operand_1, __Field_Element* operand_2) = 0;
+        virtual std::shared_ptr<__Field_Element> division(__Field_Element* operand_1, __Field_Element* operand_2) = 0;
+        virtual std::shared_ptr<__Field_Element> multiplication(__Field_Element* operand_1, const __Field_Element* operand_2) = 0;
+        virtual std::shared_ptr<__Field_Element> substraction(__Field_Element* operand_1, __Field_Element* operand_2) = 0;
+        // Property
+        virtual std::shared_ptr<Polynomial_Base> clone() const = 0;
+        virtual std::shared_ptr<Polynomial_Base> clone_empty() const = 0;
+        virtual bool is_absorbing_multiplication(__Field_Element* operand) const = 0;
+        virtual bool is_absorbing_multiplication(std::shared_ptr<__Field_Element> operand) const {return is_absorbing_multiplication(operand.get());};
+
+        // Getters and setters
+        inline std::vector<std::shared_ptr<__Monomonial_Base>>& monomonials() {return a_monomonials;};
+        inline const std::vector<std::shared_ptr<__Monomonial_Base>>& monomonials_const() const {return a_monomonials;};
+
+    private:
+
+        // Each monomonial in the polynomial
+        std::vector<std::shared_ptr<__Monomonial_Base>> a_monomonials = std::vector<std::shared_ptr<__Monomonial_Base>>();
+	};
+    template <typename T> class Polynomial_Template : public Polynomial_Base {
+    public:
+        // Polynomial_Template constructor
+        Polynomial_Template():Polynomial_Base(){};
+        Polynomial_Template(T factor):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(factor)){};
+        Polynomial_Template(__Monomonial_Template<T> factor):Polynomial_Base(factor.clone()){};
+        Polynomial_Template(T factor, std::vector<_Base_Unknown> unknowns):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(std::make_shared<Complex>(factor), unknowns)){};
+        Polynomial_Template(std::shared_ptr<__Field_Element> factor, std::vector<_Base_Unknown> unknowns):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(factor, unknowns)){};
+        Polynomial_Template(T factor, std::string unknow):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(std::make_shared<Complex>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow)))){};
+        Polynomial_Template(T factor, std::string unknow, Complex exponent):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(std::make_shared<Complex>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent)))){};
+        // Polynomial_Template copy constructor
+        Polynomial_Template(const Polynomial_Template& polynomial_copy):Polynomial_Template(){for(int i = 0;i<static_cast<int>(polynomial_copy.monomonials_const().size());i++){__add_monomonial(polynomial_copy.monomonials_const().at(i).get());}};
+
+        // Add a new monomonial to the polynomial
+        void add_monomonial(__Monomonial_Template<T> new_monomonial){__add_monomonial(&new_monomonial);};
+        // Returns the knows monomonial
+        __Monomonial_Template<T>* known_monomonial() const {return reinterpret_cast<__Monomonial_Template<T>*>(__known_monomonial());};
+        T known_monomonial_factor() const {__Monomonial_Template<T>* needed = known_monomonial();if(needed == 0){return T(0);}return *known_monomonial()->factor();};
+
+        // Returns a monomonial by its unknown
+        __Monomonial_Template<T>* monomonial(std::string unknown, Complex exponent){return reinterpret_cast<__Monomonial_Template<T>*>(__monomonial(unknown, exponent));};
+        __Monomonial_Template<T>* monomonial(std::string unknown){return reinterpret_cast<__Monomonial_Template<T>*>(__monomonial(unknown));};
+        __Monomonial_Template<T>* monomonial(int index){return reinterpret_cast<__Monomonial_Template<T>*>(monomonials().at(index).get());};
+        __Monomonial_Template<T>* monomonial(){return reinterpret_cast<__Monomonial_Template<T>*>(__monomonial());};
+
+        // Returns if two values are equals or not
+        bool is_equal(T value) const {return __is_equal(&value);};
+        // Multiply a polynomial to this one
+        void multiply(T value){__multiply(&value);};
+
+        // Comparaison
+        virtual bool is_equal(__Field_Element* operand_1, __Field_Element* operand_2)const{return (*(reinterpret_cast<T*>(operand_1))) == (*(reinterpret_cast<T*>(operand_2)));};
+        // Operations
+        virtual std::shared_ptr<__Field_Element> addition(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) + *(reinterpret_cast<T*>(operand_2)));};
+        virtual std::shared_ptr<__Field_Element> division(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) / *(reinterpret_cast<T*>(operand_2)));};
+        virtual std::shared_ptr<__Field_Element> multiplication(__Field_Element* operand_1, const __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) * *(reinterpret_cast<const T*>(operand_2)));};
+        virtual std::shared_ptr<__Field_Element> substraction(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) - *(reinterpret_cast<T*>(operand_2)));};
+        // Property
+        virtual std::shared_ptr<Polynomial_Base> clone()const{std::shared_ptr<Polynomial_Base> to_return = std::make_shared<Polynomial_Template<T>>();for(int i = 0;i<static_cast<int>(monomonials_const().size());i++){to_return.get()->__add_monomonial(monomonials_const().at(i).get());}return to_return;};
+        virtual std::shared_ptr<Polynomial_Base> clone_empty()const{std::shared_ptr<Polynomial_Base> to_return = std::make_shared<Polynomial_Template<T>>();return to_return;};
+        virtual bool is_absorbing_multiplication(__Field_Element* operand)const{return (*(reinterpret_cast<T*>(operand))) == 0;};
+    };
+    typedef Polynomial_Template<Complex> Polynomial;
+
+    class Polynomial_Complex {
+    public:
+        // Polynomial_Complex constructor
+        Polynomial_Complex(){a_polynomial.push_back(__Polynomial_Complex_Member());a_polynomial.push_back(__Polynomial_Complex_Member());a_polynomial[0].unknown = std::string("");a_polynomial[1].unknown = std::string("i");};
+
+        // Conjugates the polynomial
+        inline std::shared_ptr<Polynomial_Complex> conjugate(){std::shared_ptr<Polynomial_Complex> to_return = std::make_shared<Polynomial_Complex>(*this);to_return.get()->imaginary_polynomial()->multiply(scls::Complex(-1));return to_return;};
+        // Converts a polynomial to a complex
+        static std::shared_ptr<Polynomial_Complex> from_polynomial(Polynomial* polynomial);
+        // Returns the imaginary polynomial
+        inline Polynomial* imaginary_polynomial() const {for(int i = 0;i<static_cast<int>(a_polynomial.size());i++){if(a_polynomial[i].unknown == std::string("i")){return a_polynomial[i].polynomial.get();}}return 0;};
+        // Returns the real polynomial
+        inline Polynomial* real_polynomial() const {for(int i = 0;i<static_cast<int>(a_polynomial.size());i++){if(a_polynomial[i].unknown == std::string("")){return a_polynomial[i].polynomial.get();}}return 0;};
+        // Returns the polynomial to an entire polynomial
+        inline std::shared_ptr<Polynomial> to_polynomial() const {std::shared_ptr<Polynomial> to_return = std::make_shared<Polynomial>(*real_polynomial());to_return.get()->__add(imaginary_polynomial());to_return.get()->multiply(scls::Complex(0, 1));return to_return;};
+
+    private:
+        // Struct representating each members of the number
+        struct __Polynomial_Complex_Member{std::shared_ptr<Polynomial>polynomial=std::make_shared<Polynomial>();std::string unknown = std::string();};
+
+        // Each parts of the polynomial
+        std::vector<__Polynomial_Complex_Member> a_polynomial;
+    };
+
+	/*class Polynomial {
         // Class representating a full polynomial form
     public:
 
@@ -195,17 +365,14 @@ namespace scls {
         // Polynomial copy constructor
         Polynomial(const Polynomial& polynomial_copy){for(int i = 0;i<static_cast<int>(polynomial_copy.a_monomonials.size());i++){a_monomonials.push_back(polynomial_copy.a_monomonials.at(i));}};
 
-        // Returns the limit of a (only monomonial) polynomial for an unknown
-        scls::Limit limit(Limit needed_limit, std::string unknown_name);
-
         // Add a new monomonial to the polynomial
         void add_monomonial(__Monomonial new_monomonial);
-         // Returns all the unknowns in the formula
+        // Returns all the unknowns in the formula
         inline std::vector<std::string> all_unknowns(){std::vector<std::string> to_return;for(int i=0;i<static_cast<int>(a_monomonials.size());i++){for(int j=0;j<static_cast<int>(a_monomonials[i].unknowns().size());j++){std::string to_add=a_monomonials[i].unknowns()[j].name();if(to_add!=""&&std::count(to_return.begin(),to_return.end(),to_add)<=0){to_return.push_back(to_add);}}}return to_return;};
         // Returns if the polynomial contains a monomonial
-        inline __Monomonial* contains_monomonial(__Monomonial new_monomonial) {for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {if(a_monomonials[i].compare_unknown(new_monomonial)) {return &a_monomonials[i];}} return 0;};
+        inline __Monomonial* contains_monomonial(__Monomonial new_monomonial) {for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {if(a_monomonials[i].same_unknowns(&new_monomonial)) {return &a_monomonials[i];}} return 0;};
         // Returns if the polynomial is known
-        inline bool is_known() const {for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {if(!a_monomonials[i].is_known() && a_monomonials[i].factor() != 0) return false;} return true;};
+        inline bool is_known() const {for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {if(!a_monomonials[i].is_known() && a_monomonials[i].is_null()) return false;} return true;};
         // Returns if the polynomial is a simple monomonial
         inline bool is_simple_monomonial() const {return monomonials_number() <= 1;};
         // Returns the knows monomonial
@@ -282,6 +449,7 @@ namespace scls {
 	};
 
 	// Stream operator overloading
+    std::ostream& operator<<(std::ostream& os, const __Monomonial& obj);
     std::ostream& operator<<(std::ostream& os, Polynomial& obj);
 	// Divide operator
     Polynomial operator/(__Monomonial& obj, __Monomonial const& other);
@@ -345,7 +513,7 @@ namespace scls {
     protected:
         // Attached added element
         E a_element_add;
-	};
+	};//*/
 
 	//*********
 	//
