@@ -311,7 +311,7 @@ namespace scls {
     };
 
     // Divide a monomonial to this void
-    void Polynomial_Base::__divide(__Monomonial_Base* value) {std::shared_ptr<__Monomonial_Base> used_inverse = value->inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials.at(i).get()->__multiply(used_inverse.get());}};
+    void Polynomial_Base::__divide(__Monomonial_Base* value) {if(value == 0){return;}std::shared_ptr<__Monomonial_Base> used_inverse = value->inverse();for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {a_monomonials.at(i).get()->__multiply(used_inverse.get());}};
     void Polynomial_Base::__divide(Polynomial_Base* value) {
         // The value is a simple monomonial
         if(value->is_simple_monomonial()) {__divide(value->__monomonial());}

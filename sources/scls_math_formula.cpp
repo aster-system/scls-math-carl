@@ -36,6 +36,14 @@ namespace scls {
 	//
 	//*********
 
+	// __Formula_Base constructor
+    __Formula_Base::__Formula_Base(){}
+    __Formula_Base::__Formula_Base(Polynomial_Base* polynomial):a_polynomial(polynomial->clone()){}
+    __Formula_Base::__Formula_Base(Formula_Fraction frac){set_fraction(frac);}
+    __Formula_Base::__Formula_Base(Formula_Sum sum):__Formula_Base(&sum){}
+    __Formula_Base::__Formula_Base(Formula_Sum* sum){if(sum->is_simple_polynomial()){set_polynomial(sum);}else{set_fraction(sum);}}
+    __Formula_Base::__Formula_Base(const __Formula_Base& formula):a_polynomial(formula.polynomial_copy()),a_fraction(formula.fraction_copy()),a_applied_function(formula.applied_function_copy()){};
+
 	// Clears the container
     void __Formula_Base::Unknowns_Container::clear(){a_default_value.reset();a_unknowns.clear();};
 
@@ -43,14 +51,30 @@ namespace scls {
     void __Formula_Base::check_formula() {
         // Check if the formula is sub-placed too heavily
         if(is_simple_fraction() && !has_denominator() && a_fraction.get()->numerator()->formulas_add().size() == 1 && a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().size() == 1) {
-            if(a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().at(0).get() == 0){*this = 0;}
+            if(a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().at(0).get() == 0){clear();}
             else{std::shared_ptr<__Formula_Base>temp=a_fraction.get()->numerator()->formulas_add().at(0).get()->factors().at(0);paste(temp.get());}
         }
     }
+    // Clears the formula
+    void __Formula_Base::clear() {a_applied_function.reset();a_fraction.reset();a_polynomial.reset();};
+    // Pastes a formula to this one
+    void __Formula_Base::paste(__Formula_Base* value){a_applied_function=value->applied_function_copy();a_fraction = value->fraction_copy();a_polynomial = value->polynomial_copy();};
     // Soft_resets the formula
     void __Formula_Base::soft_reset(){a_to_double.clear();a_to_double_containers.clear();}
+    // Sub-place the current formula to a "formula add"
+    void __Formula_Base::sub_place(){std::shared_ptr<__Formula_Base> needed_copy = clone();clear();a_fraction = std::make_shared<__Formula_Base::Formula_Fraction>(needed_copy);};
 
-	// Returns the formula factor to a MathML
+    // Returns a copy of the formula
+    std::shared_ptr<__Formula_Base::Formula_Fraction> __Formula_Base::fraction_copy()const{if(a_fraction.get()==0){return std::shared_ptr<__Formula_Base::Formula_Fraction>();} return a_fraction.get()->fraction_copy();};
+    std::shared_ptr<Polynomial_Base> __Formula_Base::polynomial_copy()const{if(a_polynomial.get()==0){return std::shared_ptr<Polynomial>();}return a_polynomial.get()->clone();};
+    // Returns a part of the formula
+    __Monomonial_Base* __Formula_Base::__monomonial() const {if(__polynomial() == 0 || __polynomial()->__monomonial() == 0){return 0;}return __polynomial()->__monomonial();};
+    Polynomial_Base* __Formula_Base::Formula_Sum::polynomial() const {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){if(a_formulas_add.at(i).get()->is_simple_polynomial()){return a_formulas_add.at(i).get()->polynomial();}}return 0;}
+    Polynomial_Base* __Formula_Base::Formula_Factor::polynomial() const {for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(a_factors.at(i).get()->is_simple_polynomial()){return a_factors.at(i).get()->__polynomial();}}return 0;};
+    Polynomial_Base* __Formula_Base::Formula_Fraction::polynomial() const {return a_numerator.get()->polynomial();}
+    Polynomial_Base* __Formula_Base::__polynomial() const {if(a_polynomial.get() != 0){return a_polynomial.get();}else if(a_fraction.get()==0){return 0;} return a_fraction.get()->polynomial();};
+
+    // Returns the formula factor to a MathML
     std::string __Formula_Base::Formula_Factor::to_mathml(Textual_Math_Settings* settings) const {
         std::string to_return = "";
 
@@ -69,9 +93,9 @@ namespace scls {
         // Add the Polynomial add
         if(a_polynomial.get() != 0) {
             std::string current_str = std::string();
-            Polynomial needed_polynomial = (*a_polynomial.get());
-            if(!needed_polynomial.is_null()) {
-                current_str = needed_polynomial.to_mathml(settings);
+            Polynomial_Base* needed_polynomial = a_polynomial.get();
+            if(!needed_polynomial->is_null()) {
+                current_str = needed_polynomial->to_mathml(settings);
                 if(current_str != "") {to_return += current_str;}
             }
         }
@@ -106,9 +130,9 @@ namespace scls {
         // Add the Polynomial add
         if(a_polynomial.get() != 0) {
             std::string current_str = std::string();
-            Polynomial needed_polynomial = (*a_polynomial.get());
-            if(!needed_polynomial.is_null() || (settings != 0 && !settings->hide_if_0())) {
-                current_str = needed_polynomial.to_std_string(settings);
+            Polynomial_Base* needed_polynomial = a_polynomial.get();
+            if(!needed_polynomial->is_null() || (settings != 0 && !settings->hide_if_0())) {
+                current_str = needed_polynomial->to_std_string(settings);
                 if(current_str != "") {to_return += current_str;}
             }
         }
@@ -133,177 +157,79 @@ namespace scls {
         return to_return;
     }
     // Returns a formula from a monomonial where the unknows has been replaced
-    __Formula_Base::Formula __Formula_Base::formula_from_modified_monomonial_unknows(__Monomonial used_monomonial, std::string unknown, __Formula_Base new_value) {
-        __Formula_Base::Formula final_formula;
-
-        _Base_Unknown* unknown_ptr = used_monomonial.contains_unknown(unknown);
+    void __Formula_Base::formula_from_modified_monomonial_unknows(__Formula_Base* final_formula, __Monomonial_Base* used_monomonial, std::string unknown, __Formula_Base* new_value) {
+        _Base_Unknown* unknown_ptr = used_monomonial->contains_unknown(unknown);
         if(unknown_ptr!= 0) {
             // The monomonial is a multiplication between the unknown and the base value
             Complex exponent = unknown_ptr->exponent();
-            used_monomonial.delete_unknown(unknown);
+            used_monomonial->delete_unknown(unknown);
             // Create the good value
-            __Formula_Base final_to_add = new_value;
             int needed_exponent = static_cast<int>(exponent.real().to_double());
-            final_formula = new_value;
-            if(needed_exponent > 0){for(int i = 1;i<needed_exponent;i++) {final_formula *= new_value;}}
-            else{final_formula = 1;for(int i = 0;i<-needed_exponent;i++) {final_formula /= new_value;}}
-            final_formula *= used_monomonial;
+            final_formula->paste(new_value);
+            if(needed_exponent > 0){for(int i = 1;i<needed_exponent;i++) {final_formula->__multiply(new_value);}}
+            else{for(int i = 0;i<-needed_exponent;i++) {final_formula->__divide(new_value);}}
+            final_formula->__multiply(used_monomonial);
         }
-        else {final_formula = used_monomonial;}
-
-        return final_formula;
+        else {final_formula->set_polynomial(used_monomonial);}
     };
     // Returns a formula from a Polynomial where the unknows has been replaced
-    __Formula_Base::Formula __Formula_Base::formula_from_modified_polynomial_unknows(Polynomial used_polynomial, std::string unknown, __Formula_Base new_value) {
-        __Formula_Base::Formula final_formula;
-
+    void __Formula_Base::formula_from_modified_polynomial_unknows(__Formula_Base* final_formula, Polynomial_Base* used_polynomial, std::string unknown, __Formula_Base* new_value) {
         // Browse each Polynomials
-        std::vector<std::shared_ptr<__Monomonial_Base>>& monomonials = used_polynomial.monomonials();
-        for(int i = 0;i<static_cast<int>(monomonials.size());i++) {final_formula += formula_from_modified_monomonial_unknows(*used_polynomial.monomonial(i), unknown, new_value);}
-
-        return final_formula;
+        std::vector<std::shared_ptr<__Monomonial_Base>>& monomonials = used_polynomial->monomonials();
+        for(int i = 0;i<static_cast<int>(monomonials.size());i++) {formula_from_modified_monomonial_unknows(final_formula, used_polynomial->monomonials().at(i).get(), unknown, new_value);}
     };
     // Returns a formula where an unkown is replaced by an another unknown
     // Returns a Formula_Factor where an unkown is replaced by an another unknown
-    __Formula_Base __Formula_Base::Formula_Factor::replace_unknown(std::string unknown, __Formula_Base new_value) const {
-        __Formula_Base to_return;
-
+    void __Formula_Base::Formula_Factor::replace_unknown(__Formula_Base* to_return, std::string unknown, __Formula_Base* new_value) const {
         // Replace each factors
-        for(int i = 0;i<static_cast<int>(a_factors.size());i++) {__Formula_Base current=(*a_factors.at(i).get()->replace_unknown(unknown, new_value).formula_base());to_return*=current;}
-
-        return to_return;
+        for(int i = 0;i<static_cast<int>(a_factors.size());i++) {std::shared_ptr<__Formula_Base> current=std::shared_ptr<__Formula_Base>(a_factors.at(i).get()->replace_unknown_new(unknown, new_value));to_return->__multiply(current.get());}
     }
-    __Formula_Base::Formula __Formula_Base::replace_unknown(std::string unknown, __Formula_Base new_value) const {
-        __Formula_Base::Formula current_formula;
-        __Formula_Base::Formula final_formula = Formula(1);
-        final_formula.set_applied_function(applied_function_shared_ptr());
-        if(final_formula == 1) {std::shared_ptr<__Formula_Base_Function> used_function = applied_function_shared_ptr(); final_formula = 0; final_formula.set_applied_function(used_function);}
+    __Formula_Base* __Formula_Base::replace_unknown_new(std::string unknown, __Formula_Base* new_value) const {
+        __Formula_Base* final_formula = clone_new();
+        final_formula->set_applied_function(applied_function_shared_ptr());
+        if(final_formula->is_multiplication_neutral()) {std::shared_ptr<__Formula_Base_Function> used_function = applied_function_shared_ptr(); final_formula->clear();final_formula->set_applied_function(used_function);}
 
         // Add the added Polynomial
-        if(a_polynomial.get() != 0) {final_formula += formula_from_modified_polynomial_unknows(*a_polynomial.get(), unknown, new_value);}
+        if(a_polynomial.get() != 0) {formula_from_modified_polynomial_unknows(final_formula, a_polynomial.get(), unknown, new_value);}
 
         // Returns the result
-        final_formula.set_applied_function(applied_function_shared_ptr());
+        final_formula->set_applied_function(applied_function_shared_ptr());
         return final_formula;
     };
-    __Formula_Base::Formula __Formula_Base::replace_unknown(std::string unknown, __Formula_Base::Formula new_value) const{return replace_unknown(unknown, *new_value.formula_base());}
-    __Formula_Base::Formula __Formula_Base::replace_unknowns(Unknowns_Container* values) const{
+    __Formula_Base* __Formula_Base::replace_unknowns_new(Unknowns_Container* values) const{
         // Get the needed datas
-        __Formula_Base::Formula current_formula_complete_base = internal_value();
-        __Formula_Base current_formula = (*current_formula_complete_base.formula_base());
+        __Formula_Base* current_formula = clone_new();
         std::vector<std::string> unknowns = all_unknowns();
 
         // Get the needed value
         if(static_cast<int>(unknowns.size()) > 0 && values == 0){print("Warning", std::string("SCLS Carl Math"), std::string("Can't use unknowns with the formula \"") + to_std_string(0) + std::string("\" : now unknown container used."));}
-        for(int i = 0;i<static_cast<int>(unknowns.size());i++) {__Formula_Base* needed_value=values->value_by_name(unknowns[i]);if(needed_value!=0){current_formula = (*current_formula.replace_unknown(unknowns[i], *needed_value).formula_base());}}
+        for(int i = 0;i<static_cast<int>(unknowns.size());i++) {__Formula_Base* needed_value=values->value_by_name(unknowns[i]);if(needed_value!=0){current_formula = current_formula->replace_unknown_new(unknowns[i], needed_value);}}
 
         // Return the result
-        if(a_applied_function.get() != 0){current_formula.set_applied_function(a_applied_function.get()->function_copy());}
+        if(a_applied_function.get() != 0){current_formula->set_applied_function(a_applied_function.get()->function_copy());}
         return current_formula;
     };
-    // Returns the final value of the formula
-    scls::Complex __Formula_Base::Formula_Factor::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = scls::Complex(1);for(int i=0;i<static_cast<int>(a_factors.size());i++){to_return*=a_factors.at(i).get()->value(values);}return to_return;}
-    scls::Complex __Formula_Base::Formula_Sum::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = scls::Complex(0);for(int i=0;i<static_cast<int>(a_formulas_add.size());i++){to_return+=a_formulas_add.at(i).get()->value(values);}return to_return;}
-    scls::Complex __Formula_Base::Formula_Fraction::value(__Formula_Base::Unknowns_Container* values){scls::Complex to_return = 0;if(numerator()!=0){to_return = numerator()->value(values);}if(denominator() != 0){to_return._divide(denominator()->value(values));}return to_return;}
-    scls::Complex __Formula_Base::value(scls::Fraction current_value){Unknowns_Container temp = Unknowns_Container(current_value);return value(&temp);};
-    scls::Complex __Formula_Base::value(__Formula_Base::Unknowns_Container* values) {
-        // Simpler models
-        if(is_simple_monomonial() && is_basic()){__Monomonial* needed_monomonial = a_polynomial.get()->monomonial();if(needed_monomonial != 0 && needed_monomonial->is_known()){return *needed_monomonial->factor();}}
-
-        // Get the needed datas
-        __Formula_Base::Formula current_formula_complete_base = internal_value();
-        __Formula_Base current_formula = (*current_formula_complete_base.formula_base());
-        std::vector<std::string> unknowns = all_unknowns();
-
-        // Get the needed value
-        current_formula = *current_formula.replace_unknowns(values).formula_base();
-
-        // Get the final formula
-        __Formula_Base::Formula final_formula;
-        if(current_formula.a_polynomial.get() != 0){final_formula = (*current_formula.a_polynomial.get());}
-        else if(current_formula.a_fraction.get() != 0){final_formula = current_formula.a_fraction.get()->value(values);}
-
-        // Apply the function
-        scls::Complex to_return = scls::Complex(1);
-        if(applied_function() != 0){final_formula = final_formula.formula_base()->value(values);to_return = scls::Fraction::from_double(applied_function()->real_value(final_formula.formula_base()));}
-        else{to_return = final_formula.to_polynomial().known_monomonial_factor();}
-
-        // Returns the value
-        return to_return;
-    }
-    // Returns the value to a fraction
-    scls::Fraction __Formula_Base::value_to_fraction(Unknowns_Container* values){return value(values).real();};
-    scls::Fraction __Formula_Base::value_to_fraction(scls::Fraction current_value){return value(current_value).real();};
-    scls::Fraction __Formula_Base::value_to_fraction(){return value(1).real();};
-    // Returns the value to a double
-    double* __Formula_Base::calculated_to_double(Unknowns_Container* container){
-        for(int i = 0;i<static_cast<int>(a_to_double_containers.size());i++){
-            if(a_to_double_containers.at(i)==container){return &a_to_double[i];}
-        }
-        return 0;
-    }
-    double __Formula_Base::value_to_double(Unknowns_Container* values){
-        // TEMP
-        return value(values).real().to_double();
-
-        // TO EDIT
-        double* calculated = calculated_to_double(values);
-        if(calculated == 0){
-            double new_to_double = value(values).real().to_double();
-            a_to_double.push_back(new_to_double);
-            a_to_double_containers.push_back(values);
-            calculated = &a_to_double[a_to_double.size() - 1];
-        }
-
-        return *calculated;
-    };
-    double __Formula_Base::value_to_double(scls::Fraction current_value){
-        if(current_value == 1) {
-            double* calculated = calculated_to_double(0);
-            if(calculated == 0){
-                double new_to_double=value(1).real().to_double();
-                a_to_double.push_back(new_to_double);
-                a_to_double_containers.push_back(0);
-                calculated = &a_to_double[a_to_double.size() - 1];
-            }
-            return *calculated;
-        }
-
-        return value(current_value).real().to_double();
-    }
-    double __Formula_Base::value_to_double(){return value_to_double(1);}
-
-    // Returns the final value of the formula
-    scls::Complex __Formula_Base::Formula::value(Unknowns_Container* values) const {return a_formula.get()->value(values);};
-    scls::Complex __Formula_Base::Formula::value(scls::Fraction current_value) const {return a_formula.get()->value(current_value);};
-    scls::Fraction __Formula_Base::Formula::value_to_fraction(Unknowns_Container* values) const {return a_formula.get()->value_to_fraction(values);};
-    scls::Fraction __Formula_Base::Formula::value_to_fraction(scls::Fraction current_value) const {return a_formula.get()->value_to_fraction(current_value);};
-    scls::Fraction __Formula_Base::Formula::value_to_fraction() const {return a_formula.get()->value_to_fraction();};
-    double __Formula_Base::Formula::value_to_double(Unknowns_Container* values) const {return a_formula.get()->value_to_double(values);};
-    double __Formula_Base::Formula::value_to_double(scls::Fraction current_value) const {return a_formula.get()->value_to_double(current_value);};
-    double __Formula_Base::Formula::value_to_double() const {return a_formula.get()->value_to_double();};
 
     // Methods operators
     // Add a formula to this one
+    void __Formula_Base::Formula_Fraction::__add(__Formula_Base* value){std::shared_ptr<__Formula_Base>temp=value->clone();if(a_denominator.get() != 0){temp.get()->__multiply(a_denominator.get());}a_numerator.get()->__add(temp.get());};
     void __Formula_Base::__add(__Formula_Base* value) {
         // Asserts
-        if(value == 0 || *value == 0) {return;}
-        else if(*this == 0) {*this = *value;return;}
+        if(value == 0 || value->is_null()) {return;}
+        else if(is_null()) {paste(value);return;}
 
         // Does the redaction
         if(a_redaction != 0) {(*a_redaction) += std::string(std::string("Nous cherchon à rajouter la formule \"") + value->to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));}
 
         // Check if values are both Polynomial
         if(is_simple_polynomial() && value->is_simple_polynomial()){
-            Polynomial temp = value->to_polynomial();
-            a_polynomial.get()->__add(&temp);
-            if(a_redaction != 0) {
-                (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple addition de polynôme."));
-            }
+            Polynomial_Base* temp = value->__polynomial();
+            a_polynomial.get()->__add(temp);
+            if(a_redaction != 0) {(*a_redaction) += std::string(std::string("Or, il s'agit d'une simple addition de polynôme."));}
         }
         else {
             if(!is_basic() || is_simple_polynomial()){sub_place();}
-            a_fraction.get()->__add(*value);
+            a_fraction.get()->__add(value);
             if(a_redaction != 0) {
                 (*a_redaction) += std::string(std::string("Or, il s'agit d'une addition de termes non-additionnables."));
             }
@@ -314,15 +240,15 @@ namespace scls {
         soft_reset();
     };
     // Divide a formula to this one
-    void __Formula_Base::Formula_Factor::__divide(__Formula_Base value) {basic_formula()->__divide(value);}
-    // Divide a formula to this one
-    void __Formula_Base::Formula_Fraction::__divide(__Formula_Base value){
+    void __Formula_Base::Formula_Factor::__divide(__Formula_Base* value) {basic_formula()->__divide(value);}
+    void __Formula_Base::Formula_Fraction::__divide(__Formula_Base* value){
         // Handle the division
-        if(!value.is_basic() || !is_simple_polynomial()) {if(a_denominator.get() == 0){a_denominator=std::make_shared<Formula_Sum>(value);}else{a_denominator.get()->__multiply(value);}}
-        else {
-            if(value.is_simple_monomonial()) {
+        if(!value->is_basic() || !is_simple_polynomial() || true) {if(a_denominator.get() == 0){a_denominator=std::make_shared<Formula_Sum>(value);}else{a_denominator.get()->__multiply(value);}}
+        // TEMPORARY DISABLED
+        /*else {
+            if(value->is_simple_monomonial()) {
                 // Apply a division of a simple monomonial
-                __Monomonial used_monomonial = *value.to_polynomial().monomonial();
+                __Monomonial_Base used_monomonial* = value->__polynomial()->__monomonial();
                 // Handle the complex part
                 if(used_monomonial.factor()->imaginary() != 0) {
                     // Get the needed divisor
@@ -351,18 +277,18 @@ namespace scls {
                 }
             }
             else {if(a_denominator.get() == 0){a_denominator=std::make_shared<Formula_Sum>(value);}else{a_denominator.get()->__multiply(value);}}
-        }
+        }//*/
     }
-    void __Formula_Base::__divide(__Formula_Base value) {
+    void __Formula_Base::__divide(__Formula_Base* value) {
         // Redaction
         if(a_redaction != 0) {
-            (*a_redaction) += std::string(std::string("Nous cherchons à diviser la formule \"") + value.to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));
+            (*a_redaction) += std::string(std::string("Nous cherchons à diviser la formule \"") + value->to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));
         }
 
         // Check if values are both Polynomial
-        if(is_basic() && is_simple_polynomial() && value.is_simple_monomonial()) {
-            __Monomonial temp = value.to_monomonial();
-            a_polynomial.get()->__divide(&temp);
+        if(is_basic() && is_simple_polynomial() && value->is_simple_monomonial()) {
+            __Monomonial_Base* temp = value->__monomonial();
+            a_polynomial.get()->__divide(temp);
             if(a_redaction != 0) {
                 (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple division polynôme / monôme."));
             }
@@ -380,34 +306,44 @@ namespace scls {
         soft_reset();
     };
     // Returns if two numbers/formulas are equals
-    bool __Formula_Base::__is_equal(int value)const{if(a_polynomial.get() != 0){return a_polynomial.get()->is_equal(scls::Complex(value));} return a_fraction.get()->__is_equal(value);};
-    bool __Formula_Base::__is_equal(Fraction value)const{if(a_polynomial.get() != 0){return a_polynomial.get()->is_equal(scls::Complex(value));}return a_fraction.get()->__is_equal(value);};
-    bool __Formula_Base::__is_equal(Polynomial value)const{if(a_polynomial.get() != 0){return a_polynomial.get()->__is_equal(&value);}return a_fraction.get()->__is_equal(value);};
-    bool __Formula_Base::__is_equal(__Formula_Base value)const{
-        if(!((a_applied_function.get() == 0 && value.a_applied_function.get() == 0) || (a_applied_function.get() != 0 && value.a_applied_function.get() != 0 && a_applied_function.get()->name() == value.a_applied_function.get()->name()))){return false;}
+    bool __Formula_Base::Formula_Sum::__is_equal(Polynomial_Base* value)const{return a_formulas_add.size() == 1 && a_formulas_add.at(0).get()->__is_equal(value);}
+    bool __Formula_Base::Formula_Sum::__is_equal(__Formula_Base* value)const{return a_formulas_add.size() == 1 && a_formulas_add.at(0).get()->__is_equal(value);}
+    bool __Formula_Base::Formula_Factor::__is_equal(Polynomial_Base* value)const{return a_factors.size() == 1 && a_factors.at(0).get()->__is_equal(value);}
+    bool __Formula_Base::Formula_Factor::__is_equal(__Formula_Base* value)const{return a_factors.size() == 1 && a_factors.at(0).get()->__is_equal(value);}
+    bool __Formula_Base::__is_equal(Polynomial_Base* value)const{std::shared_ptr<__Formula_Base>temp=new_formula();temp.get()->set_polynomial(value);return __is_equal(temp.get());}
+    bool __Formula_Base::__is_equal(__Formula_Base* value)const{
+        if(!((a_applied_function.get() == 0 && value->a_applied_function.get() == 0) || (a_applied_function.get() != 0 && value->a_applied_function.get() != 0 && a_applied_function.get()->name() == value->a_applied_function.get()->name()))){return false;}
 
         // Polynomial
-        if(a_fraction.get() == 0 && value.a_fraction.get() == 0) {return a_polynomial.get()->__is_equal(value.a_polynomial.get());}
+        if(a_fraction.get() == 0 && value->fraction() == 0) {return a_polynomial.get()->__is_equal(value->__polynomial());}
 
         // Fraction
-        else if((a_fraction.get() != 0 && value.a_fraction.get() == 0) || (a_fraction.get() == 0 && value.a_fraction.get() != 0)){return false;}
-        return a_fraction.get()->__is_equal(value.internal_value());
+        else if((a_fraction.get() != 0 && value->fraction() == 0) || (a_fraction.get() == 0 && value->fraction() != 0)){return false;}
+        std::shared_ptr<__Formula_Base>temp=std::shared_ptr<__Formula_Base>(value->__internal_value_new());return fraction()->__is_equal(temp.get());
     };
     // Multiply a Polynomial to this one
-    void __Formula_Base::Formula_Factor::__multiply(__Formula_Base value){
-        if(value.is_simple_polynomial()){__multiply(value.to_polynomial());}
-        else{a_factors.push_back(std::make_shared<__Formula_Base>(value));}
+    void __Formula_Base::Formula_Sum::__multiply(Polynomial_Base* value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}}
+    void __Formula_Base::Formula_Sum::__multiply(__Formula_Base* value) {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){a_formulas_add.at(i).get()->__multiply(value);}}
+    void __Formula_Base::Formula_Factor::__multiply(Polynomial_Base* value) {if(!basic_formula_exists()){basic_formula()->set_polynomial(value);}else{basic_formula()->__multiply(value);}}
+    void __Formula_Base::Formula_Factor::__multiply(__Formula_Base* value){
+        if(value->is_simple_polynomial()){__multiply(value->__polynomial());}
+        else{a_factors.push_back(value->clone());}
     }
-    void __Formula_Base::__multiply(__Formula_Base value) {
+    void __Formula_Base::Formula_Fraction::__multiply(Polynomial_Base* value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}}
+    void __Formula_Base::Formula_Fraction::__multiply(__Formula_Base* value) {if(a_denominator.get() != 0 && a_denominator.get()->__is_equal(value)){a_denominator.reset();}else{a_numerator.get()->__multiply(value);}}
+    void __Formula_Base::__multiply(__Monomonial_Base* value){std::shared_ptr<__Formula_Base>temp=new_formula();temp.get()->set_polynomial(value);__multiply(temp.get());}
+    void __Formula_Base::__multiply(Polynomial_Base* value){std::shared_ptr<__Formula_Base>temp=new_formula();temp.get()->set_polynomial(value);__multiply(temp.get());}
+    void __Formula_Base::__multiply(__Formula_Base::Formula_Sum* value){std::shared_ptr<__Formula_Base>temp=new_formula();temp.get()->set_polynomial(value);__multiply(temp.get());}
+    void __Formula_Base::__multiply(__Formula_Base* value) {
         // Redaction
         if(a_redaction != 0) {
-            (*a_redaction) += std::string(std::string("Nous cherchon à multiplier la formule \"") + value.to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));
+            (*a_redaction) += std::string(std::string("Nous cherchon à multiplier la formule \"") + value->to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));
         }
 
         // Check Polynomial
-        if(is_simple_polynomial() && value.is_simple_polynomial()) {
-            Polynomial temp = value.to_polynomial();
-            a_polynomial.get()->__multiply(&temp);
+        if(is_simple_polynomial() && value->is_simple_polynomial()) {
+            Polynomial_Base* temp = value->__polynomial();
+            a_polynomial.get()->__multiply(temp);
             if(a_redaction != 0) {
                 (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple multiplication de polynômes."));
             }
@@ -416,7 +352,7 @@ namespace scls {
             // Handle functions
             bool control = false;
             if(applied_function() != 0){
-                std::shared_ptr<__Formula_Base> new_value = applied_function()->multiply(this, &value);
+                std::shared_ptr<__Formula_Base> new_value = applied_function()->multiply(this, value);
                 if(new_value.get() != 0) {
                     paste(new_value.get());
                     control = true;
@@ -437,27 +373,21 @@ namespace scls {
         check_formula();
         soft_reset();
     };
-
-    // Calculate the derivate value of the SQRT function
-    std::shared_ptr<__Formula_Base> __Sqrt_Function::derivate_value(__Formula_Base formula){
-        if(formula.applied_function() == 0){formula.set_applied_function<__Sqrt_Function>();}
-        std::shared_ptr<__Formula_Base> to_return=std::make_shared<__Formula_Base>(1);
-        to_return.get()->__divide(formula * 2);
-        return to_return;
-    };
+    // Substract a value to this one
+    void __Formula_Base::__substract(__Formula_Base* value){std::shared_ptr<__Formula_Base> temp = opposite();__add(temp.get());}
 
     // Multiply a value with the function
     std::shared_ptr<__Formula_Base> __Sqrt_Function::multiply(__Formula_Base* value_1, __Formula_Base* value_2){
         if(value_1->applied_function() != 0 && value_2->applied_function() != 0 && value_1->applied_function()->name() == value_2->applied_function()->name()) {
-            std::shared_ptr<__Formula_Base> copied_1 = value_1->formula_copy();
-            std::shared_ptr<__Formula_Base> copied_2 = value_2->formula_copy();
+            std::shared_ptr<__Formula_Base> copied_1 = value_1->clone();
+            std::shared_ptr<__Formula_Base> copied_2 = value_2->clone();
             copied_1.get()->clear_applied_function();copied_2.get()->clear_applied_function();
 
             // Same value
-            if(*copied_1.get() == *copied_2.get()){return copied_1;}
+            if(copied_1.get()->__is_equal(copied_2.get())){return copied_1;}
 
             // Normal multiplication
-            copied_1.get()->__multiply(*copied_2.get());
+            copied_1.get()->__multiply(copied_2.get());
             copied_1.get()->set_applied_function<__Sqrt_Function>();
             return copied_1;
         }
@@ -465,7 +395,4 @@ namespace scls {
         return std::shared_ptr<__Formula_Base>();
     };
 
-    // Calculate the derivate value of the COS and SIN function
-    std::shared_ptr<__Formula_Base> __Cos_Function::derivate_value(__Formula_Base formula){formula.set_applied_function<__Sin_Function>();formula*=-1;return std::make_shared<__Formula_Base>(formula);}
-    std::shared_ptr<__Formula_Base> __Sin_Function::derivate_value(__Formula_Base formula){formula.set_applied_function<__Cos_Function>();return std::make_shared<__Formula_Base>(formula);}
 }

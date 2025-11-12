@@ -246,13 +246,13 @@ namespace scls {
     // Rotates the formula
     __Point_2D_Formula __Point_2D_Formula::rotated(double rotation) const {
         double* rotated_point = __rotate_vector_3d(a_x.get()->value_to_double(), 0, a_y.get()->value_to_double(), 0, rotation, 0);
-        __Point_2D_Formula to_return;(*to_return.a_x.get()) = scls::Fraction::from_double(rotated_point[0]);(*to_return.a_y.get()) = scls::Fraction::from_double(rotated_point[2]);
+        __Point_2D_Formula to_return;(*to_return.a_x.get()) = scls::Complex::from_double(rotated_point[0]);(*to_return.a_y.get()) = scls::Complex::from_double(rotated_point[2]);
         delete rotated_point; return to_return;
     }
     void __Point_2D_Formula::rotate(double rotation) {if(rotation != 0){__Point_2D_Formula new_point = rotated(rotation);a_x = new_point.a_x; a_y = new_point.a_y;}};
 
     // Returns the point to XML text
-    std::string __Point_2D_Formula::to_xml_text(){std::string needed_x = x().to_std_string(0);if(needed_x==std::string()){needed_x=std::string("0");}std::string needed_y = y().to_std_string(0);if(needed_y==std::string()){needed_y=std::string("0");} return std::string("(") + needed_x + std::string(",") + needed_y + std::string(")");}
+    std::string __Point_2D_Formula::to_xml_text(){std::string needed_x = x()->to_std_string(0);if(needed_x==std::string()){needed_x=std::string("0");}std::string needed_y = y()->to_std_string(0);if(needed_y==std::string()){needed_y=std::string("0");} return std::string("(") + needed_x + std::string(",") + needed_y + std::string(")");}
 
     // Operators
     bool operator==(const Point_2D object_1, const Point_2D object_2){return object_1.x() == object_2.x() && object_1.y() == object_2.y();};
@@ -273,8 +273,7 @@ namespace scls {
     // Transform_Object_2D constructor
     Transform_Object_2D::Transform_Object_2D():__Transform_Object_2D_Base(){};
     // Copy constructor
-    Transform_Object_2D::Transform_Object_2D(Point_2D point_2d):Transform_Object_2D(__Point_2D_Formula(point_2d)){};
-    Transform_Object_2D::Transform_Object_2D(__Point_2D_Formula point_2d):a_position(point_2d){};
+    Transform_Object_2D::Transform_Object_2D(Point_2D point_2d):a_position(point_2d){};
     // Transform_Object_2D destructor
     Transform_Object_2D::~Transform_Object_2D(){if(parent() != 0){parent()->remove_child(this);}};
 
@@ -286,28 +285,16 @@ namespace scls {
         if(parent()->absolute_rotation() != 0){current_position.rotate(parent()->absolute_rotation());}
         return parent()->absolute_x() + current_position.x();
     }
-    __Formula_Base::Formula Transform_Object_2D::absolute_x_formula() const {
-        if(parent() == 0){return x_formula().formula_copy();}
-        Point_2D_Formula current_position = position_formula() * parent()->absolute_scale_formula();
-        if(parent()->rotation() != 0){current_position.rotate(parent()->rotation());}
-        return parent()->absolute_x_formula() + current_position.x();
-    }
     double Transform_Object_2D::absolute_y() const {
         if(parent() == 0){return y();}
         Point_2D current_position = position() * parent()->absolute_scale();
         if(parent()->absolute_rotation() != 0){current_position.rotate(parent()->absolute_rotation());}
         return parent()->absolute_y() + current_position.y();
     }
-    __Formula_Base::Formula Transform_Object_2D::absolute_y_formula() const {
-        if(parent() == 0){return y_formula().formula_copy();}
-        Point_2D_Formula current_position = position_formula() * parent()->absolute_scale_formula();
-        if(parent()->absolute_rotation() != 0){current_position.rotate(parent()->rotation());}
-        return parent()->absolute_y_formula() + current_position.y();
-    }
 
     // Accelerates the object
-    void Transform_Object_2D::accelerate(Point_2D_Formula acceleration){a_velocity += acceleration;};
-    void Transform_Object_2D::accelerate(Point_2D acceleration){a_velocity += Point_2D_Formula(acceleration);};
+    void Transform_Object_2D::accelerate(Point_2D_Formula acceleration){a_velocity += acceleration.to_point_2d(0);};
+    void Transform_Object_2D::accelerate(Point_2D acceleration){a_velocity += acceleration;};
     void Transform_Object_2D::accelerate_x(double acceleration){a_velocity.move_x(acceleration);};
     void Transform_Object_2D::accelerate_y(double acceleration){a_velocity.move_y(acceleration);};
 
@@ -323,8 +310,8 @@ namespace scls {
     bool Transform_Object_2D::touch(Transform_Object_2D* object){return !((min_x() > object->max_x() || object->min_x() > max_x()) || (min_y() > object->max_y() || object->min_y() > max_y()));}
 
     // Move easily the object
-    void Transform_Object_2D::move_x(Fraction movement) {set_x(x_formula() + movement);};
-    void Transform_Object_2D::move_y(Fraction movement) {set_y(y_formula() + movement);};
+    void Transform_Object_2D::move_x(Fraction movement) {set_x(x() + movement.to_double());};
+    void Transform_Object_2D::move_y(Fraction movement) {set_y(y() + movement.to_double());};
 
     // Extremums
     double Transform_Object_2D::max_absolute_x() const {return absolute_x() + absolute_scale_x() / 2.0;};
@@ -353,24 +340,20 @@ namespace scls {
     void Transform_Object_2D::update_raw_velocity(){a_raw_velocity = a_velocity;};
 
     // Getters and setters
-    Point_2D_Formula Transform_Object_2D::position_formula() const{return a_position;}
-    Point_2D Transform_Object_2D::raw_velocity() const {return a_raw_velocity.to_point_2d(a_unknowns.get());}
-    void Transform_Object_2D::set_position(scls::Fraction new_x, scls::Fraction new_y){a_position.set_x(new_x);a_position.set_y(new_y);a_moved_during_this_frame = true;}
-    void Transform_Object_2D::set_position(Point_2D_Formula new_position){a_position.set_x(new_position.x());a_position.set_y(new_position.y());a_moved_during_this_frame = true;}
+    Point_2D Transform_Object_2D::raw_velocity() const {return a_raw_velocity;}
+    void Transform_Object_2D::set_position(scls::Fraction new_x, scls::Fraction new_y){a_position.set_x(new_x.to_double());a_position.set_y(new_y.to_double());a_moved_during_this_frame = true;}
+    void Transform_Object_2D::set_position(Point_2D_Formula new_position){a_position.set_x(new_position.x()->value_to_double());a_position.set_y(new_position.y()->value_to_double());a_moved_during_this_frame = true;}
     void Transform_Object_2D::set_raw_velocity(Point_2D new_raw_velocity){a_raw_velocity.set_x(new_raw_velocity.x());a_raw_velocity.set_y(new_raw_velocity.y());}
-    void Transform_Object_2D::set_x(scls::__Formula_Base::Formula new_x){a_position.set_x(new_x);a_moved_during_this_frame = true;}
-    void Transform_Object_2D::set_y(scls::__Formula_Base::Formula new_y){a_position.set_y(new_y);a_moved_during_this_frame = true;}
-    void Transform_Object_2D::set_velocity(Point_2D_Formula new_velocity){a_velocity.set_x(new_velocity.x());a_velocity.set_y(new_velocity.y());}
-    void Transform_Object_2D::set_velocity_x(__Formula_Base::Formula new_x){a_velocity.set_x(new_x);}
-    void Transform_Object_2D::set_velocity_y(__Formula_Base::Formula new_y){a_velocity.set_y(new_y);}
-    Point_2D Transform_Object_2D::velocity() const {return a_velocity.to_point_2d(a_unknowns.get());}
-    Point_2D_Formula Transform_Object_2D::velocity_formula() const{return a_velocity;}
+    void Transform_Object_2D::set_velocity(Point_2D new_velocity){a_velocity.set_x(new_velocity.x());a_velocity.set_y(new_velocity.y());}
+    void Transform_Object_2D::set_velocity_x(double new_x){a_velocity.set_x(new_x);}
+    void Transform_Object_2D::set_velocity_y(double new_y){a_velocity.set_y(new_y);}
+    void Transform_Object_2D::set_x(double new_x) {return a_position.set_x(new_x);}
+    void Transform_Object_2D::set_y(double new_y) {return a_position.set_y(new_y);}
+    Point_2D Transform_Object_2D::velocity() const {return a_velocity;}
     double Transform_Object_2D::velocity_x() const {return velocity().x();}
     double Transform_Object_2D::velocity_y() const {return velocity().y();}
-    double Transform_Object_2D::x() const {return a_position.x().value_to_double(a_unknowns.get());}
-    scls::__Formula_Base::Formula Transform_Object_2D::x_formula() const{return a_position.x();}
-    double Transform_Object_2D::y() const {return a_position.y().value_to_double(a_unknowns.get());}
-    scls::__Formula_Base::Formula Transform_Object_2D::y_formula() const{return a_position.y();}
+    double Transform_Object_2D::x() const {return a_position.x();}
+    double Transform_Object_2D::y() const {return a_position.y();}
 
     //*********
     //
@@ -404,10 +387,8 @@ namespace scls {
 
     // Returns the angle in radians for a vector 3D
     double vector_2d_angle(Point_2D needed_vector){return vector_2d_angle(needed_vector.x(), needed_vector.y());}
-    double vector_2d_angle(__Formula_Base::Formula vector_x_formula, __Formula_Base::Formula vector_y_formula) {
+    double vector_2d_angle(double vector_x, double vector_y) {
         // Calculate the first XZ angle
-        double vector_x = vector_x_formula.value_to_double();
-        double vector_y = vector_y_formula.value_to_double();
         double total_length = std::sqrt(vector_x * vector_x + vector_y * vector_y);
         double to_add = 0;
         if(total_length > 0){to_add = std::asin(std::abs(vector_y) / total_length);}

@@ -341,6 +341,8 @@ namespace scls {
         Complex(int real_part) : Complex(Fraction(real_part)) {};
         Complex(const Complex& to_copy) : Complex(to_copy.real(), to_copy.imaginary()) {};
 
+        // Returns a fraction from a double
+        static Complex from_double(double result){return __Fraction_Base::from_double(result);};
         // Returns the module of the complex
         inline scls::Fraction module() const{return a_real * a_real + a_imaginary * a_imaginary; };
         // Normalize the number
