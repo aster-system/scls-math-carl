@@ -300,6 +300,9 @@ namespace scls {
         virtual std::shared_ptr<Polynomial_Base> clone()const{std::shared_ptr<Polynomial_Base> to_return = std::make_shared<Polynomial_Template<T>>();for(int i = 0;i<static_cast<int>(monomonials_const().size());i++){to_return.get()->__add_monomonial(monomonials_const().at(i).get());}return to_return;};
         virtual std::shared_ptr<Polynomial_Base> clone_empty()const{std::shared_ptr<Polynomial_Base> to_return = std::make_shared<Polynomial_Template<T>>();return to_return;};
         virtual bool is_absorbing_multiplication(__Field_Element* operand)const{return (*(reinterpret_cast<T*>(operand))) == 0;};
+
+        // Operators
+        Polynomial_Template<T>& operator+=(__Monomonial_Template<T> to_add){__add(&to_add);return *this;};
     };
     typedef Polynomial_Template<Complex> Polynomial;
 

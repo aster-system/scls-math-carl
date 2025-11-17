@@ -457,12 +457,12 @@ namespace scls {
 
             // Get the final formula
             __Formula_Base_Template<T> final_formula;
-            if(current_formula.get()->polynomial() != 0){final_formula = current_formula.get()->polynomial();}
-            else if(current_formula.get()->fraction() != 0){final_formula = value(current_formula.get()->fraction(), values);}
+            if(current_formula.get()->fraction() != 0){final_formula = value(current_formula.get()->fraction(), values);}
+            else if(current_formula.get()->polynomial() != 0){final_formula = current_formula.get()->polynomial();}
 
             // Apply the function
             scls::Complex to_return = scls::Complex(1);
-            if(applied_function() != 0){final_formula = final_formula.value(values);to_return = scls::Fraction::from_double(applied_function()->real_value(&final_formula));}
+            if(applied_function() != 0){to_return = scls::Fraction::from_double(applied_function()->real_value(&final_formula));}
             else{to_return = final_formula.polynomial()->known_monomonial_factor();}
 
             // Returns the value

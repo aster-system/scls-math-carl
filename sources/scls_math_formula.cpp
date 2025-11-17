@@ -176,7 +176,12 @@ namespace scls {
     void __Formula_Base::formula_from_modified_polynomial_unknows(__Formula_Base* final_formula, Polynomial_Base* used_polynomial, std::string unknown, __Formula_Base* new_value) {
         // Browse each Polynomials
         std::vector<std::shared_ptr<__Monomonial_Base>>& monomonials = used_polynomial->monomonials();
-        for(int i = 0;i<static_cast<int>(monomonials.size());i++) {formula_from_modified_monomonial_unknows(final_formula, used_polynomial->monomonials().at(i).get(), unknown, new_value);}
+        std::shared_ptr<__Formula_Base> temp = final_formula->new_formula();std::shared_ptr<__Formula_Base> total = final_formula->new_formula();
+        for(int i = 0;i<static_cast<int>(monomonials.size());i++) {
+            formula_from_modified_monomonial_unknows(temp.get(), used_polynomial->monomonials().at(i).get(), unknown, new_value);
+            total.get()->__add(temp.get());
+        }
+        final_formula->paste(total.get());
     };
     // Returns a formula where an unkown is replaced by an another unknown
     // Returns a Formula_Factor where an unkown is replaced by an another unknown
@@ -219,13 +224,13 @@ namespace scls {
         else if(is_null()) {paste(value);return;}
 
         // Does the redaction
-        if(a_redaction != 0) {(*a_redaction) += std::string(std::string("Nous cherchon à rajouter la formule \"") + value->to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));}
+        if(a_redaction != 0) {(*a_redaction) += std::string(std::string("Nous cherchon ï¿½ rajouter la formule \"") + value->to_std_string(0) + std::string("\" ï¿½ \"") + to_std_string(0) + std::string("."));}
 
         // Check if values are both Polynomial
         if(is_simple_polynomial() && value->is_simple_polynomial()){
             Polynomial_Base* temp = value->__polynomial();
             a_polynomial.get()->__add(temp);
-            if(a_redaction != 0) {(*a_redaction) += std::string(std::string("Or, il s'agit d'une simple addition de polynôme."));}
+            if(a_redaction != 0) {(*a_redaction) += std::string(std::string("Or, il s'agit d'une simple addition de polynï¿½me."));}
         }
         else {
             if(!is_basic() || is_simple_polynomial()){sub_place();}
@@ -282,7 +287,7 @@ namespace scls {
     void __Formula_Base::__divide(__Formula_Base* value) {
         // Redaction
         if(a_redaction != 0) {
-            (*a_redaction) += std::string(std::string("Nous cherchons à diviser la formule \"") + value->to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));
+            (*a_redaction) += std::string(std::string("Nous cherchons ï¿½ diviser la formule \"") + value->to_std_string(0) + std::string("\" ï¿½ \"") + to_std_string(0) + std::string("."));
         }
 
         // Check if values are both Polynomial
@@ -290,7 +295,7 @@ namespace scls {
             __Monomonial_Base* temp = value->__monomonial();
             a_polynomial.get()->__divide(temp);
             if(a_redaction != 0) {
-                (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple division polynôme / monôme."));
+                (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple division polynï¿½me / monï¿½me."));
             }
         }
         else {
@@ -337,7 +342,7 @@ namespace scls {
     void __Formula_Base::__multiply(__Formula_Base* value) {
         // Redaction
         if(a_redaction != 0) {
-            (*a_redaction) += std::string(std::string("Nous cherchon à multiplier la formule \"") + value->to_std_string(0) + std::string("\" à \"") + to_std_string(0) + std::string("."));
+            (*a_redaction) += std::string(std::string("Nous cherchon ï¿½ multiplier la formule \"") + value->to_std_string(0) + std::string("\" ï¿½ \"") + to_std_string(0) + std::string("."));
         }
 
         // Check Polynomial
@@ -345,7 +350,7 @@ namespace scls {
             Polynomial_Base* temp = value->__polynomial();
             a_polynomial.get()->__multiply(temp);
             if(a_redaction != 0) {
-                (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple multiplication de polynômes."));
+                (*a_redaction) += std::string(std::string("Or, il s'agit d'une simple multiplication de polynï¿½mes."));
             }
         }
         else {
