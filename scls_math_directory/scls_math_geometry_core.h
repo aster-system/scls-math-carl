@@ -337,7 +337,7 @@ namespace scls {
         inline std::vector<std::shared_ptr<Transform_Object_2D>>& children() {return a_children;};
         inline Fraction delta_time() const {return a_delta_time;};
         inline unsigned int id() const {return a_id;};
-        inline bool moved_during_this_frame() const {return a_moved_during_this_frame;};
+        inline bool moved_during_this_frame() const {return a_moved_during_this_frame || (parent() != 0 && parent()->moved_during_this_frame());};
         inline Transform_Object_2D* parent() const {return a_parent.lock().get();};
         inline void remove_child(Transform_Object_2D* child){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children.at(i).get()==child){a_children.erase(a_children.begin()+i);return;}};};
         inline void set_delta_time(Fraction new_delta_time){a_delta_time = new_delta_time;};

@@ -347,8 +347,8 @@ namespace scls {
     void Transform_Object_2D::set_velocity(Point_2D new_velocity){a_velocity.set_x(new_velocity.x());a_velocity.set_y(new_velocity.y());}
     void Transform_Object_2D::set_velocity_x(double new_x){a_velocity.set_x(new_x);}
     void Transform_Object_2D::set_velocity_y(double new_y){a_velocity.set_y(new_y);}
-    void Transform_Object_2D::set_x(double new_x) {return a_position.set_x(new_x);}
-    void Transform_Object_2D::set_y(double new_y) {return a_position.set_y(new_y);}
+    void Transform_Object_2D::set_x(double new_x) {a_moved_during_this_frame = true;a_position.set_x(new_x);}
+    void Transform_Object_2D::set_y(double new_y) {a_moved_during_this_frame = true;a_position.set_y(new_y);}
     Point_2D Transform_Object_2D::velocity() const {return a_velocity;}
     double Transform_Object_2D::velocity_x() const {return velocity().x();}
     double Transform_Object_2D::velocity_y() const {return velocity().y();}

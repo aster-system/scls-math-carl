@@ -379,7 +379,7 @@ namespace scls {
         soft_reset();
     };
     // Substract a value to this one
-    void __Formula_Base::__substract(__Formula_Base* value){std::shared_ptr<__Formula_Base> temp = opposite();__add(temp.get());}
+    void __Formula_Base::__substract(__Formula_Base* value){std::shared_ptr<__Formula_Base> temp = value->opposite();__add(temp.get());}
 
     // Multiply a value with the function
     std::shared_ptr<__Formula_Base> __Sqrt_Function::multiply(__Formula_Base* value_1, __Formula_Base* value_2){

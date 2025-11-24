@@ -299,7 +299,7 @@ namespace scls {
         inline void set_fraction(Formula_Sum* sum){set_fraction(sum->sum_copy());};
         inline void set_polynomial(std::shared_ptr<Polynomial_Base> sum){a_polynomial=sum;a_fraction.reset();};
         inline void set_polynomial(Formula_Sum sum){set_polynomial(sum.polynomial()->clone());};
-        inline void set_polynomial(Formula_Sum* sum){set_polynomial(sum->polynomial()->clone());};
+        inline void set_polynomial(Formula_Sum* sum){if(sum->polynomial() != 0){set_polynomial(sum->polynomial()->clone());}};
         inline void set_polynomial(__Monomonial_Base* polynomial){a_polynomial=create_polynomial();a_polynomial.get()->__add(polynomial);a_fraction.reset();};
         inline void set_polynomial(Polynomial_Base* polynomial){set_polynomial(polynomial->clone());};
         // Converts the formula to a polynomial / monomonial
