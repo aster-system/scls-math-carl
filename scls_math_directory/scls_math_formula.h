@@ -32,7 +32,7 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
 
-    //*********
+	//*********
 	//
 	// The "Formula" class
 	//
@@ -77,8 +77,10 @@ namespace scls {
         class __Formula_Base_Function {
             public:
                 // __Formula_Base_Function constructor
-                __Formula_Base_Function(std::string new_name):a_name(new_name) {};
-                __Formula_Base_Function(const __Formula_Base_Function& function_copy):a_name(function_copy.a_name){};
+                __Formula_Base_Function(std::string new_name, unsigned int arity):a_arity(arity),a_name(new_name) {};
+                __Formula_Base_Function(const __Formula_Base_Function& function_copy):a_arity(function_copy.a_arity),a_name(function_copy.a_name){};
+                // __Formula_Base_Function destructor
+                virtual ~__Formula_Base_Function(){};
 
                 // Definition set of the function
                 virtual Set_Number definition_set(){return Set_Number::real();};
@@ -87,7 +89,8 @@ namespace scls {
                 // Multiply a value with the function
                 virtual std::shared_ptr<__Formula_Base> multiply(__Formula_Base* value_1, __Formula_Base* value_2){return std::shared_ptr<__Formula_Base>();};
                 // Real value
-                virtual double real_value(__Formula_Base* formula) = 0;
+                double real_value(__Formula_Base* formula){return real_value(std::vector<__Formula_Base*>(1, formula));}
+                virtual double real_value(std::vector<__Formula_Base*> formula) = 0;
                 // Simplify a value with the function
                 virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) = 0;
 
@@ -95,8 +98,11 @@ namespace scls {
                 virtual std::shared_ptr<__Formula_Base_Function> function_copy() = 0;
 
                 // Getters and setters
-                std::string name() const {return a_name;};
+                inline unsigned int arity() const {return a_arity;};
+                inline std::string name() const {return a_name;};
             protected:
+                // Arity of the function
+                const unsigned int a_arity;
                 // Name of the function
                 const std::string a_name;
         };
@@ -252,6 +258,8 @@ namespace scls {
         __Formula_Base(Formula_Sum sum);
         __Formula_Base(Formula_Sum* sum);
         __Formula_Base(const __Formula_Base& formula);
+        // __Formula_Base destructor
+        virtual ~__Formula_Base();
 
         // Checks if the formula is well formatted
         void check_formula();
@@ -305,6 +313,11 @@ namespace scls {
         // Converts the formula to a polynomial / monomonial
         __Monomonial_Base* __monomonial() const;
         Polynomial_Base* __polynomial() const;
+        // Returns a list of formula pointer
+        std::vector<__Formula_Base*> formulas_ptr();
+
+        // Apply an operator to this formula
+        void __apply(std::string needed_operator, __Formula_Base* value);
 
         // Methods operators
         void __add(__Formula_Base* value);
@@ -366,9 +379,11 @@ namespace scls {
         std::string* a_redaction = 0;
 
         // Each parts of the formula are in order
-
         // Polynomial of the formula (fraction is ignored if a polynomial is used)
         std::shared_ptr<Polynomial_Base> a_polynomial;
+
+        // Each sub-formulas of this formula
+        std::vector<std::shared_ptr<__Formula_Base>> a_formulas;
 
         // Attached fraction of the formula
         std::shared_ptr<Formula_Fraction> a_fraction;
@@ -376,7 +391,6 @@ namespace scls {
         std::shared_ptr<__Formula_Base> a_exponent;
         // Applied function to the ENTIRE formula
         std::shared_ptr<__Formula_Base_Function> a_applied_function;
-
 	};
     template <typename T> class __Formula_Base_Template : public __Formula_Base {
     public:
@@ -536,10 +550,10 @@ namespace scls {
     class __Cos_Function : public __Formula::__Formula_Base_Function {
         public:
             // __Formula_Base_Function constructor
-            __Cos_Function():__Formula_Base_Function("cos"){};
+            __Cos_Function():__Formula_Base_Function("cos", 1){};
 
             // Real value
-            virtual double real_value(__Formula_Base* formula){__Monomonial* needed_monomonial = reinterpret_cast<__Formula*>(formula)->polynomial()->known_monomonial();if(needed_monomonial == 0){return 1;}double value = needed_monomonial->factor()->real().to_double();return std::cos(value);};
+            virtual double real_value(std::vector<__Formula_Base*> formula){__Monomonial* needed_monomonial = reinterpret_cast<__Formula*>(formula.at(0))->polynomial()->known_monomonial();if(needed_monomonial == 0){return 1;}double value = needed_monomonial->factor()->real().to_double();return std::cos(value);};
             // Simplify a value with the function
             virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula>();};
 
@@ -547,16 +561,33 @@ namespace scls {
             virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Cos_Function>();};
     };
 
+    // Cosinus function possible for a formula
+	class __Division_Function : public __Formula::__Formula_Base_Function {
+		public:
+			// __Division_Function constructor
+			__Division_Function():__Formula_Base_Function("div", 2){};
+			// __Division_Function constructor
+			virtual ~__Division_Function(){};
+
+			// Real value
+			virtual double real_value(std::vector<__Formula_Base*> formulas){__Monomonial* needed_numerator = reinterpret_cast<__Formula*>(formulas.at(0))->polynomial()->known_monomonial();__Monomonial* needed_denominator = reinterpret_cast<__Formula*>(formulas.at(1))->polynomial()->known_monomonial();double value = needed_numerator->factor()->real().to_double() / needed_denominator->factor()->real().to_double();return value;};
+			// Simplify a value with the function
+			virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula>();};
+
+			// Copies and returns this function
+			virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Division_Function>();};
+	};
+
     // Square root function possible for a formula
     class __Exp_Function : public __Formula::__Formula_Base_Function {
         public:
             // __Exp_Function constructor
-            __Exp_Function():__Formula_Base_Function("exp"){};
+            __Exp_Function():__Formula_Base_Function("exp", 1){};
 
             // Creates a formula with this function
             static __Formula create_formula(__Formula base){base.add_applied_function<__Exp_Function>();return base;};
             // Real value
-            virtual double real_value(__Formula_Base* formula){double value = reinterpret_cast<__Formula*>(formula)->value_to_double();return std::exp(value);};
+            virtual double real_value(std::vector<__Formula_Base*> formula){double value = reinterpret_cast<__Formula*>(formula.at(0))->value_to_double();return std::exp(value);};
             // Simplify a value with the function
             virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula>();};
 
@@ -568,10 +599,10 @@ namespace scls {
     class __Log_Function : public __Formula::__Formula_Base_Function {
         public:
             // __Log_Function constructor
-            __Log_Function():__Formula_Base_Function("log"){};
+            __Log_Function():__Formula_Base_Function("log", 1){};
 
             // Real value
-            virtual double real_value(__Formula_Base* formula){double value = reinterpret_cast<__Formula*>(formula)->value_to_double();return std::log(value);};
+            virtual double real_value(std::vector<__Formula_Base*> formula){double value = reinterpret_cast<__Formula*>(formula.at(0))->value_to_double();return std::log(value);};
             // Simplify a value with the function
             virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula>();};
 
@@ -583,10 +614,10 @@ namespace scls {
     class __Sin_Function : public __Formula::__Formula_Base_Function {
         public:
             // __Sin_Function constructor
-            __Sin_Function():__Formula_Base_Function("sin"){};
+            __Sin_Function():__Formula_Base_Function("sin", 1){};
 
             // Real value
-            virtual double real_value(__Formula_Base* formula){__Monomonial* needed_monomonial = reinterpret_cast<__Formula*>(formula)->polynomial()->known_monomonial();if(needed_monomonial == 0){return 0;}double value = needed_monomonial->factor()->real().to_double();return std::sin(value);};
+            virtual double real_value(std::vector<__Formula_Base*> formula){__Monomonial* needed_monomonial = reinterpret_cast<__Formula*>(formula.at(0))->polynomial()->known_monomonial();if(needed_monomonial == 0){return 0;}double value = needed_monomonial->factor()->real().to_double();return std::sin(value);};
             // Simplify a value with the function
             virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base>();};
 
@@ -598,14 +629,14 @@ namespace scls {
     class __Sqrt_Function : public __Formula::__Formula_Base_Function {
         public:
             // __Formula_Base_Function constructor
-            __Sqrt_Function():__Formula_Base_Function("sqrt"){};
+            __Sqrt_Function():__Formula_Base_Function("sqrt", 1){};
 
             // Creates a formula with this function
             static __Formula create_formula(__Formula base){base.add_applied_function<__Sqrt_Function>();return base;};
             // Multiply a value with the function
             virtual std::shared_ptr<__Formula_Base> multiply(__Formula_Base* value_1, __Formula_Base* value_2);
             // Real value
-            virtual double real_value(__Formula_Base* formula){double value = reinterpret_cast<__Formula*>(formula)->value_to_double();return std::sqrt(value);};
+            virtual double real_value(std::vector<__Formula_Base*> formula){double value = reinterpret_cast<__Formula*>(formula.at(0))->value_to_double();return std::sqrt(value);};
             // Simplify a value with the function
             virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* __value) {
                 __Formula* value = reinterpret_cast<__Formula*>(__value);

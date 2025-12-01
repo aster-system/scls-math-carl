@@ -444,6 +444,8 @@ namespace scls {
         inline bool is_in(Interval value){return is_in_intervals(value);};
         // Returns if the set is infinite or not
         inline bool is_infinite() const {return a_intervals.size() > 0 && a_intervals.at(0).start_infinite() && a_intervals.at(0).end_infinite();};
+        // Get the number in the set
+        inline Fraction number(){if(intervals().size() == 1){return intervals().at(0).start();}return 0;};
         // Unites with an another set
         inline Set_Number reunion(Interval number){Set_Number temp = *this;temp.unite(number);return temp;};
         inline Set_Number reunion(Set_Number* set_number){Set_Number temp = *this;temp.unite(set_number);return temp;};

@@ -30,7 +30,7 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
 
-    //*********
+	//*********
 	//
 	// The "Formula" class
 	//
@@ -43,6 +43,9 @@ namespace scls {
     __Formula_Base::__Formula_Base(Formula_Sum sum):__Formula_Base(&sum){}
     __Formula_Base::__Formula_Base(Formula_Sum* sum){if(sum->is_simple_polynomial()){set_polynomial(sum);}else{set_fraction(sum);}}
     __Formula_Base::__Formula_Base(const __Formula_Base& formula):a_polynomial(formula.polynomial_copy()),a_fraction(formula.fraction_copy()),a_applied_function(formula.applied_function_copy()){};
+
+    // __Formula_Base destructor
+    __Formula_Base::~__Formula_Base(){}
 
 	// Clears the container
     void __Formula_Base::Unknowns_Container::clear(){a_default_value.reset();a_unknowns.clear();};
@@ -73,6 +76,13 @@ namespace scls {
     Polynomial_Base* __Formula_Base::Formula_Factor::polynomial() const {for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(a_factors.at(i).get()->is_simple_polynomial()){return a_factors.at(i).get()->__polynomial();}}return 0;};
     Polynomial_Base* __Formula_Base::Formula_Fraction::polynomial() const {return a_numerator.get()->polynomial();}
     Polynomial_Base* __Formula_Base::__polynomial() const {if(a_polynomial.get() != 0){return a_polynomial.get();}else if(a_fraction.get()==0){return 0;} return a_fraction.get()->polynomial();};
+
+    // Returns a list of formula pointer
+    std::vector<__Formula_Base*> __Formula_Base::formulas_ptr(){
+    	std::vector<__Formula_Base*> needed = std::vector<__Formula_Base*>(a_formulas.size());
+    	for(int i = 0;i<static_cast<int>(a_formulas.size());i++){needed.push_back(a_formulas.at(i).get());}
+    	return needed;
+    };
 
     // Returns the formula factor to a MathML
     std::string __Formula_Base::Formula_Factor::to_mathml(Textual_Math_Settings* settings) const {
@@ -216,6 +226,11 @@ namespace scls {
     };
 
     // Methods operators
+    // Apply an operator to this formula
+    void __Formula_Base::__apply(std::string needed_operator, __Formula_Base* value) {
+    	if(needed_operator == "+"){__add(value);}
+    }
+
     // Add a formula to this one
     void __Formula_Base::Formula_Fraction::__add(__Formula_Base* value){std::shared_ptr<__Formula_Base>temp=value->clone();if(a_denominator.get() != 0){temp.get()->__multiply(a_denominator.get());}a_numerator.get()->__add(temp.get());};
     void __Formula_Base::__add(__Formula_Base* value) {
