@@ -45,17 +45,17 @@ namespace scls {
         enum Unknown_Comparaison {UC_DIFFERENT, UC_EQUAL, UC_EQUAL_UNKNOWN};
 
         // Unknow constructor
-        _Base_Unknown(std::string new_name, Complex exponent):a_exponent(exponent),a_name(new_name){};
-        _Base_Unknown(std::string new_name):_Base_Unknown(new_name, Complex(1)){};
+        _Base_Unknown(std::string new_name, int exponent):a_exponent(exponent),a_name(new_name){};
+        _Base_Unknown(std::string new_name):_Base_Unknown(new_name, 1){};
 
         // Returns the comparaison between two unknows
         bool compare_unknown(_Base_Unknown other) const;
 
         // Getters and setters
         inline bool conjugate() const {return a_conjugate;};
-        inline Complex exponent() const {return a_exponent;};
+        inline int exponent() const {return a_exponent;};
         inline std::string name() const {return a_name;};
-        inline void set_exponent(Complex new_exponent) {a_exponent = new_exponent;};
+        inline void set_exponent(int new_exponent) {a_exponent = new_exponent;};
         inline void set_name(std::string new_name) {a_name = new_name;};
 
         // Operator ==
@@ -66,7 +66,7 @@ namespace scls {
         // If the unknown is a conjugate
         bool a_conjugate = false;
         // Exponent of the unknow
-        Complex a_exponent = Complex(1, 0);
+        int a_exponent = 1;
         // Name of the unknow
         std::string a_name = "";
     };
@@ -79,14 +79,16 @@ namespace scls {
         __Monomonial_Base(std::shared_ptr<__Field_Element> factor):a_factor(factor){};
         __Monomonial_Base(std::shared_ptr<__Field_Element> factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(factor){a_unknowns=unknowns;};
         __Monomonial_Base(std::shared_ptr<__Field_Element> factor, std::string unknow):__Monomonial_Base(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
-        __Monomonial_Base(std::shared_ptr<__Field_Element> factor, std::string unknow, Complex exponent):__Monomonial_Base(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
+        __Monomonial_Base(std::shared_ptr<__Field_Element> factor, std::string unknow, int exponent):__Monomonial_Base(factor,std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
         // __Monomonial_Base copy constructor
         __Monomonial_Base(const __Monomonial_Base& monomonial_copy):__Monomonial_Base(monomonial_copy.a_factor,monomonial_copy.a_unknowns){};
+        // __Monomonial_Base destructor
+        virtual ~__Monomonial_Base(){};
         // Returns the inverse of the monomonial
         std::shared_ptr<__Monomonial_Base> inverse() const;
 
         // Add an unknown to the monomonial
-        inline void add_unknown(std::string name, Complex exponent) {_Base_Unknown unknown(name); unknown.set_exponent(exponent); a_unknowns.push_back(unknown);};
+        inline void add_unknown(std::string name, int exponent) {_Base_Unknown unknown(name); unknown.set_exponent(exponent); a_unknowns.push_back(unknown);};
         // Returns if the monomonial contains an unkwnown
         inline _Base_Unknown* contains_unknown(std::string unknown_name) {for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {if(a_unknowns.at(i).name() == unknown_name) {return &a_unknowns[i];}} return 0;};
         // Deletes the monomonial unkwnown
@@ -95,7 +97,7 @@ namespace scls {
         // Returns if the monomonial is known
         inline bool is_known() const {return a_unknowns.size() <= 0 || (a_unknowns.size() == 1 && (a_unknowns.at(0).name() == "" || a_unknowns.at(0).exponent() == 0));};
         // Returns if the monomonial only contains an unkwnown
-        _Base_Unknown* only_contains_unknown(std::string unknown_name, Complex exponent);
+        _Base_Unknown* only_contains_unknown(std::string unknown_name, int exponent);
         // Returns this monomonial where an unknown is replaced by an another unknown
         std::shared_ptr<__Monomonial_Base> replace_unknown(std::string unknown, __Monomonial_Base* new_value);
         // Returns if two monomonials has the same unknowns
@@ -150,11 +152,11 @@ namespace scls {
     template <typename T> class __Monomonial_Template : public __Monomonial_Base {
     public:
         // __Monomonial_Template constructor
-        __Monomonial_Template(T factor):__Monomonial_Base(std::make_shared<Complex>(factor)){}
+        __Monomonial_Template(T factor):__Monomonial_Base(std::make_shared<T>(factor)){}
         __Monomonial_Template(T factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(std::make_shared<T>(factor), unknowns){};
         __Monomonial_Template(std::shared_ptr<__Field_Element> factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(factor, unknowns){};
         __Monomonial_Template(T factor, std::string unknow):__Monomonial_Base(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
-        __Monomonial_Template(T factor, std::string unknow, Complex exponent):__Monomonial_Base(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
+        __Monomonial_Template(T factor, std::string unknow, int exponent):__Monomonial_Base(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
 
         // Comparaison
         virtual bool is_equal(__Field_Element* operand_1, __Field_Element* operand_2)const{return (*(reinterpret_cast<T*>(operand_1))) == (*(reinterpret_cast<T*>(operand_2)));};
@@ -169,9 +171,8 @@ namespace scls {
 
         // Getters and setters
         inline T* factor()const{return reinterpret_cast<T*>(__factor());};
-        inline void set_factor(T factor){__set_factor(std::make_shared<Complex>(factor));};
+        inline void set_factor(T factor){__set_factor(std::make_shared<T>(factor));};
     };
-    typedef __Monomonial_Template<Complex> __Monomonial;
 
     class Polynomial_Base {
         // Class representating a full polynomial form
@@ -200,7 +201,7 @@ namespace scls {
         // Returns the knows monomonial
         __Monomonial_Base* __known_monomonial() const;
         // Returns a monomonial by its unknown
-        __Monomonial_Base* __monomonial(std::string unknown, Complex exponent);
+        __Monomonial_Base* __monomonial(std::string unknown, int exponent);
         __Monomonial_Base* __monomonial(std::string unknown);
         __Monomonial_Base* __monomonial();
         // Returns the number of monomonials in the polynomial
@@ -265,10 +266,10 @@ namespace scls {
         Polynomial_Template(T factor):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(factor)){};
         Polynomial_Template(__Monomonial_Base* factor):Polynomial_Base(factor->clone()){};
         Polynomial_Template(__Monomonial_Template<T> factor):Polynomial_Base(factor.clone()){};
-        Polynomial_Template(T factor, std::vector<_Base_Unknown> unknowns):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(std::make_shared<Complex>(factor), unknowns)){};
+        Polynomial_Template(T factor, std::vector<_Base_Unknown> unknowns):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(std::make_shared<T>(factor), unknowns)){};
         Polynomial_Template(std::shared_ptr<__Field_Element> factor, std::vector<_Base_Unknown> unknowns):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(factor, unknowns)){};
-        Polynomial_Template(T factor, std::string unknow):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(std::make_shared<Complex>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow)))){};
-        Polynomial_Template(T factor, std::string unknow, Complex exponent):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(std::make_shared<Complex>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent)))){};
+        Polynomial_Template(T factor, std::string unknow):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow)))){};
+        Polynomial_Template(T factor, std::string unknow, int exponent):Polynomial_Base(std::make_shared<__Monomonial_Template<T>>(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent)))){};
         // Polynomial_Template copy constructor
         Polynomial_Template(const Polynomial_Template& polynomial_copy):Polynomial_Template(){for(int i = 0;i<static_cast<int>(polynomial_copy.monomonials_const().size());i++){__add_monomonial(polynomial_copy.monomonials_const().at(i).get());}};
 
@@ -279,7 +280,7 @@ namespace scls {
         T known_monomonial_factor() const {__Monomonial_Template<T>* needed = known_monomonial();if(needed == 0){return T(0);}return *known_monomonial()->factor();};
 
         // Returns a monomonial by its unknown
-        __Monomonial_Template<T>* monomonial(std::string unknown, Complex exponent){return reinterpret_cast<__Monomonial_Template<T>*>(__monomonial(unknown, exponent));};
+        __Monomonial_Template<T>* monomonial(std::string unknown, int exponent){return reinterpret_cast<__Monomonial_Template<T>*>(__monomonial(unknown, exponent));};
         __Monomonial_Template<T>* monomonial(std::string unknown){return reinterpret_cast<__Monomonial_Template<T>*>(__monomonial(unknown));};
         __Monomonial_Template<T>* monomonial(int index){return reinterpret_cast<__Monomonial_Template<T>*>(monomonials().at(index).get());};
         __Monomonial_Template<T>* monomonial(){return reinterpret_cast<__Monomonial_Template<T>*>(__monomonial());};
@@ -303,31 +304,6 @@ namespace scls {
 
         // Operators
         Polynomial_Template<T>& operator+=(__Monomonial_Template<T> to_add){__add(&to_add);return *this;};
-    };
-    typedef Polynomial_Template<Complex> Polynomial;
-
-    class Polynomial_Complex {
-    public:
-        // Polynomial_Complex constructor
-        Polynomial_Complex(){a_polynomial.push_back(__Polynomial_Complex_Member());a_polynomial.push_back(__Polynomial_Complex_Member());a_polynomial[0].unknown = std::string("");a_polynomial[1].unknown = std::string("i");};
-
-        // Conjugates the polynomial
-        inline std::shared_ptr<Polynomial_Complex> conjugate(){std::shared_ptr<Polynomial_Complex> to_return = std::make_shared<Polynomial_Complex>(*this);to_return.get()->imaginary_polynomial()->multiply(scls::Complex(-1));return to_return;};
-        // Converts a polynomial to a complex
-        static std::shared_ptr<Polynomial_Complex> from_polynomial(Polynomial* polynomial);
-        // Returns the imaginary polynomial
-        inline Polynomial* imaginary_polynomial() const {for(int i = 0;i<static_cast<int>(a_polynomial.size());i++){if(a_polynomial[i].unknown == std::string("i")){return a_polynomial[i].polynomial.get();}}return 0;};
-        // Returns the real polynomial
-        inline Polynomial* real_polynomial() const {for(int i = 0;i<static_cast<int>(a_polynomial.size());i++){if(a_polynomial[i].unknown == std::string("")){return a_polynomial[i].polynomial.get();}}return 0;};
-        // Returns the polynomial to an entire polynomial
-        inline std::shared_ptr<Polynomial> to_polynomial() const {std::shared_ptr<Polynomial> to_return = std::make_shared<Polynomial>(*real_polynomial());to_return.get()->__add(imaginary_polynomial());to_return.get()->multiply(scls::Complex(0, 1));return to_return;};
-
-    private:
-        // Struct representating each members of the number
-        struct __Polynomial_Complex_Member{std::shared_ptr<Polynomial>polynomial=std::make_shared<Polynomial>();std::string unknown = std::string();};
-
-        // Each parts of the polynomial
-        std::vector<__Polynomial_Complex_Member> a_polynomial;
     };
 
 	//*********
@@ -413,7 +389,6 @@ namespace scls {
         inline void add_interval(Interval to_add) {if(!to_add.is_empty()){a_intervals.push_back(to_add);__sort_interval();check_intervals();};};
         // Add a number to the set
         inline void add_number(Fraction to_add) {if(!is_in(to_add)){add_interval(Interval(to_add));}};
-        inline void add_number(Complex to_add) {add_number(to_add.real());};
 
         // Clears the interval
         inline void clear(){a_intervals.clear();a_numbers.clear();};
@@ -488,13 +463,13 @@ namespace scls {
 
         // Getters and setters
         const std::vector<Interval>& intervals() const {return a_intervals;};
-        const std::vector<Complex>& numbers() const {return a_numbers;};
+        const std::vector<Fraction>& numbers() const {return a_numbers;};
 
     private:
         // Intervals of fractions in this set
         std::vector<Interval> a_intervals;
         // Numbers of fractions in this set
-        std::vector<Complex> a_numbers;
+        std::vector<Fraction> a_numbers;
 	};
 
 }

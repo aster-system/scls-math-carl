@@ -49,7 +49,7 @@ namespace scls {
     };
 
     // Returns if the monomonial only contains an unkwnown
-    _Base_Unknown* __Monomonial_Base::only_contains_unknown(std::string unknown_name, Complex exponent) {
+    _Base_Unknown* __Monomonial_Base::only_contains_unknown(std::string unknown_name, int exponent) {
         _Base_Unknown* to_return = 0; unsigned int number = unknowns_number();
         for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
             if((a_unknowns[i].name() == unknown_name && a_unknowns[i].exponent() == exponent)) {
@@ -101,7 +101,7 @@ namespace scls {
         for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
             std::string current_unknow = a_unknowns.at(i).name();
             if(current_unknow == std::string()){continue;}
-            int current_exponent = a_unknowns.at(i).exponent().real().to_double();
+            int current_exponent = a_unknowns.at(i).exponent();
             for(;current_exponent>0;current_exponent--) {to_return += std::string("*") + current_unknow;}
         }
         // Returns the result
@@ -113,7 +113,7 @@ namespace scls {
         std::string final_unknow = "";
         for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
             final_unknow += std::string("<mi>") + a_unknowns.at(i).name() + std::string("</mi>");
-            int real_exponent = a_unknowns.at(i).exponent().real().to_double();
+            int real_exponent = a_unknowns.at(i).exponent();
             if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1){
                 final_unknow += std::string("<msup>") + std::to_string(real_exponent) + std::string("</msup>");
             }
@@ -127,7 +127,7 @@ namespace scls {
         std::string final_unknow = "";
         for(int i = 0;i<static_cast<int>(a_unknowns.size());i++) {
             final_unknow += a_unknowns.at(i).name();
-            int real_exponent = a_unknowns.at(i).exponent().real().to_double();
+            int real_exponent = a_unknowns.at(i).exponent();
             if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1){
                 if(real_exponent > 0){for(int j = 1;j<real_exponent;j++){final_unknow += std::string("*") + a_unknowns.at(i).name();}}
                 else{final_unknow += std::string("^") + std::to_string(real_exponent);}
@@ -149,7 +149,7 @@ namespace scls {
             _Base_Unknown* contained_unknown = contains_unknown(object->a_unknowns[i].name());
             if(contained_unknown == 0) {a_unknowns.push_back(object->a_unknowns.at(i));}
             else if(object->a_unknowns.at(i).name() != "") {
-                scls::Complex new_exponent = contained_unknown->exponent() + object->a_unknowns.at(i).exponent();
+            	int new_exponent = contained_unknown->exponent() + object->a_unknowns.at(i).exponent();
                 if(new_exponent == 0) {
                     delete_unknown(contained_unknown);
                 } else {contained_unknown->set_exponent(new_exponent);}
@@ -218,9 +218,9 @@ namespace scls {
     __Monomonial_Base* Polynomial_Base::__known_monomonial() const {for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {if(a_monomonials.at(i).get()->is_known()){return a_monomonials.at(i).get();}}return 0;};
 
     // Returns a monomonial by its unknown
-    __Monomonial_Base* Polynomial_Base::__monomonial(std::string unknown) {return __monomonial(unknown, Complex(1, 0));};
+    __Monomonial_Base* Polynomial_Base::__monomonial(std::string unknown) {return __monomonial(unknown, 1);};
     __Monomonial_Base* Polynomial_Base::__monomonial() {if(monomonials().size() > 0){return monomonials().at(0).get();}return 0;};
-    __Monomonial_Base* Polynomial_Base::__monomonial(std::string unknown, Complex exponent) {
+    __Monomonial_Base* Polynomial_Base::__monomonial(std::string unknown, int exponent) {
         for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
             _Base_Unknown* result = a_monomonials.at(i).get()->only_contains_unknown(unknown, exponent);
             if(result != 0) {return a_monomonials.at(i).get();}
@@ -421,23 +421,23 @@ namespace scls {
     //*/
 
     // Converts a polynomial to a complex
-    std::shared_ptr<Polynomial_Complex> Polynomial_Complex::from_polynomial(Polynomial* polynomial) {
+    std::shared_ptr<Polynomial_Complex> Polynomial_Complex::from_polynomial(Polynomial_Template<Complex>* polynomial) {
         // Create the polynomial complex
         std::shared_ptr<Polynomial_Complex> needed_polynomial = std::make_shared<Polynomial_Complex>();
 
         // Handle each monomonial
-        Polynomial* imaginary_polynomial = needed_polynomial.get()->imaginary_polynomial();
-        Polynomial* real_polynomial = needed_polynomial.get()->real_polynomial();
+        Polynomial_Template<Complex>* imaginary_polynomial = needed_polynomial.get()->imaginary_polynomial();
+        Polynomial_Template<Complex>* real_polynomial = needed_polynomial.get()->real_polynomial();
         for(int i = 0;i<static_cast<int>(polynomial->monomonials().size());i++) {
             // Real and imaginary factor
-            scls::__Monomonial* needed_monomonial = polynomial->monomonial(i);
+            scls::__Monomonial_Template<Complex>* needed_monomonial = polynomial->monomonial(i);
             scls::Fraction imaginary_factor = needed_monomonial->factor()->imaginary();
             scls::Fraction real_factor = needed_monomonial->factor()->real();
 
             // Add the needed factors
-            scls::__Monomonial imaginary_monomonial = *needed_monomonial;
+            scls::__Monomonial_Template<Complex> imaginary_monomonial = *needed_monomonial;
             imaginary_monomonial.set_factor(imaginary_factor);
-            scls::__Monomonial real_monomonial = *needed_monomonial;
+            scls::__Monomonial_Template<Complex> real_monomonial = *needed_monomonial;
             real_monomonial.set_factor(real_factor);
             imaginary_polynomial->__add(&imaginary_monomonial);
             real_polynomial->__add(&real_monomonial);
@@ -682,7 +682,7 @@ namespace scls {
 
         // Add the isolated elements
         for(int i = 0;i<static_cast<int>(numbers().size());i++) {
-            to_return += numbers().at(i).to_std_string_simple(settings);
+            to_return += numbers().at(i).to_std_string(settings);
             if(i < static_cast<int>(numbers().size()) - 1){to_return += std::string(";");}
         }
 

@@ -311,6 +311,7 @@ namespace scls {
         inline void set_polynomial(__Monomonial_Base* polynomial){a_polynomial=create_polynomial();a_polynomial.get()->__add(polynomial);a_fraction.reset();};
         inline void set_polynomial(Polynomial_Base* polynomial){set_polynomial(polynomial->clone());};
         // Converts the formula to a polynomial / monomonial
+        __Monomonial_Base* __monomonial(std::string unknown_name) const;
         __Monomonial_Base* __monomonial() const;
         Polynomial_Base* __polynomial() const;
         // Returns a list of formula pointer
@@ -429,6 +430,7 @@ namespace scls {
         virtual bool is_null() const{return (fraction() == 0 && polynomial() == 0) || (polynomial() != 0 && polynomial()->is_null());};
 
         // Converts the formula to a polynomial / monomonial
+        __Monomonial_Template<T>* monomonial(std::string unknown_name) const{return reinterpret_cast<__Monomonial_Template<T>*>(__monomonial(unknown_name));};
         __Monomonial_Template<T>* monomonial() const{return reinterpret_cast<__Monomonial_Template<T>*>(__monomonial());};
         Polynomial_Template<T>* polynomial() const{return reinterpret_cast<Polynomial_Template<T>*>(__polynomial());};
         inline void set_polynomial(T polynomial){__Formula_Base::set_polynomial(std::make_shared<Polynomial_Template<T>>(polynomial));};
@@ -457,7 +459,7 @@ namespace scls {
         T value(__Formula_Base::Formula_Factor* fac, __Formula_Base::Unknowns_Container* values){T to_return = T(1);for(int i=0;i<static_cast<int>(fac->factors().size());i++){to_return*=reinterpret_cast<__Formula_Base_Template<T>*>(fac->factors().at(i).get())->value(values);}return to_return;}
         T value(__Formula_Base::Formula_Sum* sum, __Formula_Base::Unknowns_Container* values){T to_return = T(0);for(int i=0;i<static_cast<int>(sum->formulas_add().size());i++){to_return+=value(sum->formulas_add().at(i).get(), values);}return to_return;}
         T value(__Formula_Base::Formula_Fraction* f, __Formula_Base::Unknowns_Container* values){T to_return = T(0);if(f->numerator()!=0){to_return = value(f->numerator(), values);}if(f->denominator() != 0){to_return._divide(value(f->denominator(), values));}return to_return;}
-        T value(Fraction current_value){__Formula_Base_Template<T>t=scls::Complex(current_value);Unknowns_Container temp = Unknowns_Container(&t);return value(&temp);};
+        T value(Fraction current_value){__Formula_Base_Template<T>t=T(current_value);Unknowns_Container temp = Unknowns_Container(&t);return value(&temp);};
         T value(__Formula_Base::Unknowns_Container* values) {
             // Simpler models
             if(is_simple_monomonial() && is_basic()){__Monomonial_Template<T>* needed_monomonial = monomonial();if(needed_monomonial != 0 && needed_monomonial->is_known()){return *needed_monomonial->factor();}}
@@ -475,7 +477,7 @@ namespace scls {
             else if(current_formula.get()->polynomial() != 0){final_formula = current_formula.get()->polynomial();}
 
             // Apply the function
-            scls::Complex to_return = scls::Complex(1);
+            T to_return = T(1);
             if(applied_function() != 0){to_return = scls::Fraction::from_double(applied_function()->real_value(&final_formula));}
             else{to_return = final_formula.polynomial()->known_monomonial_factor();}
 
@@ -495,12 +497,12 @@ namespace scls {
         Fraction value_to_fraction(){return value(1).real();};
         double value_to_double(Unknowns_Container* values){
             // TEMP
-            return value(values).real().to_double();
+            return value(values).to_double();
 
             // TO EDIT
             double* calculated = calculated_to_double(values);
             if(calculated == 0){
-                double new_to_double = value(values).real().to_double();
+                double new_to_double = value(values).to_double();
                 a_to_double.push_back(new_to_double);
                 a_to_double_containers.push_back(values);
                 calculated = &a_to_double[a_to_double.size() - 1];
@@ -543,129 +545,6 @@ namespace scls {
         __Formula_Base_Template<T>& operator*=(__Formula_Base_Template<T> value) {__multiply(&value);return*this;};
         __Formula_Base_Template<T> operator/(__Formula_Base_Template<T> value) const {__Formula_Base_Template<T> other(*this);other.__divide(&value);return other;};
         __Formula_Base_Template<T>& operator/=(__Formula_Base_Template<T> value) {__divide(&value);return*this;};
-    };
-    typedef __Formula_Base_Template<Complex> __Formula;
-
-	// Cosinus function possible for a formula
-    class __Cos_Function : public __Formula::__Formula_Base_Function {
-        public:
-            // __Formula_Base_Function constructor
-            __Cos_Function():__Formula_Base_Function("cos", 1){};
-
-            // Real value
-            virtual double real_value(std::vector<__Formula_Base*> formula){__Monomonial* needed_monomonial = reinterpret_cast<__Formula*>(formula.at(0))->polynomial()->known_monomonial();if(needed_monomonial == 0){return 1;}double value = needed_monomonial->factor()->real().to_double();return std::cos(value);};
-            // Simplify a value with the function
-            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula>();};
-
-            // Copies and returns this function
-            virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Cos_Function>();};
-    };
-
-    // Cosinus function possible for a formula
-	class __Division_Function : public __Formula::__Formula_Base_Function {
-		public:
-			// __Division_Function constructor
-			__Division_Function():__Formula_Base_Function("div", 2){};
-			// __Division_Function constructor
-			virtual ~__Division_Function(){};
-
-			// Real value
-			virtual double real_value(std::vector<__Formula_Base*> formulas){__Monomonial* needed_numerator = reinterpret_cast<__Formula*>(formulas.at(0))->polynomial()->known_monomonial();__Monomonial* needed_denominator = reinterpret_cast<__Formula*>(formulas.at(1))->polynomial()->known_monomonial();double value = needed_numerator->factor()->real().to_double() / needed_denominator->factor()->real().to_double();return value;};
-			// Simplify a value with the function
-			virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula>();};
-
-			// Copies and returns this function
-			virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Division_Function>();};
-	};
-
-    // Square root function possible for a formula
-    class __Exp_Function : public __Formula::__Formula_Base_Function {
-        public:
-            // __Exp_Function constructor
-            __Exp_Function():__Formula_Base_Function("exp", 1){};
-
-            // Creates a formula with this function
-            static __Formula create_formula(__Formula base){base.add_applied_function<__Exp_Function>();return base;};
-            // Real value
-            virtual double real_value(std::vector<__Formula_Base*> formula){double value = reinterpret_cast<__Formula*>(formula.at(0))->value_to_double();return std::exp(value);};
-            // Simplify a value with the function
-            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula>();};
-
-            // Copies and returns this function
-            virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Exp_Function>();};
-    };
-
-    // Logarithm function function possible for a formula
-    class __Log_Function : public __Formula::__Formula_Base_Function {
-        public:
-            // __Log_Function constructor
-            __Log_Function():__Formula_Base_Function("log", 1){};
-
-            // Real value
-            virtual double real_value(std::vector<__Formula_Base*> formula){double value = reinterpret_cast<__Formula*>(formula.at(0))->value_to_double();return std::log(value);};
-            // Simplify a value with the function
-            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula>();};
-
-            // Copies and returns this function
-            virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Log_Function>();};
-    };
-
-    // Sinus function possible for a formula
-    class __Sin_Function : public __Formula::__Formula_Base_Function {
-        public:
-            // __Sin_Function constructor
-            __Sin_Function():__Formula_Base_Function("sin", 1){};
-
-            // Real value
-            virtual double real_value(std::vector<__Formula_Base*> formula){__Monomonial* needed_monomonial = reinterpret_cast<__Formula*>(formula.at(0))->polynomial()->known_monomonial();if(needed_monomonial == 0){return 0;}double value = needed_monomonial->factor()->real().to_double();return std::sin(value);};
-            // Simplify a value with the function
-            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base>();};
-
-            // Copies and returns this function
-            virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Sin_Function>();};
-    };
-
-    // Square root function possible for a formula
-    class __Sqrt_Function : public __Formula::__Formula_Base_Function {
-        public:
-            // __Formula_Base_Function constructor
-            __Sqrt_Function():__Formula_Base_Function("sqrt", 1){};
-
-            // Creates a formula with this function
-            static __Formula create_formula(__Formula base){base.add_applied_function<__Sqrt_Function>();return base;};
-            // Multiply a value with the function
-            virtual std::shared_ptr<__Formula_Base> multiply(__Formula_Base* value_1, __Formula_Base* value_2);
-            // Real value
-            virtual double real_value(std::vector<__Formula_Base*> formula){double value = reinterpret_cast<__Formula*>(formula.at(0))->value_to_double();return std::sqrt(value);};
-            // Simplify a value with the function
-            virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* __value) {
-                __Formula* value = reinterpret_cast<__Formula*>(__value);
-                if(value->applied_function() == 0) {
-                    std::shared_ptr<__Formula> inner = value->internal_value();
-                    if(inner.get()->is_simple_monomonial()) {
-                        Polynomial* to_poly = inner.get()->polynomial();
-                        if(to_poly->is_simple_monomonial()){
-                            // Simplify a simple monomonial
-                            __Monomonial needed_monomonial = *to_poly->monomonial();
-                            std::vector<double> needed_exponent; bool good = true;
-                            for(int i = 0;i<static_cast<int>(needed_monomonial.unknowns().size());i++){if(needed_monomonial.unknowns()[i].name()!=std::string()){needed_exponent.push_back(std::log2(needed_monomonial.unknowns()[i].exponent().real().to_double()));}}
-                            for(int i = 0;i<static_cast<int>(needed_exponent.size());i++){if(needed_exponent[i]!=round(needed_exponent[i])||needed_exponent[i]==0){good=false;break;}}
-                            if(good) {
-                                // Create the needed monomonial
-                                scls::Fraction value = std::sqrt(needed_monomonial.factor()->real().to_double());
-                                scls::__Monomonial final_monomonial = needed_monomonial;
-                                final_monomonial.set_factor(value);
-                                for(int i = 0;i<static_cast<int>(final_monomonial.unknowns().size());i++){if(final_monomonial.unknowns()[i].name()!=std::string()){final_monomonial.unknowns()[i].set_exponent(final_monomonial.unknowns()[i].exponent()/2);}}
-                                return std::make_shared<__Formula>(final_monomonial);
-                            }
-                        }
-                    }
-                }
-                return std::shared_ptr<__Formula>();
-            };
-
-            // Copies and returns this function
-            virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Sqrt_Function>();};
     };
 }
 

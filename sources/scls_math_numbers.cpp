@@ -159,7 +159,7 @@ namespace scls {
     double __Fraction_Base::to_double_floor() const {return std::floor(to_double());};
     double __Fraction_Base::to_double_round() const {return std::round(to_double());};
     // Returns the fraction to MathML
-    std::string __Fraction_Base::to_mathml(){normalize();if(a_denominator == 1){return std::string("<math><mi>") + std::to_string(numerator()) + std::string("</mi></math>");}return std::string("<math><frac><mrow>") + std::to_string(a_numerator) + "</mrow><mrow>" + std::to_string(a_denominator) + std::string("</mrow></frac></math>");};
+    std::string __Fraction_Base::to_mathml(Textual_Math_Settings* settings)const{if(a_denominator == 1){return std::string("<math><mi>") + std::to_string(numerator()) + std::string("</mi></math>");}return std::string("<math><frac><mrow>") + std::to_string(a_numerator) + "</mrow><mrow>" + std::to_string(a_denominator) + std::string("</mrow></frac></math>");};
     // Returns the fraction to std::string, in the fraction redaction
     std::string __Fraction_Base::to_std_string_fraction(Textual_Math_Settings* settings) const {if(denominator() == 1) return std::to_string(numerator()); return std::to_string(numerator()) + "/" + std::to_string(denominator());};
     std::string __Fraction_Base::to_std_string(unsigned int max_number_size, Textual_Math_Settings* settings) const {std::string from_fraction = to_std_string_fraction(settings);if(from_fraction.size() <= max_number_size) return from_fraction;return format_number_to_text(to_double());};
@@ -278,117 +278,9 @@ namespace scls {
     void remove_duplication_sorted_fractions(std::vector<Fraction>& fractions){for(int i = 1;i<static_cast<int>(fractions.size());i++){if(fractions.at(i)==fractions.at(i-1)){fractions.erase(fractions.begin()+i);i--;}}}
     bool __sort_fractions(const Fraction& obj_1, const Fraction& obj_2){return obj_1 < obj_2;};
     void sort_fractions(std::vector<Fraction>& fractions){std::sort(fractions.begin(), fractions.end(), __sort_fractions);}
-}
 
-//*********
-//
-// The Complex part
-//
-//*********
-
-// The namespace "scls" is used to simplify the all.
-namespace scls {
-
-    // Returns the Complex to a simple std::string
-    std::string Complex::to_mathml(Textual_Math_Settings* settings) const {
-        if(imaginary() == 0){
-            if(real().denominator() == 1){return to_std_string_simple(settings);}
-            else if(real().numerator() == 1) {return std::string("/") + std::to_string(real().denominator());}
-            else {return std::string("(") + std::to_string(real().numerator()) + std::string(")/") + std::to_string(real().denominator());}
-        }
-        else if(real() == 0){return to_std_string_simple(settings);}
-        return std::string("(") + to_std_string_simple(settings) + std::string(")");
-    }
-    std::string Complex::to_std_string_simple(unsigned int max_number_size, Textual_Math_Settings* settings) const {
-        // Asserts
-        if(real() == 0 && imaginary() == 0 && settings != 0 && !settings->hide_if_0()){return std::string("0");}
-
-        std::string to_return = "";
-        if(real() != 0) {
-            to_return += real().to_std_string(max_number_size, settings) + " ";
-        }
-        if(imaginary() != 0) {
-            if(imaginary() > 0) {
-                to_return += "+ " + imaginary().to_std_string(max_number_size, settings) + "i";
-            }
-            else {
-                to_return += "- " + (imaginary() * -1).to_std_string(max_number_size, settings) + "i";
-            }
-        }
-        while(to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
-        if(to_return == "") to_return = "0";
-        return to_return;
-    };
-
-    //*********
-    //
-    // Operator methods
-    //
-    //*********
-
-    // Divides the Complex with a Complex
-    void Complex::_divide(Complex const& obj) {
-        _multiply(obj.conjugate());
-        Complex real_denominateur = obj * obj.conjugate();
-        a_imaginary = a_imaginary / real_denominateur.imaginary();
-        a_real = a_real / real_denominateur.real();
-    };
-
-    // Divides the Complex with a Complex
-    Complex Complex::_divide_without_modification(Complex const& obj) const {
-        // Simplifications
-        if(a_imaginary == 0 && obj.a_imaginary == 0){return Complex(a_real / obj.a_real);}
-
-        Complex new_complex = Complex(a_real, a_imaginary);
-        new_complex._multiply(obj.conjugate());
-        Complex real_denominateur = obj * obj.conjugate();
-        new_complex.a_imaginary = new_complex.a_imaginary / real_denominateur.real();
-        new_complex.a_real = new_complex.a_real / real_denominateur.real();
-        return new_complex;
-    };
-
-    // Multiplies the Complex with a Complex
-    void Complex::_multiply(Complex const& obj) {
-        Fraction new_imaginary = real() * obj.imaginary() + imaginary() * obj.real();
-        Fraction new_real = real() * obj.real() - (imaginary() * obj.imaginary());
-        a_imaginary = new_imaginary;
-        a_real = new_real;
-    };
-
-	// Returns a complex from a std::string (indev)
-    Complex string_to_complex(std::string source) {
-	    Complex to_return(Fraction(0));
-
-	    // Cut the number by + operator
-	    std::vector<std::string> cutted = cut_string(source, "+");
-	    for(int i = 0;i<static_cast<int>(cutted.size());i++){if(cutted[i] == ""){cutted.erase(cutted.begin()+i);i--;}}
-	    if(cutted.size() > 0) {
-            // First part of a complex number
-            bool is_imaginary = false;
-            std::string& current_string = cutted[0];
-            // Special cases
-            if(current_string == "i") to_return.set_imaginary(Fraction(1));
-            else {
-                // Analyse the part
-                if(current_string[0] == 'i') {is_imaginary = true;current_string=current_string.substr(1,current_string.size()-1);}
-                else if(current_string[current_string.size()-1] == 'i') {is_imaginary = true;current_string=current_string.substr(0,current_string.size()-1);}
-                // Get the number
-                Fraction current_number = Fraction::from_std_string(current_string);
-                if(is_imaginary) {
-                    to_return.set_imaginary(current_number);
-                } else {
-                    to_return.set_real(current_number);
-                }
-            }
-	    }
-
-	    return to_return;
-	};
-
-	// Multiplciation operator
-    Complex operator*(int obj_1, Complex obj){ return obj._multiply_without_modification(obj_1); };
-	// Stream operator overloading (indev)
-    std::ostream& operator<<(std::ostream& os, const Complex& obj){ os << "Complex : " << obj.real().to_double() << " + " << obj.imaginary().to_double() << "i" ; return os; };
+    // Returns a fraction from a double
+    Fraction Fraction::from_double(double result) {__Fraction_Base b = __Fraction_Base::from_double(result);return Fraction(b);}
 }
 
 //*********

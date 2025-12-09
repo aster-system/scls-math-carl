@@ -42,7 +42,7 @@
 #define SCLS_MATH_TOLERANCE 0.00000001
 
 // Include the good header file
-#include "scls_math_formula.h"
+#include "scls_math_complex.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
@@ -345,7 +345,7 @@ namespace scls {
         inline void set_parent(std::shared_ptr<Transform_Object_2D> new_parent) {
             if(parent() != 0){parent()->remove_child(this);}
             a_parent = new_parent;
-            parent()->children().push_back(a_this_object.lock());
+            if(parent() != 0){parent()->children().push_back(a_this_object.lock());}
         };
         inline void set_parent(std::shared_ptr<Transform_Object_2D>* new_parent) {if(new_parent==0) {if(parent() != 0){parent()->remove_child(this);}a_parent.reset();}else{set_parent(*new_parent);}};
         inline void set_this_object(std::weak_ptr<Transform_Object_2D> this_object){a_this_object=this_object;};

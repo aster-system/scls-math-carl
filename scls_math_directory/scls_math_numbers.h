@@ -137,7 +137,7 @@ namespace scls {
     //*********
 
     extern int __normalize_value;
-    class __Fraction_Base {
+    class __Fraction_Base : public __Field_Element {
 	    // Class representating the base of a fraction
     public:
         //*********
@@ -177,11 +177,11 @@ namespace scls {
         double to_double_floor() const;
         double to_double_round() const;
         // Returns the fraction to MathML
-        std::string to_mathml();
+        virtual std::string to_mathml(Textual_Math_Settings* settings) const;
         // Returns the fraction to std::string, in the fraction redaction
         std::string to_std_string_fraction(Textual_Math_Settings* settings) const;
         std::string to_std_string(unsigned int max_number_size, Textual_Math_Settings* settings) const;
-        std::string to_std_string(Textual_Math_Settings* settings) const;
+        virtual std::string to_std_string(Textual_Math_Settings* settings) const;
 
         // Getters and setter
         long long denominator() const;
@@ -212,6 +212,9 @@ namespace scls {
         __Fraction_Base _multiply_without_modification(double obj) const;
         __Fraction_Base _multiply_without_modification(int obj) const;
         __Fraction_Base _multiply_without_modification(unsigned int obj) const;
+
+        // Returns the inverse of this element
+        virtual std::shared_ptr<__Field_Element> inverse(){return std::make_shared<__Fraction_Base>(denominator(), numerator());};
 
         // Substracts an another Fraction to this fraction
         void _substract(__Fraction_Base obj);
@@ -270,6 +273,9 @@ namespace scls {
         //
         //*********
 
+    	// Returns a fraction from a double
+    	static Fraction from_double(double result);
+
         // Most simple fraction constructor
         Fraction(double real):__Fraction_Base(real){};
         Fraction():__Fraction_Base(0){};
@@ -277,6 +283,9 @@ namespace scls {
         Fraction(long long numerator, long long denominator) : __Fraction_Base(numerator, denominator) {}
         // Fraction copy constructor
         Fraction(const __Fraction_Base& to_copy) : __Fraction_Base(to_copy) {};
+
+        // Returns the real value
+        inline Fraction real() const {return *this;};
 
         // Arithmetic operator
         Fraction operator-(__Fraction_Base obj) const { return _substract_without_modification(obj); };
@@ -309,159 +318,6 @@ namespace scls {
     // Function to sort a std::vector of fraction
     void remove_duplication_sorted_fractions(std::vector<Fraction>& fractions);
     void sort_fractions(std::vector<Fraction>& fractions);
-}
-
-//*********
-//
-// The Complex part
-//
-//*********
-
-// The namespace "scls" is used to simplify the all.
-namespace scls {
-
-    class Complex : public __Field_Element {
-	    // Class representating a complex number
-    public:
-        //*********
-        //
-        // Complex simple methods
-        //
-        //*********
-
-        // Simple fraction constructor
-        Complex(__Fraction_Base real_part, __Fraction_Base imaginary) : __Field_Element(), a_imaginary(imaginary), a_real(real_part) {};
-        Complex(Fraction real_part, Fraction imaginary) : __Field_Element(), a_imaginary(imaginary), a_real(real_part) {};
-        Complex(long long real_part, long long imaginary_part) : Complex(Fraction(real_part), Fraction(imaginary_part)) {};
-        Complex(long long real_part, Fraction imaginary_part) : Complex(Fraction(real_part), imaginary_part) {};
-        Complex(Fraction real_part, long long imaginary_part) : Complex(real_part, Fraction(imaginary_part)) {};
-        Complex(__Fraction_Base real_part) : Complex(real_part, __Fraction_Base(0)){};
-        Complex(Fraction real_part) : Complex(real_part, Fraction(0)) {};
-        Complex(double real_part) : Complex(Fraction::from_double(real_part)) {};
-        Complex(int real_part) : Complex(Fraction(real_part)) {};
-        Complex(const Complex& to_copy) : Complex(to_copy.real(), to_copy.imaginary()) {};
-
-        // Returns a fraction from a double
-        static Complex from_double(double result){return __Fraction_Base::from_double(result);};
-        // Returns the module of the complex
-        inline scls::Fraction module() const{return a_real * a_real + a_imaginary * a_imaginary; };
-        // Normalize the number
-        inline void normalize(int limit){a_imaginary.normalize(limit);a_real.normalize(limit);};
-
-        // Getters and setter
-        inline Fraction imaginary() const {return a_imaginary;};
-        inline Fraction real() const {return a_real;};
-        inline void set_imaginary(Fraction new_imaginary) {a_imaginary=new_imaginary;};
-        inline void set_real(Fraction new_real) {a_real=new_real;};
-
-        // Returns the Complex to a simple std::string
-        virtual std::string to_mathml(Textual_Math_Settings* settings) const;
-        std::string to_std_string_simple(unsigned int max_number_size, Textual_Math_Settings* settings) const;
-        std::string to_std_string_simple(Textual_Math_Settings* settings) const {return to_std_string_simple(-1, settings);};
-        virtual std::string to_std_string(Textual_Math_Settings* settings) const{return to_std_string_simple(-1, settings);};
-
-        //*********
-        //
-        // Operator methods
-        //
-        //*********
-
-        // Returns the conjugate of this Complex
-        inline Complex conjugate() const {return Complex(a_real, a_imaginary * -1);};
-
-        // Returns the inverse of this element
-        virtual std::shared_ptr<__Field_Element> inverse(){return std::make_shared<Complex>(Complex(1) / (*this));};
-
-        // Function to do operations with Complex
-        // Adds an another Complex to this Complex
-        void _add(Complex const& obj) {a_imaginary += obj.imaginary();a_real += obj.real();};
-        Complex _add_without_modification(Complex const& obj) const {Complex new_complex = Complex(real() + obj.real(), imaginary() + obj.imaginary());return new_complex;};
-
-        // Divides the Complex with a Complex
-        void _divide(Complex const& obj);
-        Complex _divide_without_modification(Complex const& obj) const;
-
-        // Returns if this Complex is equal to another
-        bool _equal(Complex const& obj) const {return obj.real() == real() && obj.imaginary() == imaginary();};
-
-        // Multiplies the Complex with a Complex
-        void _multiply(Complex const& obj);
-        inline Complex _multiply_without_modification(Complex const& obj) const {return Complex(real() * obj.real() - (imaginary() * obj.imaginary()), real() * obj.imaginary() + imaginary() * obj.real());};
-
-        // Multiplies the Complex with a double
-        Complex _multiply_without_modification(Fraction const& obj) const { return Complex(real() * obj, imaginary() * obj); };
-        Complex _multiply_without_modification(int const& obj) const { return Complex(real() * obj, imaginary() * obj); };
-        Complex _multiply_without_modification(unsigned int const& obj) const { return Complex(real() * obj, imaginary() * obj); };
-
-        // Substracts an another Complex to this Complex
-        void _substract(Complex const& obj) {a_imaginary = imaginary() - obj.imaginary();a_real = real() - obj.real();};
-        Complex _substract_without_modification(Complex const& obj) const {Complex new_complex = Complex(real() - obj.real(), imaginary() - obj.imaginary());return new_complex;};
-
-        // Operator overloading with int
-        // Equality operator
-        bool operator==(int obj) { return _equal(obj); }
-        bool operator!=(int obj) { return !_equal(obj); }
-        // Multiplication operator
-        Complex operator*(int obj) const { return _multiply_without_modification(obj); }
-        // Multiplication operator
-        Complex operator*(unsigned int obj) const { return _multiply_without_modification(obj); }
-
-        // Operator overloading with Fraction
-        // Minus operator
-        Complex operator-(Fraction const& obj) { return _substract_without_modification(Complex(obj)); }
-        // Minus operator assignment
-        Complex& operator-=(Fraction const& obj) { _substract(Complex(obj)); return *this; }
-        // Multiplication operator
-        Complex operator*(Fraction const& obj) const { return _multiply_without_modification(obj); }
-        // Plus operator
-        Complex operator+(Fraction const& obj) { return _add_without_modification(Complex(obj)); };
-        // Plus operator assignment
-        Complex& operator+=(Fraction const& obj) { _add(Complex(obj)); return *this; }
-
-        // Operator overloading with fractions
-        // Decrement operator
-        Complex& operator--(int) { _substract(Fraction(1)); return *this; }
-        // Divide operator
-        Complex operator/(Complex const& obj) const { return _divide_without_modification(obj); };
-        // Divide operator assignment
-        Complex& operator/=(Complex const& obj) { _divide(obj);return *this; };
-        // Equality operator
-        bool operator==(const Complex& obj) const { return _equal(obj); }
-        // Increment operator
-        Complex& operator++(int) { _add(Fraction(1)); return *this; }
-        // Minus operator
-        Complex operator-(Complex const& obj) const { return _substract_without_modification(obj); };
-        // Minus operator assignment
-        Complex& operator-=(const Complex& obj) { _substract(obj); return *this; }
-        // Multiply operator assignment
-        Complex operator*(Complex const& obj) const { return _multiply_without_modification(obj); };
-        // Multiply operator
-        Complex& operator*=(Complex const& obj) { _multiply(obj);return *this; };
-        // Plus operator
-        Complex operator+(Complex const& obj) const { return _add_without_modification(obj); };
-        // Plus operator assignment
-        Complex& operator+=(const Complex& obj) { _add(obj); return *this; }
-    private:
-        //*********
-        //
-        // Complex simple attributes
-        //
-        //*********
-
-        // Imaginary part of the complex
-        Fraction a_imaginary = Fraction(0);
-        // Real part of the complex
-        Fraction a_real = Fraction(0);
-
-	};
-
-	// Returns a complex from a std::string (indev)
-    Complex string_to_complex(std::string source);
-
-	// Multiplication operator
-    Complex operator*(int obj_1, Complex obj);
-	// Stream operator overloading (indev)
-    std::ostream& operator<<(std::ostream& os, const Complex& obj);
 }
 
 //*********

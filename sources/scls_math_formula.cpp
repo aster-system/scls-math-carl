@@ -71,6 +71,7 @@ namespace scls {
     std::shared_ptr<__Formula_Base::Formula_Fraction> __Formula_Base::fraction_copy()const{if(a_fraction.get()==0){return std::shared_ptr<__Formula_Base::Formula_Fraction>();} return a_fraction.get()->fraction_copy();};
     std::shared_ptr<Polynomial_Base> __Formula_Base::polynomial_copy()const{if(a_polynomial.get()==0){return std::shared_ptr<Polynomial>();}return a_polynomial.get()->clone();};
     // Returns a part of the formula
+    __Monomonial_Base* __Formula_Base::__monomonial(std::string unknown_name) const {if(__polynomial() == 0 || __polynomial()->__monomonial(unknown_name) == 0){return 0;}return __polynomial()->__monomonial(unknown_name);};
     __Monomonial_Base* __Formula_Base::__monomonial() const {if(__polynomial() == 0 || __polynomial()->__monomonial() == 0){return 0;}return __polynomial()->__monomonial();};
     Polynomial_Base* __Formula_Base::Formula_Sum::polynomial() const {for(int i = 0;i<static_cast<int>(a_formulas_add.size());i++){if(a_formulas_add.at(i).get()->is_simple_polynomial()){return a_formulas_add.at(i).get()->polynomial();}}return 0;}
     Polynomial_Base* __Formula_Base::Formula_Factor::polynomial() const {for(int i = 0;i<static_cast<int>(a_factors.size());i++){if(a_factors.at(i).get()->is_simple_polynomial()){return a_factors.at(i).get()->__polynomial();}}return 0;};

@@ -78,9 +78,10 @@ namespace scls {
             while(number_i < base.size() && !__string_is_number(base[number_i])){unknow_part+=base[number_i];number_i++;}
             while(number_i < base.size() && __string_is_number(base[number_i])){number_part_2+=base[number_i];number_i++;}
             // Add the monomonial
-            Complex number = string_to_complex(number_part_1);
+            //Complex number = string_to_complex(number_part_1);
+            Fraction number = scls::Fraction::from_std_string(number_part_1);
             if(unknow_part != "" && number_part_1 == "") number = 1;
-            if(number_part_2 != "") number *= string_to_complex(number_part_2);
+            if(number_part_2 != "") number *= scls::Fraction::from_std_string(number_part_2);
             __Monomonial to_add(number, unknow_part);
             Polynomial current_polymonial;
             current_polymonial.add_monomonial(to_add);
@@ -297,7 +298,7 @@ namespace scls {
     scls::__Formula_Base::Unknown* Math_Environment::create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
     std::shared_ptr<scls::__Formula_Base::Unknown> Math_Environment::create_unknown_shared_ptr(std::string name){return a_unknowns.get()->create_unknown_shared_ptr(name);};
     // Returns a value by its name
-    scls::Fraction Math_Environment::value_by_name(std::string name)const{scls::__Formula_Base::Unknown*unknow=unknown_by_name(name);if(unknow==0||unknow->value.get()==0){return 0;}return (reinterpret_cast<__Formula*>(unknow->value.get())->value(0).real());};
+    scls::Fraction Math_Environment::value_by_name(std::string name)const{scls::__Formula_Base::Unknown*unknow=unknown_by_name(name);if(unknow==0||unknow->value.get()==0){return 0;}return (reinterpret_cast<__Formula_Base_Template<Complex>*>(unknow->value.get())->value(0).real());};
     // Returns a unknown by its name
     scls::__Formula_Base::Unknown* Math_Environment::unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
     std::shared_ptr<scls::__Formula_Base::Unknown> Math_Environment::unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};

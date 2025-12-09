@@ -78,7 +78,8 @@
     #endif // SCLS_RADIANS_TO_ANGLE
 
     // Root of SCLS Math
-    #include "scls_math_directory/scls_math_numbers.h"
+    #include "scls_math_directory/scls_math_complex.h"
+	#include "scls_math_directory/scls_math_numbers.h"
     // Geometry in SCLS Math
     #include "scls_math_directory/scls_math_geometry_core.h"
 

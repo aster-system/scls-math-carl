@@ -48,6 +48,8 @@ namespace scls {
 
             // Math_Environment constructor
             Math_Environment();
+            // Math_Environment destructor
+            virtual ~Math_Environment(){};
 
             // Clears the environment
             void clear();
