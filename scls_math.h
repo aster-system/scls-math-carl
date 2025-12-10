@@ -81,6 +81,7 @@
     #include "scls_math_directory/scls_math_complex.h"
 	#include "scls_math_directory/scls_math_numbers.h"
     // Geometry in SCLS Math
+    #include "scls_math_directory/scls_math_collision.h"
     #include "scls_math_directory/scls_math_geometry_core.h"
 
     // Function handling (indev)
