@@ -340,12 +340,7 @@ namespace scls {
         int model_maker::Face::__triangulation_step_test(std::shared_ptr<model_maker::Face::__Triangulation_Datas> triangulation_datas, std::shared_ptr<model_maker::Point> current_point, std::shared_ptr<model_maker::Point> current_point_1, std::shared_ptr<model_maker::Point> current_point_2){
             // Needed datas
             std::vector<std::shared_ptr<Point>>& created_sides = triangulation_datas.get()->created_sides;
-            unsigned int& current_i = triangulation_datas.get()->current_i;
             std::vector<std::shared_ptr<model_maker::Point>>& points_copy = triangulation_datas.get()->points_copy;
-            // Treated datas
-            int needed_i = (current_i + triangulation_datas.get()->offset_i) % points_copy.size();
-            int needed_i_1 = (needed_i + 1) % points_copy.size();
-            int needed_i_2 = (needed_i_1 + 1) % points_copy.size();
 
             // Check if the points are the same
             if(current_point.get() == current_point_1.get() || current_point_1.get() == current_point_2.get()) {return TRIANGULATION_STEP_TEST_SAME_POINT;}

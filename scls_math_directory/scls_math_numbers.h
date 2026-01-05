@@ -68,12 +68,17 @@ namespace scls {
         Textual_Math_Settings();
 
         // Getters and setters
+        inline int complex_double()const{return a_complex_double;};
         inline bool hide_if_0() const {return a_hide_if_0;};
         inline bool introduction_in_mathml() const {return a_introduction_in_mathml;};
+        void set_complex_double(int new_complex_double){a_complex_double = new_complex_double;};
         void set_hide_if_0(bool new_hide_if_0){a_hide_if_0 = new_hide_if_0;};
         void set_spaces_in_color(bool new_spaces_in_color);
         bool spaces_in_color();
     private:
+        // Write the complex with doubles or fraction (-1)
+        int a_complex_double = -1;
+
         // Hides the number if equal to "0"
         bool a_hide_if_0 = true;
 
@@ -99,6 +104,26 @@ namespace scls {
 
     //*********
     //
+    // The __Algebra_Element class
+    //
+    //*********
+
+    class __Algebra_Element {
+        // Class representating an element in a field
+    public:
+
+        // __Algebra_Element constructor
+        __Algebra_Element(){};
+        // __Algebra_Element destructor
+        virtual ~__Algebra_Element(){};
+
+        // Returns the element to a simple std::string
+        virtual std::string to_mathml(Textual_Math_Settings* settings) const = 0;
+        virtual std::string to_std_string(Textual_Math_Settings* settings) const = 0;
+    };
+
+    //*********
+    //
     // The __Field_Element class
     //
     //*********
@@ -116,8 +141,9 @@ namespace scls {
         virtual std::string to_mathml(Textual_Math_Settings* settings) const = 0;
         virtual std::string to_std_string(Textual_Math_Settings* settings) const = 0;
 
-        // Returns the inverse of this element
+        // Returns the inverse / opposite of this element
         virtual std::shared_ptr<__Field_Element> inverse() = 0;
+        virtual std::shared_ptr<__Field_Element> opposite() = 0;
     };
 }
 
@@ -159,6 +185,7 @@ namespace scls {
         // Returns a fraction from a std::string
         static __Fraction_Base from_std_string(std::string content);
         // Returns the inverse of the fraction
+        __Fraction_Base opposite() const;
         __Fraction_Base inverse() const;
         // Normalize the fraction
         void normalize_force();
@@ -214,6 +241,7 @@ namespace scls {
         __Fraction_Base _multiply_without_modification(unsigned int obj) const;
 
         // Returns the inverse of this element
+        virtual std::shared_ptr<__Field_Element> opposite(){return std::make_shared<__Fraction_Base>(-numerator(), denominator());};
         virtual std::shared_ptr<__Field_Element> inverse(){return std::make_shared<__Fraction_Base>(denominator(), numerator());};
 
         // Substracts an another Fraction to this fraction

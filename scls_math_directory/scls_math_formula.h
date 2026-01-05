@@ -357,6 +357,7 @@ namespace scls {
         //inline __Formula_Base* denominator() const {return a_fraction.get()->denominator();};
         inline std::string* redaction_ptr() {return a_redaction;};
         template<typename T> void set_applied_function(std::shared_ptr<T> new_applied_function) {a_applied_function = new_applied_function;if(a_applied_function.get()!=0){std::shared_ptr<__Formula_Base>f=a_applied_function.get()->simplify(this);if(f.get()!=0){paste(f.get());}}soft_reset();};
+        template<typename T> void set_applied_function(int value) {set_applied_function(std::make_shared<T>(value));};
         template<typename T> void set_applied_function() {set_applied_function(std::make_shared<T>());};
         inline void set_redaction(std::string* new_redaction){a_redaction = new_redaction;};
 
@@ -425,7 +426,7 @@ namespace scls {
         // Returns the opposite of the formula
         virtual std::shared_ptr<__Formula_Base> opposite() const {std::shared_ptr<__Formula_Base_Template<T>>t=clone();t.get()->multiply(T(-1));return t;};
         // Returns if the formula is a precise object
-        virtual bool is_multiplication_neutral() const{return is_simple_monomonial() && monomonial()->is_known() && (*monomonial()->factor()) == 1;};
+        virtual bool is_multiplication_neutral() const{return is_simple_monomonial() && monomonial() != 0 && monomonial()->is_known() && monomonial()->factor() != 0 && (*monomonial()->factor()) == 1;};
         // Returns if the formula is null or not
         virtual bool is_null() const{return (fraction() == 0 && polynomial() == 0) || (polynomial() != 0 && polynomial()->is_null());};
 

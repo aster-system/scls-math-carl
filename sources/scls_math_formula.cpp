@@ -118,6 +118,7 @@ namespace scls {
         }
 
         // Return the result
+        if(to_return == std::string() && !settings->hide_if_0()){to_return = std::string("<mi>0</mi>");}
         return to_return;
     }
     // Returns the formula factor to a std::string

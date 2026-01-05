@@ -39,7 +39,14 @@ namespace scls {
 	// Returns the comparaison between two unknows
     bool _Base_Unknown::compare_unknown(_Base_Unknown other) const {if(a_conjugate == other.a_conjugate && a_exponent == other.a_exponent && a_name == other.a_name) {return Unknown_Comparaison::UC_EQUAL;}return Unknown_Comparaison::UC_DIFFERENT;};
 
-    // Returns the inverse the monomonial
+    // Returns the inverse / opposite the monomonial
+    std::shared_ptr<__Monomonial_Base> __Monomonial_Base::opposite() const {
+    	std::shared_ptr<__Monomonial_Base> new_monomonial = clone();
+		new_monomonial.get()->__set_factor(__factor()->opposite());
+
+		// Reverse each unknowns
+		return new_monomonial;
+    }
     std::shared_ptr<__Monomonial_Base> __Monomonial_Base::inverse() const {
         std::shared_ptr<__Monomonial_Base> new_monomonial = clone();
         new_monomonial.get()->__set_factor(__factor()->inverse());
@@ -187,12 +194,37 @@ namespace scls {
                     }
                 }
             }
-            else {same_monomonial->__add(new_monomonial);}
+            else {
+            	same_monomonial->__add(new_monomonial);
+            	if(same_monomonial->is_null()){
+            		// Remove the empty monomonial
+					for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+						if(a_monomonials.at(i).get()->same_unknowns(same_monomonial)) {
+							a_monomonials.erase(a_monomonials.begin() + i, a_monomonials.begin() + i + 1);
+							break;
+						}
+					}
+            	}
+            }
         }
     };
 
     // Returns all the unknowns in the formula
     std::vector<std::string> Polynomial_Base::all_unknowns(){std::vector<std::string> to_return;for(int i=0;i<static_cast<int>(a_monomonials.size());i++){for(int j=0;j<static_cast<int>(a_monomonials.at(i).get()->unknowns().size());j++){std::string to_add=a_monomonials.at(i).get()->unknowns().at(j).name();if(to_add!=""&&std::count(to_return.begin(),to_return.end(),to_add)<=0){to_return.push_back(to_add);}}}return to_return;};
+
+    // Returns the bigger monomonial
+    __Monomonial_Base* Polynomial_Base::__bigger_monomonial() const {
+    	int bigger = 0;int exponent = 0;
+    	for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {
+    		__Monomonial_Base* current = a_monomonials.at(i).get();
+    		if(current != 0 && current->unknowns().size()  == 1 && current->unknown() != 0 && current->unknown()->exponent() > exponent){
+    			bigger = i;exponent = current->unknown()->exponent();
+    		}
+    	}
+
+    	// Return the result
+    	return a_monomonials.at(bigger).get();
+    }
 
     // Returns if the polynomial contains a monomonial
     __Monomonial_Base* Polynomial_Base::contains_monomonial(__Monomonial_Base* new_monomonial) {for(int i = 0;i<static_cast<int>(a_monomonials.size());i++) {if(a_monomonials[i].get()->same_unknowns(new_monomonial)) {return a_monomonials.at(i).get();}} return 0;}
@@ -293,10 +325,7 @@ namespace scls {
 
     // Methods operators
     // Add a Polynomial_Base to this one
-    void Polynomial_Base::__add(__Monomonial_Base* value) {
-        __Monomonial_Base* contained_monomonial = contains_monomonial(value);
-        if(contained_monomonial == 0) {__add_monomonial(value);} else {contained_monomonial->__add(value);}
-    }
+    void Polynomial_Base::__add(__Monomonial_Base* value) {__add_monomonial(value);}
     void Polynomial_Base::__add(Polynomial_Base* value) {
         // Asserts / speed
         if(value->monomonials().size() <= 0 || (value->monomonials().size() == 1 && value->monomonials().at(0).get()->is_null())){return;}
@@ -390,6 +419,20 @@ namespace scls {
         }
         return poly;
     };
+
+    // Substracts a monomonial / polynomial to this void
+    void  Polynomial_Base::__substract(__Monomonial_Base* value) {std::shared_ptr<__Monomonial_Base> to_add = value->opposite();__add(to_add.get());}
+    void  Polynomial_Base::__substract(Polynomial_Base* value) {
+    	// Asserts / speed
+		if(value->monomonials().size() <= 0 || (value->monomonials().size() == 1 && value->monomonials().at(0).get()->is_null())){return;}
+		if(value->monomonials().size() == 1 && monomonials().size() == 1 && value->monomonials().at(0).get()->is_known() && monomonials().at(0).get()->is_known()){monomonials().at(0).get()->__add(value->monomonials().at(0).get());return;}
+
+		// Add the monomonial
+		for(int i = 0;i<static_cast<int>(value->a_monomonials.size());i++) {
+			__Monomonial_Base* current_monomonial = value->a_monomonials.at(i).get();
+			__substract(current_monomonial);
+		}
+    }
 
     // Operators
     bool Polynomial_Base::__is_equal(__Field_Element* value) const {return a_monomonials.size() == 1 && a_monomonials.at(0).get()->is_known() && a_monomonials.at(0).get()->is_equal(a_monomonials.at(0).get()->__factor(), value);};

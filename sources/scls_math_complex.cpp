@@ -33,15 +33,14 @@ namespace scls {
 
         std::string to_return = "";
         if(real() != 0) {
-            to_return += real().to_std_string(max_number_size, settings) + " ";
+            if(settings == 0 || settings->complex_double() == -1){to_return += real().to_std_string(max_number_size, settings) + " ";}
+            else{to_return += format_number_to_text(real().to_double(), settings->complex_double()) + " ";}
         }
         if(imaginary() != 0) {
-            if(imaginary() > 0) {
-                to_return += "+ " + imaginary().to_std_string(max_number_size, settings) + "i";
-            }
-            else {
-                to_return += "- " + (imaginary() * -1).to_std_string(max_number_size, settings) + "i";
-            }
+            if(imaginary() > 0) {to_return += "+ ";}
+            else {to_return += "- ";}
+            if(settings == 0 || settings->complex_double() == -1){to_return += imaginary().abs().to_std_string(max_number_size, settings) + "i";}
+            else{to_return += format_number_to_text(std::abs(imaginary().to_double()), settings->complex_double()) + "i";}
         }
         while(to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
         if(to_return == "") to_return = "0";

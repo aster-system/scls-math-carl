@@ -36,7 +36,8 @@ namespace scls {
 
 	// String_To_Formula_Parse constructor
 	String_To_Formula_Parse::String_To_Formula_Parse(unsigned int level):a_level(level){
-        add_function(std::string("cos"));
+		add_function(std::string("arccos"));
+		add_function(std::string("cos"));
         add_function(std::string("exp"));
         add_function(std::string("ln"));
         add_function(std::string("normal"));

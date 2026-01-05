@@ -84,7 +84,8 @@ namespace scls {
         __Monomonial_Base(const __Monomonial_Base& monomonial_copy):__Monomonial_Base(monomonial_copy.a_factor,monomonial_copy.a_unknowns){};
         // __Monomonial_Base destructor
         virtual ~__Monomonial_Base(){};
-        // Returns the inverse of the monomonial
+        // Returns the inverse / opposite of the monomonial
+        std::shared_ptr<__Monomonial_Base> opposite() const;
         std::shared_ptr<__Monomonial_Base> inverse() const;
 
         // Add an unknown to the monomonial
@@ -149,30 +150,6 @@ namespace scls {
         // Unknows of the monomonial
         std::vector<_Base_Unknown> a_unknowns;
     };
-    template <typename T> class __Monomonial_Template : public __Monomonial_Base {
-    public:
-        // __Monomonial_Template constructor
-        __Monomonial_Template(T factor):__Monomonial_Base(std::make_shared<T>(factor)){}
-        __Monomonial_Template(T factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(std::make_shared<T>(factor), unknowns){};
-        __Monomonial_Template(std::shared_ptr<__Field_Element> factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(factor, unknowns){};
-        __Monomonial_Template(T factor, std::string unknow):__Monomonial_Base(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
-        __Monomonial_Template(T factor, std::string unknow, int exponent):__Monomonial_Base(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
-
-        // Comparaison
-        virtual bool is_equal(__Field_Element* operand_1, __Field_Element* operand_2)const{return (*(reinterpret_cast<T*>(operand_1))) == (*(reinterpret_cast<T*>(operand_2)));};
-        // Operations
-        virtual std::shared_ptr<__Field_Element> addition(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) + *(reinterpret_cast<T*>(operand_2)));};
-        virtual std::shared_ptr<__Field_Element> division(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) / *(reinterpret_cast<T*>(operand_2)));};
-        virtual std::shared_ptr<__Field_Element> multiplication(__Field_Element* operand_1, const __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) * *(reinterpret_cast<const T*>(operand_2)));};
-        virtual std::shared_ptr<__Field_Element> substraction(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) - *(reinterpret_cast<T*>(operand_2)));};
-        // Property
-        virtual std::shared_ptr<__Monomonial_Base> clone()const{return std::make_shared<__Monomonial_Template<T>>(*factor(), unknowns_const());};
-        virtual bool is_null(__Field_Element* operand)const{return (*(reinterpret_cast<T*>(operand))) == 0;};
-
-        // Getters and setters
-        inline T* factor()const{return reinterpret_cast<T*>(__factor());};
-        inline void set_factor(T factor){__set_factor(std::make_shared<T>(factor));};
-    };
 
     class Polynomial_Base {
         // Class representating a full polynomial form
@@ -183,11 +160,15 @@ namespace scls {
         Polynomial_Base(std::shared_ptr<__Monomonial_Base> monomonial){a_monomonials.push_back(monomonial);};
         // Polynomial_Base copy constructor
         Polynomial_Base(const Polynomial_Base& polynomial_copy);
+        // Polynomial_Base destructor
+        virtual ~Polynomial_Base(){};
 
         // Add a new monomonial to the polynomial
         void __add_monomonial(__Monomonial_Base* new_monomonial);
         // Returns all the unknowns in the formula
         std::vector<std::string> all_unknowns();
+        // Returns the bigger monomonial
+        __Monomonial_Base* __bigger_monomonial() const;
         // Returns if the polynomial contains a monomonial
         __Monomonial_Base* contains_monomonial(__Monomonial_Base* new_monomonial);
         // Returns the maximum degree in the polynomial
@@ -229,6 +210,9 @@ namespace scls {
         // Multiply a polynomial to this one
         void __multiply(__Field_Element* value);
         void __multiply(Polynomial_Base* value);
+        // Substracts a monomonial / polynomial to this void
+        void __substract(__Monomonial_Base* value);
+        void __substract(Polynomial_Base* value);
 
         // Returns a polynomial from a monomonial where the unknows has been replaced
         static std::shared_ptr<Polynomial_Base> polynomial_from_modified_monomonial_unknows(__Monomonial_Base* used_monomonial, std::string unknown, Polynomial_Base* new_value);
@@ -259,6 +243,31 @@ namespace scls {
         // Each monomonial in the polynomial
         std::vector<std::shared_ptr<__Monomonial_Base>> a_monomonials = std::vector<std::shared_ptr<__Monomonial_Base>>();
 	};
+
+    template <typename T> class __Monomonial_Template : public __Monomonial_Base {
+    public:
+        // __Monomonial_Template constructor
+        __Monomonial_Template(T factor):__Monomonial_Base(std::make_shared<T>(factor)){}
+        __Monomonial_Template(T factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(std::make_shared<T>(factor), unknowns){};
+        __Monomonial_Template(std::shared_ptr<__Field_Element> factor, std::vector<_Base_Unknown> unknowns):__Monomonial_Base(factor, unknowns){};
+        __Monomonial_Template(T factor, std::string unknow):__Monomonial_Base(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow))){};
+        __Monomonial_Template(T factor, std::string unknow, int exponent):__Monomonial_Base(std::make_shared<T>(factor),std::vector<_Base_Unknown>(1,_Base_Unknown(unknow, exponent))){};
+
+        // Comparaison
+        virtual bool is_equal(__Field_Element* operand_1, __Field_Element* operand_2)const{return (*(reinterpret_cast<T*>(operand_1))) == (*(reinterpret_cast<T*>(operand_2)));};
+        // Operations
+        virtual std::shared_ptr<__Field_Element> addition(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) + *(reinterpret_cast<T*>(operand_2)));};
+        virtual std::shared_ptr<__Field_Element> division(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) / *(reinterpret_cast<T*>(operand_2)));};
+        virtual std::shared_ptr<__Field_Element> multiplication(__Field_Element* operand_1, const __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) * *(reinterpret_cast<const T*>(operand_2)));};
+        virtual std::shared_ptr<__Field_Element> substraction(__Field_Element* operand_1, __Field_Element* operand_2){return std::make_shared<T>(*(reinterpret_cast<T*>(operand_1)) - *(reinterpret_cast<T*>(operand_2)));};
+        // Property
+        virtual std::shared_ptr<__Monomonial_Base> clone()const{return std::make_shared<__Monomonial_Template<T>>(*factor(), unknowns_const());};
+        virtual bool is_null(__Field_Element* operand)const{return (*(reinterpret_cast<T*>(operand))) == 0;};
+
+        // Getters and setters
+        inline T* factor()const{return reinterpret_cast<T*>(__factor());};
+        inline void set_factor(T factor){__set_factor(std::make_shared<T>(factor));};
+    };
     template <typename T> class Polynomial_Template : public Polynomial_Base {
     public:
         // Polynomial_Template constructor
@@ -275,6 +284,8 @@ namespace scls {
 
         // Add a new monomonial to the polynomial
         void add_monomonial(__Monomonial_Template<T> new_monomonial){__add_monomonial(&new_monomonial);};
+        // Returns the bigger monomonial
+        __Monomonial_Template<T>* bigger_monomonial() const {return reinterpret_cast<__Monomonial_Template<T>*>(__bigger_monomonial());};
         // Returns the knows monomonial
         __Monomonial_Template<T>* known_monomonial() const {return reinterpret_cast<__Monomonial_Template<T>*>(__known_monomonial());};
         T known_monomonial_factor() const {__Monomonial_Template<T>* needed = known_monomonial();if(needed == 0){return T(0);}return *known_monomonial()->factor();};

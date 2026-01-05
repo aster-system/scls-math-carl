@@ -75,6 +75,7 @@ namespace scls {
 
         // Returns the inverse of this element
         virtual std::shared_ptr<__Field_Element> inverse(){return std::make_shared<Complex>(Complex(1) / (*this));};
+        virtual std::shared_ptr<__Field_Element> opposite(){return std::make_shared<Complex>(*this * -1);};
 
         // Function to do operations with Complex
         // Adds an another Complex to this Complex
@@ -156,7 +157,6 @@ namespace scls {
         Fraction a_imaginary = Fraction(0);
         // Real part of the complex
         Fraction a_real = Fraction(0);
-
 	};
 
 	// Returns a complex from a std::string (indev)
@@ -197,7 +197,39 @@ namespace scls {
     // Complex formula
     typedef __Formula_Base_Template<Complex> __Formula;
 
-	// Cosinus function possible for a formula
+    // Trigonometric complex
+    struct Complex_Polar {
+    	// Complex_Polar constructor
+    	Complex_Polar(std::shared_ptr<__Formula_Base_Template<Complex>> needed_argument, std::shared_ptr<__Formula_Base_Template<Complex>> needed_modulus):a_argument(needed_argument),a_modulus(needed_modulus){};
+
+    	// Converts the polar complex to an algebric complex
+    	Complex to_complex() const {Complex c(scls::Fraction::from_double(std::cos(a_argument.get()->value_to_double())), scls::Fraction::from_double(std::sin(a_argument.get()->value_to_double())));return c * a_modulus.get()->value_to_fraction();};
+
+    	// Getters and setters
+    	__Formula_Base_Template<Complex>* argument(){return a_argument.get();};
+    	__Formula_Base_Template<Complex>* modulus(){return a_modulus.get();};
+
+    	// Module and argument
+    	std::shared_ptr<__Formula_Base_Template<Complex>> a_argument;
+    	std::shared_ptr<__Formula_Base_Template<Complex>> a_modulus;
+    };
+
+    // Arccosinus function possible for a formula
+	class __Arccos_Function : public __Formula_Base_Template<Complex>::__Formula_Base_Function {
+		public:
+			// __Arccos_Function constructor
+			__Arccos_Function():__Formula_Base_Function("arccos", 1){};
+
+			// Real value
+			virtual double real_value(std::vector<__Formula_Base*> formula){__Monomonial_Template<Complex>* needed_monomonial = reinterpret_cast<__Formula_Base_Template<Complex>*>(formula.at(0))->polynomial()->known_monomonial();if(needed_monomonial == 0){return 1;}double value = needed_monomonial->factor()->real().to_double();return std::acos(value);};
+			// Simplify a value with the function
+			virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base_Template<Complex>>();};
+
+			// Copies and returns this function
+			virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Arccos_Function>();};
+	};
+
+    // Cosinus function possible for a formula
 	class __Cos_Function : public __Formula_Base_Template<Complex>::__Formula_Base_Function {
 		public:
 			// __Formula_Base_Function constructor
@@ -259,6 +291,27 @@ namespace scls {
 
 			// Copies and returns this function
 			virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Log_Function>();};
+	};
+
+	// Square root function possible for a formula
+	class __Root_Function : public __Formula_Base_Template<Complex>::__Formula_Base_Function {
+		public:
+			// __Root_Function constructor
+			__Root_Function():__Formula_Base_Function("root", 2){};
+			__Root_Function(int needed_base):__Root_Function(){a_base=needed_base;};
+
+			// Real value
+			virtual double real_value(std::vector<__Formula_Base*> formula){__Monomonial_Template<Complex>* needed_monomonial = reinterpret_cast<__Formula_Base_Template<Complex>*>(formula.at(0))->polynomial()->known_monomonial();if(needed_monomonial == 0){return 0;}double value = needed_monomonial->factor()->real().to_double();return std::pow(value, 1.0/a_base);};
+			// Simplify a value with the function
+			virtual std::shared_ptr<__Formula_Base> simplify(__Formula_Base* value) {return std::shared_ptr<__Formula_Base>();};
+
+			// Copies and returns this function
+			virtual std::shared_ptr<__Formula_Base_Function> function_copy(){return std::make_shared<__Root_Function>(a_base);};
+
+		private:
+
+			// Base of the root
+			int a_base = 3;
 	};
 
 	// Sinus function possible for a formula

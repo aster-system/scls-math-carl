@@ -97,6 +97,7 @@ namespace scls {
     // Returns the absolute value of the fraction
     __Fraction_Base __Fraction_Base::abs() const{if(to_double() >= 0){return *this;}return (*this) * -1;};
     // Returns the inverse of the fraction
+    __Fraction_Base __Fraction_Base::opposite() const{return __Fraction_Base(-a_numerator, a_denominator);};
     __Fraction_Base __Fraction_Base::inverse() const {return __Fraction_Base(a_denominator, a_numerator);};
 
     // Returns a fraction from a double

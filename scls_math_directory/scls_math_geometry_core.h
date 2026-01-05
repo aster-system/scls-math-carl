@@ -376,12 +376,25 @@ namespace scls {
         double distance(Point_2D point);
         double distance(const Transform_Object_2D& object);
 
+        // Forward vector
+        inline double forward_vector_x() const {return Point_2D(1, 0).rotated(absolute_rotation()).x();};
+        inline double forward_vector_y() const {return Point_2D(1, 0).rotated(absolute_rotation()).y();};
+        // Right vector
+        inline double right_vector_x() const {return Point_2D(0, 1).rotated(absolute_rotation()).x();};
+        inline double right_vector_y() const {return Point_2D(0, 1).rotated(absolute_rotation()).y();};
+
+        // Move on the forward axis
+        inline void move_forward(double force) {move_xy(forward_vector_x() * force, forward_vector_y() * force);};
+        // Move on the right axis
+        inline void move_right(double force) {move_xy(right_vector_x() * force, right_vector_y() * force);};
+
         // Returns if a transform object touches an another
         bool touch(Transform_Object_2D* object);
 
         // Move easily the object
         void move_x(Fraction movement);
         void move_y(Fraction movement);
+        void move_xy(double x, double y);
 
         // Extremums
         double max_absolute_x() const;

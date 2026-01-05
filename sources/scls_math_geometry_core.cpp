@@ -312,12 +312,19 @@ namespace scls {
     // Move easily the object
     void Transform_Object_2D::move_x(Fraction movement) {set_x(x() + movement.to_double());};
     void Transform_Object_2D::move_y(Fraction movement) {set_y(y() + movement.to_double());};
+    void Transform_Object_2D::move_xy(double movement_x, double movement_y){set_x(x() + movement_x);set_y(y() + movement_y);}
+    // TEST {a_velocity.set_x(a_velocity.x() + movement_x / delta_time().to_double());a_velocity.set_y(a_velocity.y() + movement_y / delta_time().to_double());};
 
     // Extremums
-    double Transform_Object_2D::max_absolute_x() const {return absolute_x() + absolute_scale_x() / 2.0;};
-    double Transform_Object_2D::max_absolute_y() const {return absolute_y() + absolute_scale_y() / 2.0;};
-    double Transform_Object_2D::min_absolute_x() const {return absolute_x() - absolute_scale_x() / 2.0;};
-    double Transform_Object_2D::min_absolute_y() const {return absolute_y() - absolute_scale_y() / 2.0;};
+    // TO OPTIMISE
+    double Transform_Object_2D::max_absolute_x() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_x() + absolute_max.x();};
+    double Transform_Object_2D::max_absolute_y() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_y() + absolute_max.y();};
+    double Transform_Object_2D::min_absolute_x() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_x() - absolute_max.x();};
+    double Transform_Object_2D::min_absolute_y() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_y() - absolute_max.y();};
+    //double Transform_Object_2D::max_absolute_x() const {return absolute_x() + absolute_scale_x() / 2.0;};
+    //double Transform_Object_2D::max_absolute_y() const {return absolute_y() + absolute_scale_y() / 2.0;};
+    //double Transform_Object_2D::min_absolute_x() const {return absolute_x() - absolute_scale_x() / 2.0;};
+    //double Transform_Object_2D::min_absolute_y() const {return absolute_y() - absolute_scale_y() / 2.0;};
     double Transform_Object_2D::max_x() const {return x() + scale_x() / 2;};
     double Transform_Object_2D::max_y() const {return y() + scale_y() / 2;};
     double Transform_Object_2D::min_x() const {return x() - scale_x() / 2;};
