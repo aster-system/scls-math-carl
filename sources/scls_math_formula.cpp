@@ -136,7 +136,6 @@ namespace scls {
         return to_return;
     }
 	std::string __Formula_Base::to_std_string(Textual_Math_Settings* settings) const {
-        std::string current_str = "";
         std::string to_return = "";
 
         // Add the Polynomial add
