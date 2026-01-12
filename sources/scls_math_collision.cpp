@@ -178,6 +178,7 @@ namespace scls {
         scls::Point_2D position_from_other = (position - other_position).normalized();
         if(distance < other_scale.x() / 2.0 && can_be_in_each_other){position_from_here *= -1;circle_1_in_other=true;}
         if(distance < scale.x() / 2.0 && can_be_in_each_other){position_from_other *= -1;}
+        scls::Point_2D velocity_from_here = (velocity_other - velocity).normalized();
         scls::Point_2D velocity_from_other = (velocity - velocity_other).normalized();
 
         // Calculate the angle
@@ -199,9 +200,13 @@ namespace scls {
                 new_velocity -= velocity;
             }
             else {
-                new_velocity = velocity * -1;velocity_total = 10.0;
-                new_velocity = (position_from_other * velocity_total);
-                if(circle_1_in_other){new_velocity = (position_from_other * -velocity_total);}
+                velocity_total = (velocity_other.norm() + velocity.norm()) / 2.0;
+                double velocity_angle = angle_tangent - scls::vector_2d_angle(velocity_from_here);
+                double final_angle = angle_tangent + velocity_angle;
+                new_velocity = velocity * -1 + scls::vector_2d_with_angle(final_angle) * velocity_total;
+
+                //new_velocity = (position_from_other * velocity_total);
+                //if(circle_1_in_other){new_velocity = (position_from_other * -velocity_total);}
             }
             to_return.get()->acceleration = new_velocity;
         }

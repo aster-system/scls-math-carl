@@ -117,7 +117,7 @@ namespace scls {
                 formula.get()->add(current_polymonial.get());
             }
         }
-        else {formula = __string_to_formula_base(cutted[0]);}
+        else {formula = __string_to_formula_base(cutted[0], std::string(), environment);}
 
         // Return the result
         return formula;

@@ -46,7 +46,7 @@ namespace scls {
         virtual std::shared_ptr<__Formula_Base> new_formula() const = 0;
 
         // Container of unknowns
-        struct Unknown{std:: string name = std::string();std::shared_ptr<__Formula_Base> value;void set_value(std::shared_ptr<__Formula_Base> formula){value = formula;};void set_value(__Formula_Base* formula){value = formula->clone();};};;
+        struct Unknown{std:: string name = std::string();std::shared_ptr<__Formula_Base> value;void set_value(std::shared_ptr<__Formula_Base> formula){value = formula;};void set_value(__Formula_Base* formula){value = formula->clone();};};
         class Unknowns_Container {
         public:
             // Unknowns_Container constructor
@@ -547,6 +547,84 @@ namespace scls {
         __Formula_Base_Template<T> operator/(__Formula_Base_Template<T> value) const {__Formula_Base_Template<T> other(*this);other.__divide(&value);return other;};
         __Formula_Base_Template<T>& operator/=(__Formula_Base_Template<T> value) {__divide(&value);return*this;};
     };
+
+    //*********
+	//
+	// The "Boolean" class
+	//
+	//*********
+
+    class Boolean: public __Algebra_Element {
+    public:
+    	// Container of unknowns
+    	struct __Boolean_Unknown : public __Algebra_Element::__Algebra_Unknown {bool value = false;};
+
+    	// Boolean constructor
+    	Boolean(){};
+    	Boolean(std::string unknown_name):Boolean(){new_unknown(unknown_name);};
+
+    	// Adds an operator
+    	void add_and(char other){if(other == 0){clear();a_value = false;}};
+    	void add_and(Boolean* other){
+    	    // Has a value
+    	    if(other->is_final_element() && !other->is_unknown()){add_and(other->a_value);return;}
+
+    	    // Not a value
+			if(is_final_element() || algebra_operator() != std::string(".")){sub_place();set_algebra_operator(".");}
+			algebra_elements().push_back(other->clone());
+		};
+    	void add_and(__Algebra_Element* other){add_and(reinterpret_cast<Boolean*>(other));};
+    	void add_and(Boolean other){add_and(&other);};
+    	void add_and(std::string unknown_name){Boolean b = Boolean(unknown_name);add_and(b);};
+    	void add_or(char other){if(other == 1){clear();a_value = true;}};
+    	void add_or(__Algebra_Element* other){add_or(reinterpret_cast<Boolean*>(other));};
+    	void add_or(Boolean* other){
+    	    // Has a value
+    	    if(other->is_final_element() && !other->is_unknown()){add_or(other->a_value);return;}
+
+    	    // Not a value
+			if(is_final_element() || algebra_operator() != std::string("+")){sub_place();set_algebra_operator("+");}
+			algebra_elements().push_back(other->clone());
+		};
+    	void add_or(Boolean other){add_or(&other);};
+		void add_or(std::string unknown_name){Boolean b = Boolean(unknown_name);add_or(b);};
+
+    	// Creates a new algebra element of the same type
+		virtual std::shared_ptr<__Algebra_Element> algebra_clone() const {return clone();};
+		virtual std::shared_ptr<Boolean> clone() const {std::shared_ptr<Boolean> b = std::make_shared<Boolean>();__clone_base(b.get());b.get()->a_value = a_value;return b;};
+    	virtual std::shared_ptr<__Algebra_Element> new_algebra_element() const {std::shared_ptr<Boolean> s = std::make_shared<Boolean>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
+
+    	// Creates the unknown
+    	virtual __Algebra_Element::__Algebra_Unknown* create_unknown(){clear();a_unknown = std::make_shared<__Boolean_Unknown>();return a_unknown.get();};
+
+    	// Replaces the unknowns
+    	std::shared_ptr<Boolean> replace_unknowns(Unknowns_Container* values) const;
+
+    	// Returns the element to a simple std::string
+    	virtual std::string to_mathml(Textual_Math_Settings* settings) const {if(is_unknown()){return algebra_unknown()->name;}};
+    	virtual std::string to_std_string(Textual_Math_Settings* settings) const {
+    		// If the element is the final element
+    		if(is_final_element()) {
+    			if(is_unknown()){return algebra_unknown()->name;}
+    			else{if(a_value){return std::string("1");}return std::string("0");}
+    		}
+
+    		// A lot of objects
+    		std::string to_return = std::string();
+    		for(int i = 0;i<static_cast<int>(algebra_elements_const().size());i++) {
+    			std::string current = algebra_elements_const().at(i).get()->to_std_string(settings);
+    			if(!algebra_elements_const().at(i).get()->is_final_element()){current = std::string("(") + current + std::string(")");}
+    			to_return += current;
+    			if(i != static_cast<int>(algebra_elements_const().size()) - 1){to_return += std::string(" ") + algebra_operator() + std::string(" ");}
+    		}
+
+    		return to_return;
+    	};
+    private:
+    	// Value of the element
+    	bool a_value = false;
+    };
+    typedef Boolean::__Boolean_Unknown Boolean_Unknown;
 }
 
 #endif // SCLS_MATH_FORMULA

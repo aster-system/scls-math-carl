@@ -63,6 +63,40 @@ namespace scls {
 
 namespace scls {
 
+	//*********
+    //
+    // The __Algebra_Element class
+    //
+    //*********
+
+    // __Algebra_Element constructor
+	__Algebra_Element::__Algebra_Element(){}
+	// __Algebra_Element destructor
+	__Algebra_Element::~__Algebra_Element(){}
+
+	// Clears the object
+	void __Algebra_Element::clear(){a_elements.clear();a_operator = std::string();a_unknown.reset();}
+
+	// Return if the element is a final element
+	bool __Algebra_Element::is_final_element()const{return static_cast<int>(a_elements.size()) == 0;};
+	bool __Algebra_Element::is_unknown()const{return is_final_element() && a_unknown.get() != 0;};
+
+	// Sub-places the element
+	void __Algebra_Element::sub_place() {
+		std::shared_ptr<__Algebra_Element> e = algebra_clone();
+		clear();
+		a_elements.push_back(e);
+	}
+
+	// Virtual functions
+
+	// Creates a new algebra element of the same type
+	void __Algebra_Element::__clone_base(__Algebra_Element* e)const{e->a_operator = a_operator;e->a_unknown = a_unknown;e->a_elements = a_elements;}
+
+	// Creates the unknown
+	__Algebra_Element::__Algebra_Unknown* __Algebra_Element::create_unknown(){clear();a_unknown = std::make_shared<__Algebra_Element::__Algebra_Unknown>();return a_unknown.get();};
+	__Algebra_Element::__Algebra_Unknown* __Algebra_Element::new_unknown(std::string unknown_name){create_unknown();a_unknown.get()->name = unknown_name;return a_unknown.get();};
+
     //*********
     //
     // The __Field_Element class
