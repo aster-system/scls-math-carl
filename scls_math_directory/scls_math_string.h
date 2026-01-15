@@ -146,6 +146,10 @@ namespace scls {
     // Use parsers methods outside the class
     std::shared_ptr<__Formula> string_to_formula(std::string source);
     std::shared_ptr<__Formula> replace_unknown(__Formula_Base used_formula, std::string unknown, std::string new_value);
+
+    // Use parsers methods outside the class
+    void __string_to_algebra_element(__Algebra_Element* element, std::string source);
+    template <typename T> std::shared_ptr<T> string_to_algebra_element(std::string source){std::shared_ptr<T> new_object = std::make_shared<T>();__string_to_algebra_element(new_object.get(), source);return new_object;};
 }
 
 #endif // SCLS_MATH_STRING

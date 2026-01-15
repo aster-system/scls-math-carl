@@ -151,6 +151,10 @@ namespace scls {
         void __clone_base(__Algebra_Element* e) const;
         virtual std::shared_ptr<__Algebra_Element> algebra_clone() const = 0;
         virtual std::shared_ptr<__Algebra_Element> new_algebra_element() const = 0;
+        virtual std::shared_ptr<__Algebra_Element> new_algebra_element(std::string content) const = 0;
+
+        // Operates this element with another one
+        virtual void operate(__Algebra_Element* other, std::string operation) = 0;
 
         // Sub-places the element
         void sub_place();

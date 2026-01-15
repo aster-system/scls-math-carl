@@ -303,4 +303,27 @@ namespace scls {
     // Returns a unknown by its name
     scls::__Formula_Base::Unknown* Math_Environment::unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
     std::shared_ptr<scls::__Formula_Base::Unknown> Math_Environment::unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
+
+    // Use parsers methods outside the class
+    void __string_to_algebra_element_operator(__Algebra_Element* element, std::string source, std::vector<std::string>& operator_order, int position) {
+        // Cut the text operator by * operator
+        std::vector<std::string> cutted = cut_string_out_of_2(source, operator_order.at(position), "(", ")");
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            std::shared_ptr<__Algebra_Element> current_element;
+            if(position <= 0) {
+                if(cutted.at(i).size() < 2 || (cutted.at(i).at(0) != '(')) {current_element = element->new_algebra_element(cutted.at(i));}
+                else {current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), cutted.at(i).substr(1, cutted.at(i).size() - 2), operator_order, operator_order.size() - 1);}
+            }
+            else{current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), cutted.at(i), operator_order, position - 1);}
+            element->operate(current_element.get(), operator_order.at(position));
+        }
+    }
+    void __string_to_algebra_element(__Algebra_Element* element, std::string source) {
+        // Operator order
+        std::vector<std::string> operator_order = {std::string("."), std::string("+")};
+        source = remove_space(source);
+
+        // Cut the text operator by * operator
+        __string_to_algebra_element_operator(element, source, operator_order, operator_order.size() - 1);
+    }
 }
