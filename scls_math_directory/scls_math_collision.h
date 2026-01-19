@@ -179,6 +179,7 @@ namespace scls {
         // Add a line / rect collision to the graphic object
         void add_collision(std::shared_ptr<Collision> collision);
         void add_collision(double x_1, double y_1, double x_2, double y_2);
+        void add_collision(double x_1, double y_1, double x_2, double y_2, double restitution);
         // Checks if a collision occurs with an another collision
         void check_collision(std::shared_ptr<Collision> collision, Graphic_Physic* other_object);
         // Returns a new a collision to the graphic object

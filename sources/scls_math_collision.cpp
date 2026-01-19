@@ -157,6 +157,12 @@ namespace scls {
         collision.get()->set_x_2(x_2);collision.get()->set_y_2(y_2);
         collision.get()->set_type(Collision_Type::GCT_Line);
     };
+    void Graphic_Physic::add_collision(double x_1, double y_1, double x_2, double y_2, double restitution){
+        std::shared_ptr<Collision> collision = new_collision(Collision_Type::GCT_Line);
+        collision.get()->set_x_1(x_1);collision.get()->set_y_1(y_1);
+        collision.get()->set_x_2(x_2);collision.get()->set_y_2(y_2);
+        collision.get()->set_type(Collision_Type::GCT_Line);
+    };
 
     // Checks if a collision occurs with an another object
     struct Collision_Result{
@@ -474,7 +480,7 @@ namespace scls {
 
         // Calculate the velocity of the object 1
         double multiplier = velocity_from_1.norm();
-        scls::Point_2D new_velocity = new_velocity_direction * multiplier;
+        scls::Point_2D new_velocity = new_velocity_direction * multiplier * object_2->restitution();
         to_return_1.get()->acceleration = object_1->velocity() * -1 + new_velocity;
 
         // Return the result
