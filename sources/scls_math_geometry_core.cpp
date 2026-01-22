@@ -349,7 +349,7 @@ namespace scls {
     // Getters and setters
     Point_2D Transform_Object_2D::raw_velocity() const {return a_raw_velocity;}
     void Transform_Object_2D::set_position(scls::Fraction new_x, scls::Fraction new_y){a_position.set_x(new_x.to_double());a_position.set_y(new_y.to_double());a_moved_during_this_frame = true;}
-    void Transform_Object_2D::set_position(Point_2D_Formula new_position){a_position.set_x(new_position.x()->value_to_double());a_position.set_y(new_position.y()->value_to_double());a_moved_during_this_frame = true;}
+    void Transform_Object_2D::set_position(Point_2D new_position){a_position.set_x(new_position.x());a_position.set_y(new_position.y());a_moved_during_this_frame = true;}
     void Transform_Object_2D::set_raw_velocity(Point_2D new_raw_velocity){a_raw_velocity.set_x(new_raw_velocity.x());a_raw_velocity.set_y(new_raw_velocity.y());}
     void Transform_Object_2D::set_velocity(Point_2D new_velocity){a_velocity.set_x(new_velocity.x());a_velocity.set_y(new_velocity.y());}
     void Transform_Object_2D::set_velocity_x(double new_x){a_velocity.set_x(new_x);}

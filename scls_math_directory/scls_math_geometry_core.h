@@ -425,7 +425,7 @@ namespace scls {
         // Getters and setters
         Point_2D raw_velocity() const;
         void set_position(Fraction new_x, Fraction new_y);
-        void set_position(Point_2D_Formula new_position);
+        void set_position(Point_2D new_position);
         void set_raw_velocity(Point_2D new_raw_velocity);
         virtual void set_x(double new_x);
         virtual void set_y(double new_y);

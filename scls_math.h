@@ -86,7 +86,7 @@
     #include "scls_math_directory/scls_math_boolean.h"
     #include "scls_math_directory/scls_math_matrix.h"
     // Geometry in SCLS Math
-    #include "scls_math_directory/scls_math_collision.h"
+    #include "scls_math_directory/scls_math_2d_physic.h"
     #include "scls_math_directory/scls_math_geometry_core.h"
 
     // Function handling (indev)
