@@ -330,7 +330,7 @@ namespace scls {
         // Transform_Object_2D destructor
         ~Transform_Object_2D();
 
-        // Soft reset the transform
+        // Soft-resets the transform
         inline void soft_reset(){a_moved_during_this_frame = false;};
 
         // Getters and setters

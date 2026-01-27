@@ -30,7 +30,7 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
     // Possible types of collision
-    enum Collision_Type {GCT_Circle, GCT_Line, GCT_Rect};
+    enum Collision_Type_3D {CT_3D_Sphere, CT_3D_Line, CT_3D_Cube};
 
     // Physic in a graphic object
     class Physic_Object_3D {
@@ -53,7 +53,7 @@ namespace scls {
 
                 // If the collision happens or not
                 bool happens = false;
-                Collision_Type type;
+                Collision_Type_3D type;
 
                 // Other collided object
                 Physic_Object_3D* attached_physic(){return a_collision_parent.lock().get()->attached_physic();};
@@ -82,7 +82,7 @@ namespace scls {
             // Datas for a circle collision
             struct Collision_Event_Circle : public Collision_Event {
                 // Collision_Circle constructor
-                Collision_Event_Circle(std::weak_ptr<Collision_3D> collision_parent):Collision_Event(collision_parent){type = Collision_Type::GCT_Circle;};
+                Collision_Event_Circle(std::weak_ptr<Collision_3D> collision_parent):Collision_Event(collision_parent){type = Collision_Type_3D::CT_3D_Sphere;};
 
                 // Angle of the collision
                 double angle;
@@ -97,12 +97,14 @@ namespace scls {
                 #define PLEOS_PHYSIC_RECT_COLLISION_TOP 1
 
                 // Collision_Rect_Rect constructor
-                Collision_Event_Rect_Rect(std::weak_ptr<Collision_3D> collision_parent):Collision_Event(collision_parent){type = Collision_Type::GCT_Rect;};
+                Collision_Event_Rect_Rect(std::weak_ptr<Collision_3D> collision_parent):Collision_Event(collision_parent){type = Collision_Type_3D::CT_3D_Cube;};
 
                 // Distance between the colliding side
                 double distance;
                 // Sides of the collision
+                bool side_backward = false;
                 bool side_bottom = false;
+                bool side_forward = false;
                 bool side_left = false;
                 bool side_right = false;
                 bool side_top = false;
@@ -133,15 +135,17 @@ namespace scls {
             double min_absolute_y() const;
             double max_absolute_x_next() const;
             double max_absolute_y_next() const;
+            double max_absolute_z_next() const;
             double min_absolute_x_next() const;
             double min_absolute_y_next() const;
-            scls::Point_2D position_next() const;
-            void set_type(Collision_Type new_type);
+            double min_absolute_z_next() const;
+            scls::Point_3D position_next() const;
+            void set_type(Collision_Type_3D new_type);
             void set_x_1(scls::Fraction new_x_1);
             void set_x_2(scls::Fraction new_x_2);
             void set_y_1(scls::Fraction new_y_1);
             void set_y_2(scls::Fraction new_y_2);
-            Collision_Type type()const;
+            Collision_Type_3D type()const;
             double x_1() const;
             double x_2() const;
             double y_1() const;
@@ -153,7 +157,7 @@ namespace scls {
             // Attached object
             std::weak_ptr<Transform_Object_3D> a_attached_transform;
             // Type of the collision
-            Collision_Type a_type = Collision_Type::GCT_Line;
+            Collision_Type_3D a_type = Collision_Type_3D::CT_3D_Cube;
 
             // Two points (needed for lines)
             scls::Fraction a_x_1 = 0;scls::Fraction a_y_1 = 0;
@@ -184,13 +188,11 @@ namespace scls {
 
         // Add a line / rect collision to the graphic object
         void add_collision(std::shared_ptr<Collision_3D> collision);
-        void add_collision(double x_1, double y_1, double x_2, double y_2);
-        void add_collision(double x_1, double y_1, double x_2, double y_2, double restitution);
         // Checks if a collision occurs with an another collision
         void check_collision(std::shared_ptr<Collision_3D> collision, Physic_Object_3D* other_object);
         // Returns a new a collision to the graphic object
-        std::shared_ptr<Collision_3D> new_collision(Collision_Type type);
-        std::shared_ptr<Collision_3D> new_collision(){return new_collision(Collision_Type::GCT_Rect);};
+        std::shared_ptr<Collision_3D> new_collision(Collision_Type_3D type);
+        std::shared_ptr<Collision_3D> new_collision(){return new_collision(Collision_Type_3D::CT_3D_Cube);};
 
         // Accelerates the object
         inline void accelerate(scls::Point_3D acceleration){a_attached_transform.lock().get()->accelerate(acceleration);};
@@ -205,16 +207,20 @@ namespace scls {
         void __move(){Transform_Object_3D* t=a_attached_transform.lock().get();t->add_x(next_movement_x());t->add_y(next_movement_y());};
 
         // Physic
+        virtual int collision_depht(){return std::ceil(max_absolute_z_next()) - std::floor(min_absolute_z_next());};
         virtual int collision_height(){return std::ceil(max_absolute_y_next()) - std::floor(min_absolute_y_next());};
         virtual int collision_width(){return std::ceil(max_absolute_x_next()) - std::floor(min_absolute_x_next());};
         virtual int collision_x_start(){return std::floor(min_absolute_x_next());};
         virtual int collision_y_start(){return std::floor(min_absolute_y_next());};
+        virtual int collision_z_start(){return std::floor(min_absolute_z_next());};
 
         // Precise next movement
         inline double max_absolute_x_next() const {return attached_transform()->max_absolute_x_next();};
         inline double max_absolute_y_next() const {return attached_transform()->max_absolute_y_next();};
+        inline double max_absolute_z_next() const {return attached_transform()->max_absolute_z_next();};
         inline double min_absolute_x_next() const {return attached_transform()->min_absolute_x_next();};
         inline double min_absolute_y_next() const {return attached_transform()->min_absolute_y_next();};
+        inline double min_absolute_z_next() const {return attached_transform()->min_absolute_z_next();};
         inline Point_3D position_next() const {return attached_transform()->position_next();};
         inline double x_next() const {return attached_transform()->x_next();};
         inline double y_next() const {return attached_transform()->y_next();};
@@ -299,11 +305,11 @@ namespace scls {
         // Deletes the physic in a case
         void delete_physic_object_case(Physic_Object_3D* to_delete);
         // Loads 100 X 100 physic map
-        void load_physic_map(int middle_loading_x, int middle_loading_y);
+        void load_physic_map(int middle_loading_x, int middle_loading_y, int middle_loading_z);
         // Creates and return a new physic object
         std::shared_ptr<Physic_Object_3D> new_physic_object(std::weak_ptr<Transform_Object_3D> object);
         // Returns a physic case by its coordinates
-        Physic_Case_3D* physic_case(int x, int y);
+        Physic_Case_3D* physic_case(int x, int y, int z);
         // Returns a list of physic object in a rectr
         std::vector<std::shared_ptr<Physic_Object_3D>> physic_objects_in_rect(double x, double y, double width, double height);
 
@@ -319,13 +325,13 @@ namespace scls {
         int update_physic_late(double multiplier);
 
         // Getters and setters
-        inline std::vector<std::vector<std::shared_ptr<Physic_Case_3D>>>& physic_map(){return a_physic_map;};
+        inline std::vector<std::vector<std::vector<std::shared_ptr<Physic_Case_3D>>>>& physic_map(){return a_physic_map;};
         inline std::vector<std::shared_ptr<Physic_Object_3D>>& physic_objects(){return a_physic_objects;};
     private:
 
         // Physic map
-        std::vector<std::vector<std::shared_ptr<Physic_Case_3D>>> a_physic_map;
-        int a_physic_map_start_x = 0;int a_physic_map_start_y = 0;
+        std::vector<std::vector<std::vector<std::shared_ptr<Physic_Case_3D>>>> a_physic_map;
+        int a_physic_map_start_x = 0;int a_physic_map_start_y = 0;int a_physic_map_start_z = 0;
 
         // Physic objects
         std::vector<std::shared_ptr<Physic_Object_3D>> a_physic_objects;

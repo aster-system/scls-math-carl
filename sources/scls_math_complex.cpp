@@ -42,7 +42,7 @@ namespace scls {
             if(settings == 0 || settings->complex_double() == -1){to_return += imaginary().abs().to_std_string(max_number_size, settings) + "i";}
             else{to_return += format_number_to_text(std::abs(imaginary().to_double()), settings->complex_double()) + "i";}
         }
-        while(to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
+        while(to_return.size() > 0 && to_return[to_return.size() - 1] == ' ') to_return = to_return.substr(0, to_return.size() - 1);
         if(to_return == "") to_return = "0";
         return to_return;
     };

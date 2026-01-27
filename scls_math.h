@@ -97,7 +97,7 @@
     // 3D Geometry handling (indev)
     #include "scls_math_directory/scls_math_3d_core.h"
     #include "scls_math_directory/scls_math_3d_model.h"
-    #include "scls_math_directory/scls_math_string.h"
+    #include "scls_math_directory/scls_math_3d_physic.h"
     #endif // __ASTER_DEV
 
 #endif // SCLS_MATH_NUMBERS

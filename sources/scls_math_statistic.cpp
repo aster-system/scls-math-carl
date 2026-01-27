@@ -46,6 +46,18 @@ namespace scls {
         update();
     }
 
+    // Adds sampling
+    void Statistics::add_sampling(std::string name) {
+    	Datas* needed_data = data(name);
+		if(needed_data == 0) {
+			int i = 0;
+			for(;i<static_cast<int>(a_samplings.size());i++){if(std::stod(a_samplings.at(i).get()->data()) > std::stod(name)){break;}}
+			a_samplings.insert(a_samplings.begin() + i, std::make_shared<Datas>(name, a_this_object));
+			a_samplings.at(i).get()->set_size(0);
+		}
+		update();
+    }
+
     // Gets a data from the sampling
     Statistics::Datas* Statistics::data(std::string name){for(int i = 0;i<static_cast<int>(a_samplings.size());i++){if(a_samplings.at(i).get()->data() == name){return a_samplings.at(i).get();}}return 0;}
 

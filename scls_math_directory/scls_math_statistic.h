@@ -70,6 +70,9 @@ namespace scls {
         // Adds data
         void add_data(std::string name);
 
+        // Adds sampling
+        void add_sampling(std::string name);
+
         // Gets a data from the sampling
         Datas* data(std::string name);
 

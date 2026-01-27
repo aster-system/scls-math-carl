@@ -94,7 +94,7 @@ namespace scls {
     	std::vector<std::string> unknowns();
 
     	// Returns the element to a simple std::string
-    	virtual std::string to_mathml(Textual_Math_Settings* settings) const {if(is_unknown()){return algebra_unknown()->name;}};
+    	virtual std::string to_mathml(Textual_Math_Settings* settings) const {if(is_unknown()){return algebra_unknown()->name;}return std::string();};
     	virtual std::string to_std_string(Textual_Math_Settings* settings) const {
     		// If the element is the final element
     		if(is_final_element()) {

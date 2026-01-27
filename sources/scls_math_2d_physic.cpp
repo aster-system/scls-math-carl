@@ -210,8 +210,10 @@ namespace scls {
         scls::Point_2D position_from_other = (position - other_position).normalized();
         if(distance < other_scale.x() / 2.0 && can_be_in_each_other){position_from_here *= -1;circle_1_in_other=true;}
         if(distance < scale.x() / 2.0 && can_be_in_each_other){position_from_other *= -1;}
-        scls::Point_2D velocity_from_here = (velocity_other - velocity).normalized();
-        scls::Point_2D velocity_from_other = (velocity - velocity_other).normalized();
+        scls::Point_2D velocity_from_here = (velocity_other - velocity);
+        scls::Point_2D velocity_from_here_normalized = velocity_from_here.normalized();
+        scls::Point_2D velocity_from_other = (velocity - velocity_other);
+        scls::Point_2D velocity_from_other_normalized = velocity_from_other.normalized();
 
         // Calculate the angle
         double angle_tangent = scls::vector_2d_angle(position_from_other);
@@ -219,7 +221,7 @@ namespace scls {
         to_return.get()->angle = angle_tangent_other;
 
         // Calculate the velocity of the object
-        double velocity_total = (velocity_other.norm() + velocity.norm());
+        double velocity_total = (velocity_other + velocity).norm();
         if(object != 0 && !object->is_static()) {
             scls::Point_2D new_velocity;
             if(other_object->is_static()){
@@ -232,13 +234,11 @@ namespace scls {
                 new_velocity -= velocity;
             }
             else {
-                velocity_total = (velocity_other.norm() + velocity.norm()) / 2.0;
-                double velocity_angle = angle_tangent - scls::vector_2d_angle(velocity_from_here);
+                Point_2D to_keep = velocity - velocity_from_other;
+                velocity_total = (velocity_from_other + velocity_from_here).norm();
+                double velocity_angle = angle_tangent - scls::vector_2d_angle(velocity_from_other);
                 double final_angle = angle_tangent + velocity_angle;
-                new_velocity = velocity * -1 + scls::vector_2d_with_angle(final_angle) * velocity_total;
-
-                //new_velocity = (position_from_other * velocity_total);
-                //if(circle_1_in_other){new_velocity = (position_from_other * -velocity_total);}
+                new_velocity = velocity * -1 + to_keep - scls::vector_2d_with_angle(final_angle) * velocity_total;
             }
             to_return.get()->acceleration = new_velocity;
         }
@@ -904,7 +904,7 @@ namespace scls {
 
             // Check the dynamics collisions
             if(!dynamic_objects_physic.at(i).get()->ignore_dynamic_collisions()){
-                for(int j = 0;j<static_cast<int>(dynamic_objects_physic.size());j++){
+                for(int j = i + 1;j<static_cast<int>(dynamic_objects_physic.size());j++){
                     for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
                         if(dynamic_objects_physic.at(i).get() != dynamic_objects_physic.at(j).get()) {
                             dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());

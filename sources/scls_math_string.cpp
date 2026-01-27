@@ -320,7 +320,7 @@ namespace scls {
     }
     void __string_to_algebra_element(__Algebra_Element* element, std::string source) {
         // Operator order
-        std::vector<std::string> operator_order = {std::string("."), std::string("+")};
+        std::vector<std::string> operator_order = {std::string("^"), std::string("*"), std::string("+")};
         source = remove_space(source);
 
         // Cut the text operator by * operator
