@@ -111,7 +111,7 @@ namespace scls {
         inline bool __string_is_number(char text) const {return (string_is_number(text) || text == '/' || text == 'i' || text == '-');};
         inline bool __string_is_number(std::string text) const {for(int i = 0;i<static_cast<int>(text.size());i++) {if(!__string_is_number(text[i])) return false;} return true;};
         // Returns if a std::string is an operator or not
-        inline bool __string_is_operator(char text) const {return (text == '+' || text == '-' || text == '*' || text == '/' || text == '>');};
+        bool __string_is_operator(char text) const;
         // Returns a given first base string to a formula
         std::shared_ptr<__Formula> __string_to_formula_base(std::string base, std::string used_function = "", const Math_Environment* environment = 0);
 

@@ -137,7 +137,7 @@ namespace scls {
             int real_exponent = a_unknowns.at(i).exponent();
             if(a_unknowns.at(i).name() != "" && a_unknowns.at(i).exponent() != 1){
                 if(real_exponent > 0){for(int j = 1;j<real_exponent;j++){final_unknow += std::string("*") + a_unknowns.at(i).name();}}
-                else{final_unknow += std::string("^") + std::to_string(real_exponent);}
+                else{final_unknow += std::string("^(") + std::to_string(real_exponent) + std::string(")");}
             }
         }
 

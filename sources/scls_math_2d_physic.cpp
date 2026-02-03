@@ -756,8 +756,10 @@ namespace scls {
             // Get the cases
             std::vector<Physic_Object::Physic_Case*> current_case = std::vector<Physic_Object::Physic_Case*>();
             for(int i = 0;i<std::ceil(std::abs(adder_x));i++){
-                if(adder_y > 0){current_case.push_back(physic_case(std::floor(vertical_x + adder_x), std::floor(vertical_y)));}
-                else{current_case.push_back(physic_case(std::floor(vertical_x + adder_x), std::floor(vertical_y  - 1)));}
+                Physic_Object::Physic_Case* to_add = 0;
+                if(adder_y > 0){to_add = physic_case(std::floor(vertical_x + adder_x), std::floor(vertical_y));}
+                else{to_add = physic_case(std::floor(vertical_x + adder_x), std::floor(vertical_y  - 1));}
+                if(to_add != 0){current_case.push_back(to_add);}
             }
 
             // Do the collisions
@@ -852,7 +854,7 @@ namespace scls {
                 // Get the basic datas
                 int x_start = physic_objects().at(i)->collision_x_start()-1;
                 int y_start = physic_objects().at(i)->collision_y_start()-1;
-                bool good_position = (physic_objects().at(i)->used_physic_case().size() > 0 && (physic_objects().at(i)->used_physic_case().at(0)->x() != x_start));
+                bool good_position = (physic_objects().at(i)->used_physic_case().size() > 0 && (physic_objects().at(i)->used_physic_case().at(0)->x() != x_start || physic_objects().at(i)->used_physic_case().at(0)->y() != y_start));
 
                 if(!physic_objects().at(i)->loaded_in_map() || physic_objects().at(i)->moved_during_this_frame() || good_position) {
                     // Delete the last cases

@@ -156,12 +156,54 @@ namespace scls {
     };
 
     // Returns all the unknowns in the formula
+    std::vector<std::string> __Formula_Base::Formula_Factor::all_unknowns() const {
+        std::vector<std::string> to_return;
+
+        // Check the operands
+        for(size_t i = 0;i<a_factors.size();i++) {
+            std::vector<std::string> current = a_factors.at(i).get()->all_unknowns();
+            for(size_t j=0;j<current.size();j++){std::string to_add=current.at(j);if(to_add!=""&&std::count(to_return.begin(),to_return.end(),to_add)<=0){to_return.push_back(to_add);}}
+        }
+
+        return to_return;
+    }
+    std::vector<std::string> __Formula_Base::Formula_Sum::all_unknowns() const {
+        std::vector<std::string> to_return;
+
+        // Check the operands
+        for(size_t i = 0;i<a_formulas_add.size();i++) {
+            std::vector<std::string> current = a_formulas_add.at(i).get()->all_unknowns();
+            for(size_t j=0;j<current.size();j++){std::string to_add=current.at(j);if(to_add!=""&&std::count(to_return.begin(),to_return.end(),to_add)<=0){to_return.push_back(to_add);}}
+        }
+
+        return to_return;
+    }
+    std::vector<std::string> __Formula_Base::Formula_Fraction::all_unknowns() const {
+        std::vector<std::string> to_return;
+
+        // Check the numerator
+        std::vector<std::string> current = a_numerator.get()->all_unknowns();
+        for(int j=0;j<static_cast<int>(current.size());j++){std::string to_add=current.at(j);if(to_add!=""&&std::count(to_return.begin(),to_return.end(),to_add)<=0){to_return.push_back(to_add);}}
+
+        // Check the denominator
+        if(a_denominator.get() != 0) {
+            current = a_denominator.get()->all_unknowns();
+            for(int j=0;j<static_cast<int>(current.size());j++){std::string to_add=current.at(j);if(to_add!=""&&std::count(to_return.begin(),to_return.end(),to_add)<=0){to_return.push_back(to_add);}}
+        }
+
+        return to_return;
+    }
     std::vector<std::string> __Formula_Base::all_unknowns() const {
         std::vector<std::string> to_return;
 
         if(a_polynomial.get() != 0) {
             // Check the Polynomial
             std::vector<std::string> current = a_polynomial.get()->all_unknowns();
+            for(int j=0;j<static_cast<int>(current.size());j++){std::string to_add=current.at(j);if(to_add!=""&&std::count(to_return.begin(),to_return.end(),to_add)<=0){to_return.push_back(to_add);}}
+        }
+        else if(a_fraction.get() != 0) {
+            // Check the numerator
+            std::vector<std::string> current = a_fraction.get()->all_unknowns();
             for(int j=0;j<static_cast<int>(current.size());j++){std::string to_add=current.at(j);if(to_add!=""&&std::count(to_return.begin(),to_return.end(),to_add)<=0){to_return.push_back(to_add);}}
         }
 
@@ -178,7 +220,7 @@ namespace scls {
             int needed_exponent = static_cast<int>(exponent.real().to_double());
             final_formula->paste(new_value);
             if(needed_exponent > 0){for(int i = 1;i<needed_exponent;i++) {final_formula->__multiply(new_value);}}
-            else{for(int i = 0;i<-needed_exponent;i++) {final_formula->__divide(new_value);}}
+            else{final_formula->set_multiplication_neutral();for(int i = 0;i<-needed_exponent;i++) {final_formula->__divide(new_value);}}
             final_formula->__multiply(used_monomonial);
         }
         else {final_formula->set_polynomial(used_monomonial);}

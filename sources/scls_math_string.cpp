@@ -138,7 +138,9 @@ namespace scls {
                     Polynomial_Base* p = current_polymonial.get()->polynomial();
                     if(p->is_known()){
                         double r = current_polymonial.get()->value_to_double(0);std::shared_ptr<__Formula> f = formula.get()->clone();
-                        for(int j=1;j<r;j++){f.get()->multiply(formula.get());}formula->paste(f.get());
+                        if(r > 0){for(int j=1;j<r;j++){f.get()->multiply(formula.get());}}
+                        else{f.get()->clear();(*f.get()) = 1;for(int j=0;j<-r;j++){f.get()->divide(formula.get());}}
+                        formula->paste(f.get());
                     }
                 }
             }
@@ -238,6 +240,9 @@ namespace scls {
         formula.get()->check_formula();
         return formula;
     };
+
+    // Returns if a std::string is an operator or not
+    bool String_To_Formula_Parse::__string_is_operator(char text) const {return (text == '+' || text == '-' || text == '*' || text == '/' || text == '>' || text == '^');};
 
     // Use parsers methods outside the class
     std::shared_ptr<__Formula> string_to_formula(std::string source){String_To_Formula_Parse parser;return parser.string_to_formula(source);};

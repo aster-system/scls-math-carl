@@ -170,6 +170,7 @@ namespace scls {
             // Position
             scls::Point_2D position;
             inline int x(){return position.x();};
+            inline int y(){return position.y();};
         };
 
         // Physic_Object constructor

@@ -151,6 +151,9 @@ namespace scls {
             // Replaces unknowns in the formula
             void replace_unknown(__Formula_Base* to_return, std::string unknown, __Formula_Base* new_value) const;
 
+            // Returns all the unknowns in the formula
+            std::vector<std::string> all_unknowns() const;
+
             // Operators
             Formula_Factor& operator*=(__Formula_Base* value) {__multiply(value);return*this;};
 
@@ -193,6 +196,9 @@ namespace scls {
             // Multiply a polynomial to this one
             virtual void __multiply(Polynomial_Base* value);
             virtual void __multiply(__Formula_Base* value);
+
+            // Returns all the unknowns in the formula
+            std::vector<std::string> all_unknowns() const;
 
             // Getters and setters
             inline std::vector<std::shared_ptr<Formula_Factor>>& formulas_add(){return a_formulas_add;};
@@ -244,6 +250,9 @@ namespace scls {
             Formula_Sum* denominator(){return a_denominator.get();};
             Formula_Sum* numerator(){return a_numerator.get();};
             void set_denominator(Formula_Sum* new_denominator){if(new_denominator == 0){a_denominator.reset();}else{a_denominator = new_denominator->sum_copy();}};
+
+            // Returns all the unknowns in the formula
+            std::vector<std::string> all_unknowns() const;
         private:
             // Denominator of the fraction
             std::shared_ptr<Formula_Sum> a_denominator;
@@ -332,8 +341,10 @@ namespace scls {
         bool __is_equal(Polynomial_Base* value) const;
         bool __is_equal(__Formula_Base* value) const;
 
-        // Returns the opposite of the formula
+        // Returns the opposite / neutral of the formula
+        virtual std::shared_ptr<__Formula_Base> multiplication_neutral() const = 0;
         virtual std::shared_ptr<__Formula_Base> opposite() const = 0;
+        virtual void set_multiplication_neutral() = 0;
         // Returns if the formula is a precise object
         virtual bool is_multiplication_neutral() const = 0;
         // Returns if the formula is null or not
@@ -424,7 +435,9 @@ namespace scls {
         std::shared_ptr<__Formula_Base_Template<T>> internal_value() const {return std::shared_ptr<__Formula_Base_Template<T>>(reinterpret_cast<__Formula_Base_Template<T>*>(__internal_value_new()));};
 
         // Returns the opposite of the formula
+        virtual std::shared_ptr<__Formula_Base> multiplication_neutral() const{return std::make_shared<__Formula_Base_Template>(1);};
         virtual std::shared_ptr<__Formula_Base> opposite() const {std::shared_ptr<__Formula_Base_Template<T>>t=clone();t.get()->multiply(T(-1));return t;};
+        virtual void set_multiplication_neutral() {*this = __Formula_Base_Template(1);};
         // Returns if the formula is a precise object
         virtual bool is_multiplication_neutral() const{return is_simple_monomonial() && monomonial() != 0 && monomonial()->is_known() && monomonial()->factor() != 0 && (*monomonial()->factor()) == 1;};
         // Returns if the formula is null or not
