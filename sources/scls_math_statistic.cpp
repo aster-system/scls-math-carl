@@ -34,14 +34,24 @@ namespace scls {
 	//
 	//*********
 
+	// Loads the statistics XML balises
+    void load_balises_statistics(__Balise_Container* defined_balises) {
+        //std::shared_ptr<scls::Balise_Style_Datas> current_balise;
+        //current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        //current_balise.get()->has_content = true;
+        //defined_balises->set_defined_balise("", current_balise);
+    }
+
 	// Adds data
-    void Statistics::add_data(std::string name){
+	void Statistics::add_data(std::string name){add_data(name, 1);}
+    void Statistics::add_data(std::string name, double number){
         Datas* needed_data = data(name);
-        if(needed_data != 0){needed_data->set_size(needed_data->size() + 1);}
+        if(needed_data != 0){needed_data->set_size(needed_data->size() + number);}
         else{
             int i = 0;
             for(;i<static_cast<int>(a_samplings.size());i++){if(std::stod(a_samplings.at(i).get()->data()) > std::stod(name)){break;}}
             a_samplings.insert(a_samplings.begin() + i, std::make_shared<Datas>(name, a_this_object));
+            a_samplings.at(i).get()->set_size(number - 1);
         }
         update();
     }
@@ -60,6 +70,27 @@ namespace scls {
 
     // Gets a data from the sampling
     Statistics::Datas* Statistics::data(std::string name){for(int i = 0;i<static_cast<int>(a_samplings.size());i++){if(a_samplings.at(i).get()->data() == name){return a_samplings.at(i).get();}}return 0;}
+
+    // Loads the datas from XML
+    std::shared_ptr<__Balise_Container> statistics_balise;
+    void Statistics::load_from_xml(std::string current_text){if(statistics_balise.get() == 0){statistics_balise = std::make_shared<__Balise_Container>();load_balises_statistics(statistics_balise.get());}load_from_xml(xml(statistics_balise, current_text));}
+    void Statistics::load_from_xml(std::shared_ptr<XML_Text_Base> content) {
+        // Handle a lot of balises
+	    for(int i = 0;i<static_cast<int>(content->sub_texts().size());i++){
+            std::string current_balise_name = content->sub_texts()[i].get()->xml_balise_name();
+            std::vector<scls::XML_Attribute>& attributes = content->sub_texts()[i].get()->xml_balise_attributes();
+            if(current_balise_name == std::string_view("data")){
+                std::string content = std::string();double number = 0;
+                for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                    if(attributes[i].name == std::string_view("content") || attributes[i].name == std::string_view("name")){content = attributes.at(i).value;}
+                    else if(attributes.at(i).value == std::string_view("number")){number = scls::string_to_double(attributes.at(i).value);}
+                }
+
+                // Add the stat
+                add_data(content, number);
+            }
+        }
+    }
 
     // Returns an std::string containing the data structured
     std::string Statistics::structured_datas() {

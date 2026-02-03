@@ -28,6 +28,7 @@
 #define SCLS_MATH_STATISTIC
 
 #include "scls_math_numbers.h"
+#include "scls_math_string.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
@@ -69,12 +70,17 @@ namespace scls {
 
         // Adds data
         void add_data(std::string name);
+        void add_data(std::string name, double number);
 
         // Adds sampling
         void add_sampling(std::string name);
 
         // Gets a data from the sampling
         Datas* data(std::string name);
+
+        // Loads the datas from XML
+        void load_from_xml(std::shared_ptr<XML_Text_Base> content);
+        void load_from_xml(std::string content);
 
         // Returns an std::string containing the data structured
         std::string structured_datas();
