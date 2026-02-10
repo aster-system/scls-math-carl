@@ -36,39 +36,27 @@ namespace scls {
 	//
 	//*********
 
+	// Available operators for this object
+	std::vector<Algebra_Element::Algebra_Operator> formula_operators = {scls::Algebra_Element::Algebra_Operator("."), scls::Algebra_Element::Algebra_Operator("+")};
+	const std::vector<Algebra_Element::Algebra_Operator>& Boolean::operators(){return formula_operators;}
+
     // Replaces the unknowns
+	void Boolean::replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const {
+		// The element is final
+		if(is_final_element()) {
+			if(is_unknown()){
+				__Boolean_Unknown* current = reinterpret_cast<__Boolean_Unknown*>(values->unknown_by_name(algebra_unknown()->name));
+				if(current == 0){algebra_clone(element);}
+				else{reinterpret_cast<Boolean*>(element)->a_value = current->value;}
+			}
+			else {reinterpret_cast<Boolean*>(element)->a_value = a_value;}
+		}
+		else {Algebra_Element::replace_unknowns_algebra(element, values); }
+	}
     std::shared_ptr<Boolean> Boolean::replace_unknowns(Unknowns_Container* values) const {
         // Create the object
         std::shared_ptr<Boolean> s = std::make_shared<Boolean>();
-        s.get()->a_this_object=s;
-
-        // The element is final
-        if(is_final_element()) {
-            if(is_unknown()){
-                __Boolean_Unknown* current = reinterpret_cast<__Boolean_Unknown*>(values->unknown_by_name(algebra_unknown()->name));
-                if(current == 0){s = clone();}
-                else{s.get()->a_value = current->value;}
-            }
-            else {s.get()->a_value = a_value;}
-        }
-        else {
-            if(algebra_operator() == std::string(".")) {
-                s = reinterpret_cast<Boolean*>(algebra_elements_const().at(0).get())->replace_unknowns(values);
-                for(int i = 1;i<static_cast<int>(algebra_elements_const().size());i++) {
-                    Boolean* b = reinterpret_cast<Boolean*>(algebra_elements_const().at(i).get());
-                    std::shared_ptr<Boolean> b_replaced = b->replace_unknowns(values);
-                    s.get()->add_and(b_replaced.get());
-                }
-            }
-            else if(algebra_operator() == std::string("+")) {
-                s = reinterpret_cast<Boolean*>(algebra_elements_const().at(0).get())->replace_unknowns(values);
-                for(int i = 1;i<static_cast<int>(algebra_elements_const().size());i++) {
-                    Boolean* b = reinterpret_cast<Boolean*>(algebra_elements_const().at(i).get());
-                    std::shared_ptr<Boolean> b_replaced = b->replace_unknowns(values);
-                    s.get()->add_or(b_replaced.get());
-                }
-            }
-        }
+        s.get()->a_this_object=s;replace_unknowns_algebra(s.get(), values);
 
         return s;
     }

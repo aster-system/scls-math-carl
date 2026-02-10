@@ -458,9 +458,9 @@ namespace scls {
 
         // Calculate the velocity of the object 1
         double multiplier = velocity_from_1.norm();
-        scls::Point_2D new_velocity = new_velocity_direction * multiplier * object_line->restitution();
-        //to_return_1.get()->acceleration = velocity_circle * -1 + new_velocity;
-        to_return_1.get()->acceleration = velocity_circle * -1 + (velocity_circle + new_velocity) / 2.0;
+        double needed_restitution = 1;//if(object_2 != 0){needed_restitution = object_2->restitution();}
+        scls::Point_2D new_velocity = new_velocity_direction * multiplier * needed_restitution;
+        to_return_1.get()->acceleration = velocity_circle * -1 + new_velocity;
 
         // Return the result
         return Collision_Result(to_return_1, to_return_2);
@@ -526,14 +526,14 @@ namespace scls {
         // Check the collisions as line
         // Top collision
         double line_x_1 = collision_rect->min_absolute_x();
-        double line_y_1 = collision_rect->max_absolute_y();
+        double line_y_1 = collision_rect->min_absolute_y();
         double line_x_2 = collision_rect->max_absolute_x();
         double line_y_2 = collision_rect->max_absolute_y();
-        Collision_Result result_top = __check_collision_circle_line_maths(collision_circle->absolute_x(), collision_circle->absolute_y(), collision_circle->absolute_width().to_double(), collision_circle->position_next(), object_circle->velocity(), line_x_1, line_y_1, line_x_2, line_y_2, collision_circle, collision_rect, object_circle, object_rect);
+        Collision_Result result_top = __check_collision_circle_line_maths(collision_circle->absolute_x(), collision_circle->absolute_y(), collision_circle->absolute_width().to_double(), collision_circle->position_next(), object_circle->velocity(), line_x_1, line_y_2, line_x_2, line_y_2, collision_circle, collision_rect, object_circle, object_rect);
         // Bottom collision
         line_y_1 = collision_rect->min_absolute_y();
         line_y_2 = collision_rect->min_absolute_y();
-        Collision_Result result_bottom = __check_collision_circle_line_maths(collision_circle->absolute_x(), collision_circle->absolute_y(), collision_circle->absolute_width().to_double(), collision_circle->position_next(), object_circle->velocity(), line_x_1, line_y_1, line_x_2, line_y_2, collision_circle, collision_rect, object_circle, object_rect);
+        Collision_Result result_bottom = __check_collision_circle_line_maths(collision_circle->absolute_x(), collision_circle->absolute_y(), collision_circle->absolute_width().to_double(), collision_circle->position_next(), object_circle->velocity(), line_x_1, line_y_1, line_x_2, line_y_1, collision_circle, collision_rect, object_circle, object_rect);
         // Left collision
         line_x_1 = collision_rect->min_absolute_x();line_y_1 = collision_rect->max_absolute_y();
         line_x_2 = collision_rect->min_absolute_x();line_y_2 = collision_rect->min_absolute_y();

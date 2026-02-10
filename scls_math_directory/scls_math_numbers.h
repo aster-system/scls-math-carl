@@ -104,67 +104,102 @@ namespace scls {
 
     //*********
     //
-    // The __Algebra_Element class
+    // The Algebra_Element class
     //
     //*********
 
-    class __Algebra_Element {
+    class Algebra_Element {
         // Class representing an element in a field
     public:
 
+    	class Algebra_Operator {
+    	public:
+			// Algebra_Operator constructor
+    		Algebra_Operator(){};
+    		Algebra_Operator(std::string name):a_name(name){};
+    		Algebra_Operator(std::string name, int arity):a_arity(arity),a_name(name){};
+    		// Algebra_Operator destructor
+    		~Algebra_Operator(){};
+
+    		// Getters and setters
+    		inline int arity() const {return a_arity;}
+    		inline std::string name() const {return a_name;};
+    	private:
+    		// Arity of the operator
+    		int a_arity = -1;
+
+    		// Name of the operator
+    		std::string a_name = std::string();
+    	};
+
     	// Container of unknowns
-    	struct __Algebra_Unknown{std:: string name = std::string();};
+    	struct __Algebra_Unknown{std::string name = std::string();};
     	class Unknowns_Container {
-			public:
-				// Unknowns_Container constructor
-				Unknowns_Container(){};
+		public:
+			// Unknowns_Container constructor
+			Unknowns_Container(){};
 
-				// Clears the container
-				void clear();
+			// Clears the container
+			void clear();
 
-				// Handle unknown
-				// Creates a unknown
-				template <typename T> T* create_unknown(std::string name){return create_unknown_shared_ptr<T>(name).get();};
-				template <typename T> std::shared_ptr<T> create_unknown_shared_ptr(std::string name){std::shared_ptr<__Algebra_Element::__Algebra_Unknown> temp=unknown_shared_ptr_by_name(name);if(temp.get()!=0){return std::shared_ptr<T>();}std::shared_ptr<T> unknown=std::make_shared<T>();a_unknowns.push_back(unknown);unknown.get()->name=name;return unknown;};
-				// Returns an unknown by its name
-				__Algebra_Element::__Algebra_Unknown* unknown_by_name(std::string name)const{return unknown_shared_ptr_by_name(name).get();};
-				std::shared_ptr<__Algebra_Element::__Algebra_Unknown> unknown_shared_ptr_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns.at(i).get()->name == name){return a_unknowns.at(i);}} return std::shared_ptr<__Algebra_Element::__Algebra_Unknown>();};
+			// Handle unknown
+			// Creates a unknown
+			template <typename T> T* create_unknown(std::string name){return create_unknown_shared_ptr<T>(name).get();};
+			template <typename T> std::shared_ptr<T> create_unknown_shared_ptr(std::string name){std::shared_ptr<Algebra_Element::__Algebra_Unknown> temp=unknown_shared_ptr_by_name(name);if(temp.get()!=0){return std::shared_ptr<T>();}std::shared_ptr<T> unknown=std::make_shared<T>();a_unknowns.push_back(unknown);unknown.get()->name=name;return unknown;};
+			// Returns an unknown by its name
+			Algebra_Element::__Algebra_Unknown* unknown_by_name(std::string name)const{return unknown_shared_ptr_by_name(name).get();};
+			std::shared_ptr<Algebra_Element::__Algebra_Unknown> unknown_shared_ptr_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns.at(i).get()->name == name){return a_unknowns.at(i);}} return std::shared_ptr<Algebra_Element::__Algebra_Unknown>();};
 
-			private:
-				// Unknowns
-				std::vector<std::shared_ptr<__Algebra_Unknown>> a_unknowns;
-			};
+		private:
+			// Unknowns
+			std::vector<std::shared_ptr<__Algebra_Unknown>> a_unknowns;
+		};
 
-        // __Algebra_Element constructor
-        __Algebra_Element();
-        // __Algebra_Element destructor
-        virtual ~__Algebra_Element();
+        // Algebra_Element constructor
+        Algebra_Element();
+        // Algebra_Element destructor
+        virtual ~Algebra_Element();
 
         // Clears the object
         void clear();
 
         // Return if the element is a final element
         bool is_final_element() const;
+        bool is_known() const;
         bool is_unknown() const;
 
         // Creates a new algebra element of the same type
-        void __clone_base(__Algebra_Element* e) const;
-        virtual std::shared_ptr<__Algebra_Element> algebra_clone() const = 0;
-        virtual std::shared_ptr<__Algebra_Element> new_algebra_element() const = 0;
-        virtual std::shared_ptr<__Algebra_Element> new_algebra_element(std::string content) const = 0;
+        void __clone_base(Algebra_Element* e) const;
+        virtual void algebra_clone(Algebra_Element* e) const = 0;
+        virtual std::shared_ptr<Algebra_Element> algebra_clone() const = 0;
+        virtual std::shared_ptr<Algebra_Element> new_algebra_element() const = 0;
+        virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const = 0;
+
+        // Returns if two elements are equal or not
+        virtual bool is_equal_without_value(Algebra_Element* other) const;
 
         // Operates this element with another one
-        virtual void operate(__Algebra_Element* other, std::string operation) = 0;
+        virtual void operate(Algebra_Element* other, std::string operation) = 0;
+
+        // Available operators for this object
+        virtual const std::vector<Algebra_Operator>& operators();
+
+        // Replaces the unknowns
+        virtual void replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const;
+
+        // Returns the first known algebra element of this element
+        Algebra_Element* known_algebra_element();
 
         // Sub-places the element
         void sub_place();
 
         // Getters and setters
-        inline std::vector<std::shared_ptr<__Algebra_Element>>& algebra_elements() {return a_elements;};
-        inline const std::vector<std::shared_ptr<__Algebra_Element>>& algebra_elements_const() const {return a_elements;};
+        inline std::vector<std::shared_ptr<Algebra_Element>>& algebra_elements() {return a_elements;};
+        inline const std::vector<std::shared_ptr<Algebra_Element>>& algebra_elements_const() const {return a_elements;};
         inline __Algebra_Unknown* algebra_unknown() const {return a_unknown.get();};
-        inline std::string algebra_operator() const {return a_operator;};
-        inline void set_algebra_operator(std::string new_algebra_operator){a_operator = new_algebra_operator;};
+        inline Algebra_Operator* algebra_operator() {return &a_operator;};
+        inline std::string algebra_operator_name() const {return a_operator.name();};
+        inline void set_algebra_operator(std::string new_algebra_operator){a_operator = Algebra_Operator(new_algebra_operator);};
 
         // Virtual functions
 
@@ -178,19 +213,19 @@ namespace scls {
 
     protected:
         // Parent object
-        std::weak_ptr<__Algebra_Element> a_parent;
+        std::weak_ptr<Algebra_Element> a_parent;
         // This object
-        std::weak_ptr<__Algebra_Element> a_this_object;
+        std::weak_ptr<Algebra_Element> a_this_object;
 
         // Possible unknown
         std::shared_ptr<__Algebra_Unknown> a_unknown;
 
     private:
         // Every elements in this element
-        std::string a_operator = std::string();
-        std::vector<std::shared_ptr<__Algebra_Element>> a_elements;
+        Algebra_Operator a_operator = Algebra_Operator();
+        std::vector<std::shared_ptr<Algebra_Element>> a_elements;
     };
-    typedef __Algebra_Element::Unknowns_Container Unknowns_Container;
+    typedef Algebra_Element::Unknowns_Container Unknowns_Container;
 
     //*********
     //

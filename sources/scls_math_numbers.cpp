@@ -65,25 +65,26 @@ namespace scls {
 
 	//*********
     //
-    // The __Algebra_Element class
+    // The Algebra_Element class
     //
     //*********
 
-    // __Algebra_Element constructor
-	__Algebra_Element::__Algebra_Element(){}
-	// __Algebra_Element destructor
-	__Algebra_Element::~__Algebra_Element(){}
+    // Algebra_Element constructor
+	Algebra_Element::Algebra_Element(){}
+	// Algebra_Element destructor
+	Algebra_Element::~Algebra_Element(){}
 
 	// Clears the object
-	void __Algebra_Element::clear(){a_elements.clear();a_operator = std::string();a_unknown.reset();}
+	void Algebra_Element::clear(){a_elements.clear();a_operator = std::string();a_unknown.reset();}
 
 	// Return if the element is a final element
-	bool __Algebra_Element::is_final_element()const{return static_cast<int>(a_elements.size()) == 0;};
-	bool __Algebra_Element::is_unknown()const{return is_final_element() && a_unknown.get() != 0;};
+	bool Algebra_Element::is_final_element()const{return static_cast<int>(a_elements.size()) == 0;};
+	bool Algebra_Element::is_known() const{return is_final_element() && a_unknown.get() == 0;};
+	bool Algebra_Element::is_unknown()const{return is_final_element() && a_unknown.get() != 0;};
 
 	// Sub-places the element
-	void __Algebra_Element::sub_place() {
-		std::shared_ptr<__Algebra_Element> e = algebra_clone();
+	void Algebra_Element::sub_place() {
+		std::shared_ptr<Algebra_Element> e = algebra_clone();
 		clear();
 		a_elements.push_back(e);
 	}
@@ -91,11 +92,72 @@ namespace scls {
 	// Virtual functions
 
 	// Creates a new algebra element of the same type
-	void __Algebra_Element::__clone_base(__Algebra_Element* e)const{e->a_operator = a_operator;e->a_unknown = a_unknown;e->a_elements = a_elements;}
+	void Algebra_Element::__clone_base(Algebra_Element* e)const{e->a_operator = a_operator;e->a_unknown = a_unknown;e->a_elements = a_elements;}
 
 	// Creates the unknown
-	__Algebra_Element::__Algebra_Unknown* __Algebra_Element::create_unknown(){clear();a_unknown = std::make_shared<__Algebra_Element::__Algebra_Unknown>();return a_unknown.get();};
-	__Algebra_Element::__Algebra_Unknown* __Algebra_Element::new_unknown(std::string unknown_name){create_unknown();a_unknown.get()->name = unknown_name;return a_unknown.get();};
+	Algebra_Element::__Algebra_Unknown* Algebra_Element::create_unknown(){clear();a_unknown = std::make_shared<Algebra_Element::__Algebra_Unknown>();return a_unknown.get();};
+	Algebra_Element::__Algebra_Unknown* Algebra_Element::new_unknown(std::string unknown_name){create_unknown();a_unknown.get()->name = unknown_name;return a_unknown.get();};
+
+	// Returns the first known algebra element of this element
+	Algebra_Element* Algebra_Element::known_algebra_element() {
+		for(std::size_t i = 0;i<a_elements.size();i++) {
+			if(a_elements.at(i).get()->is_final_element() && a_elements.at(i).get()->a_unknown.get() == 0) {
+				return a_elements.at(i).get();
+			}
+		}
+		return 0;
+	}
+
+	// Returns if two elements are equal or not
+	bool Algebra_Element::is_equal_without_value(Algebra_Element* other) const {
+		if(is_final_element() && other->is_final_element()) {
+			if(a_unknown.get() == 0 && other->a_unknown.get() == 0){return true;}
+			else if(a_unknown.get() != 0 && other->a_unknown.get() != 0) {
+				return a_unknown.get()->name == other->a_unknown.get()->name;
+			}
+		}
+		else {
+			if(a_operator.name() == other->a_operator.name() && a_elements.size() == other->a_elements.size()) {
+				for(std::size_t i = 0;i<a_elements.size();i++) {
+					bool good = false;
+					for(std::size_t j = 0;j<other->a_elements.size();j++) {
+						if(a_elements.at(i).get()->is_equal_without_value(other->a_elements.at((i + j) % other->a_elements.size()).get())){good = true;break;}
+					}
+					if(!good){return false;}
+				}
+				return true;
+			}
+			else if(other->is_final_element() && a_elements.size() == 2) {
+				if(a_elements.at(0).get()->is_known()){return other->is_equal_without_value(a_elements.at(1).get());}
+				else if(a_elements.at(1).get()->is_known()){return other->is_equal_without_value(a_elements.at(0).get());}
+			}
+			else if(is_final_element() && other->a_elements.size() == 2) {
+				if(other->a_elements.at(0).get()->is_known()){return is_equal_without_value(other->a_elements.at(1).get());}
+				else if(other->a_elements.at(1).get()->is_known()){return is_equal_without_value(other->a_elements.at(0).get());}
+			}
+		}
+		return false;
+	}
+
+	// Available operators for this object
+	std::vector<Algebra_Element::Algebra_Operator> base_operators;
+	const std::vector<Algebra_Element::Algebra_Operator>& Algebra_Element::operators() {
+		return base_operators;
+	}
+
+	// Replaces the unknowns
+	void Algebra_Element::replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const {
+		// The element is final
+		if(!is_final_element()) {
+			std::shared_ptr<Algebra_Element> c = algebra_elements_const().at(0).get()->algebra_clone();
+			c.get()->replace_unknowns_algebra(element, values);
+			for(int i = 1;i<static_cast<int>(algebra_elements_const().size());i++) {
+				std::shared_ptr<Algebra_Element> b_replaced = algebra_elements_const().at(i).get()->algebra_clone();
+				c = new_algebra_element();b_replaced.get()->replace_unknowns_algebra(c.get(), values);
+				element->operate(c.get(), algebra_operator_name());
+			}
+		}
+	}
 
     //*********
     //
