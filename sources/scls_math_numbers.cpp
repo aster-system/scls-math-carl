@@ -92,7 +92,16 @@ namespace scls {
 	// Virtual functions
 
 	// Creates a new algebra element of the same type
-	void Algebra_Element::__clone_base(Algebra_Element* e)const{e->a_operator = a_operator;e->a_unknown = a_unknown;e->a_elements = a_elements;}
+	void Algebra_Element::__clone_base(Algebra_Element* e)const{
+		e->a_operator = a_operator;
+		e->a_unknown = a_unknown;
+
+		// Copy the element
+		e->a_elements = std::vector<std::shared_ptr<Algebra_Element>>(a_elements.size());
+		for(std::size_t i = 0;i<a_elements.size();i++) {
+			e->a_elements[i] = a_elements.at(i).get()->algebra_clone();
+		}
+	}
 
 	// Creates the unknown
 	Algebra_Element::__Algebra_Unknown* Algebra_Element::create_unknown(){clear();a_unknown = std::make_shared<Algebra_Element::__Algebra_Unknown>();return a_unknown.get();};
@@ -109,31 +118,80 @@ namespace scls {
 	}
 
 	// Returns if two elements are equal or not
-	bool Algebra_Element::is_equal_without_value(Algebra_Element* other) const {
+    bool Algebra_Element::is_equal_with_value(Algebra_Element* other) const {
+        if(is_final_element() && other->is_final_element()) {
+            // Final element case
+			if(a_unknown.get() == 0 && other->a_unknown.get() == 0){return true;}
+			else if(a_unknown.get() != 0 && other->a_unknown.get() != 0) {
+				return a_unknown.get()->name == other->a_unknown.get()->name;
+			}
+		}
+		else if(a_elements.size() == other->a_elements.size()) {
+			if(a_operator.name() == other->a_operator.name()) {
+				std::vector<std::shared_ptr<Algebra_Element>> sub_elements = a_elements;
+                std::vector<std::shared_ptr<Algebra_Element>> sub_elements_other = other->a_elements;
+                for(int i = 0;i<static_cast<int>(sub_elements.size());i++) {
+                    for(int j = 0;j<static_cast<int>(sub_elements_other.size());j++) {
+                        if(sub_elements.at(i).get()->is_equal_with_value(sub_elements_other.at(j).get())) {
+                            sub_elements.erase(sub_elements.begin() + i);
+                            sub_elements_other.erase(sub_elements_other.begin() + j);
+                            i = -1;break;
+                        }
+                    }
+                }
+
+                return sub_elements.size() == 0 && sub_elements_other.size() == 0;
+			}
+		}
+		return false;
+    }
+	bool Algebra_Element::is_equal_without_value(Algebra_Element* other, std::string used_operator) const {
+	    // Operator
+	    if(!is_final_element() && algebra_operator_name() != used_operator){return false;}
+
 		if(is_final_element() && other->is_final_element()) {
 			if(a_unknown.get() == 0 && other->a_unknown.get() == 0){return true;}
 			else if(a_unknown.get() != 0 && other->a_unknown.get() != 0) {
 				return a_unknown.get()->name == other->a_unknown.get()->name;
 			}
 		}
+		else if(!is_final_element() && !other->is_final_element()) {
+            std::vector<std::shared_ptr<Algebra_Element>> sub_elements = a_elements;
+            std::vector<std::shared_ptr<Algebra_Element>> sub_elements_other = other->a_elements;
+            for(int i = 0;i<static_cast<int>(sub_elements.size());i++) {
+                for(int j = 0;j<static_cast<int>(sub_elements_other.size());j++) {
+                    if(sub_elements.at(i).get()->is_equal_with_value(sub_elements_other.at(j).get())) {
+                        sub_elements.erase(sub_elements.begin() + i);
+                        sub_elements_other.erase(sub_elements_other.begin() + j);
+                        i = -1;break;
+                    }
+                }
+            }
+
+            // Possible remaining element
+            if(sub_elements.size() == 1 && sub_elements.at(0).get()->is_known()){sub_elements.clear();}
+            if(sub_elements_other.size() == 1 && sub_elements_other.at(0).get()->is_known()){sub_elements_other.clear();}
+
+            return sub_elements.size() == 0 && sub_elements_other.size() == 0;
+		}
 		else {
 			if(a_operator.name() == other->a_operator.name() && a_elements.size() == other->a_elements.size()) {
 				for(std::size_t i = 0;i<a_elements.size();i++) {
 					bool good = false;
 					for(std::size_t j = 0;j<other->a_elements.size();j++) {
-						if(a_elements.at(i).get()->is_equal_without_value(other->a_elements.at((i + j) % other->a_elements.size()).get())){good = true;break;}
+						if(a_elements.at(i).get()->is_equal_without_value(other->a_elements.at((i + j) % other->a_elements.size()).get(), used_operator)){good = true;break;}
 					}
 					if(!good){return false;}
 				}
 				return true;
 			}
-			else if(other->is_final_element() && a_elements.size() == 2) {
-				if(a_elements.at(0).get()->is_known()){return other->is_equal_without_value(a_elements.at(1).get());}
-				else if(a_elements.at(1).get()->is_known()){return other->is_equal_without_value(a_elements.at(0).get());}
+			else if(other->is_final_element() && other->is_unknown() && a_elements.size() == 2) {
+                if(a_elements.at(0).get()->is_known()){return other->is_equal_without_value(a_elements.at(1).get(), used_operator);}
+				else if(a_elements.at(1).get()->is_known()){return other->is_equal_without_value(a_elements.at(0).get(), used_operator);}
 			}
-			else if(is_final_element() && other->a_elements.size() == 2) {
-				if(other->a_elements.at(0).get()->is_known()){return is_equal_without_value(other->a_elements.at(1).get());}
-				else if(other->a_elements.at(1).get()->is_known()){return is_equal_without_value(other->a_elements.at(0).get());}
+			else if(is_final_element() && is_unknown() && other->a_elements.size() == 2) {
+				if(other->a_elements.at(0).get()->is_known()){return is_equal_without_value(other->a_elements.at(1).get(), used_operator);}
+				else if(other->a_elements.at(1).get()->is_known()){return is_equal_without_value(other->a_elements.at(0).get(), used_operator);}
 			}
 		}
 		return false;
@@ -189,6 +247,21 @@ namespace scls {
     __Fraction_Base::__Fraction_Base(double real):__Fraction_Base(from_double(real)){};
     __Fraction_Base::__Fraction_Base():__Fraction_Base(0){};
     __Fraction_Base::__Fraction_Base(long long numerator, long long denominator) : a_denominator(denominator), a_numerator(numerator) {if(a_denominator!=1&&a_numerator!=1){normalize();}}
+
+    // Clone
+    void __Fraction_Base::algebra_clone(Algebra_Element* e) const{reinterpret_cast<__Fraction_Base*>(e)->a_denominator = a_denominator;reinterpret_cast<__Fraction_Base*>(e)->a_numerator = a_numerator;};
+    std::shared_ptr<Algebra_Element> __Fraction_Base::algebra_clone() const{std::shared_ptr<Algebra_Element>f=new_algebra_element();algebra_clone(f.get());return f;};
+    std::shared_ptr<Algebra_Element> __Fraction_Base::new_algebra_element() const{return std::make_shared<__Fraction_Base>();};
+    std::shared_ptr<Algebra_Element> __Fraction_Base::new_algebra_element(std::string content) const{return std::make_shared<__Fraction_Base>(__Fraction_Base::from_std_string(content));};
+
+    // Type of the object
+    std::string __Fraction_Base::algebra_type() const{return std::string("fraction_base");};
+
+    // Operates this element with another one
+    void __Fraction_Base::operate(Algebra_Element* other, std::string operation){
+        if(operation == "+"){_add(*reinterpret_cast<__Fraction_Base*>(other));}
+        else if(operation == "*"){_multiply(*reinterpret_cast<__Fraction_Base*>(other));}
+    }
 
     // Returns the absolute value of the fraction
     __Fraction_Base __Fraction_Base::abs() const{if(to_double() >= 0){return *this;}return (*this) * -1;};

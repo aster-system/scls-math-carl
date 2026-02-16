@@ -17,6 +17,15 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
 
+    // Clone
+    void Complex::algebra_clone(Algebra_Element* e) const{reinterpret_cast<Complex*>(e)->a_real = a_real;reinterpret_cast<Complex*>(e)->a_imaginary = a_imaginary;};
+    std::shared_ptr<Algebra_Element> Complex::algebra_clone() const{std::shared_ptr<Algebra_Element>f=new_algebra_element();algebra_clone(f.get());return f;};
+    std::shared_ptr<Algebra_Element> Complex::new_algebra_element() const{return std::make_shared<Complex>(0);};
+    std::shared_ptr<Algebra_Element> Complex::new_algebra_element(std::string content) const{return std::make_shared<Complex>(string_to_complex(content));};
+
+    // Type of the object
+    std::string Complex::algebra_type() const{return std::string("complex");};
+
     // Returns the Complex to a simple std::string
     std::string Complex::to_mathml(Textual_Math_Settings* settings) const {
         if(imaginary() == 0){

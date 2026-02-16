@@ -43,6 +43,21 @@ namespace scls {
         Complex(int real_part) : Complex(Fraction(real_part)) {};
         Complex(const Complex& to_copy) : Complex(to_copy.real(), to_copy.imaginary()) {};
 
+        // Clone
+        virtual void algebra_clone(Algebra_Element* e) const;
+        virtual std::shared_ptr<Algebra_Element> algebra_clone() const;
+        virtual std::shared_ptr<Algebra_Element> new_algebra_element() const;
+        virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const;
+
+        // Type of the object
+        virtual std::string algebra_type() const;
+
+        // Return if the element is a precise algebric element
+        virtual bool is_multiplication_neutral() const{return a_real == 1 && a_imaginary == 0;};
+
+        // Operates this element with another one
+        virtual void operate(Algebra_Element* other, std::string operation){};
+
         // Returns a fraction from a double
         static Complex from_double(double result){return __Fraction_Base::from_double(result);};
         // Returns the module of the complex

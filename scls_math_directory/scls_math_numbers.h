@@ -168,6 +168,9 @@ namespace scls {
         bool is_known() const;
         bool is_unknown() const;
 
+        // Return if the element is a precise algebric element
+        virtual bool is_multiplication_neutral() const{return false;};
+
         // Creates a new algebra element of the same type
         void __clone_base(Algebra_Element* e) const;
         virtual void algebra_clone(Algebra_Element* e) const = 0;
@@ -175,8 +178,12 @@ namespace scls {
         virtual std::shared_ptr<Algebra_Element> new_algebra_element() const = 0;
         virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const = 0;
 
+        // Type of the object
+        virtual std::string algebra_type() const = 0;
+
         // Returns if two elements are equal or not
-        virtual bool is_equal_without_value(Algebra_Element* other) const;
+        virtual bool is_equal_with_value(Algebra_Element* other) const;
+        virtual bool is_equal_without_value(Algebra_Element* other, std::string used_operator) const;
 
         // Operates this element with another one
         virtual void operate(Algebra_Element* other, std::string operation) = 0;
@@ -233,12 +240,12 @@ namespace scls {
     //
     //*********
 
-    class __Field_Element {
+    class __Field_Element : public Algebra_Element {
         // Class representing an element in a field
     public:
 
         // __Field_Element constructor
-        __Field_Element(){};
+        __Field_Element():Algebra_Element(){};
         // __Field_Element destructor
         virtual ~__Field_Element(){};
 
@@ -282,6 +289,21 @@ namespace scls {
         __Fraction_Base(double real);
         __Fraction_Base();
         __Fraction_Base(long long numerator, long long denominator);
+
+        // Clone
+        virtual void algebra_clone(Algebra_Element* e) const;
+        virtual std::shared_ptr<Algebra_Element> algebra_clone() const;
+        virtual std::shared_ptr<Algebra_Element> new_algebra_element() const;
+        virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const;
+
+        // Type of the object
+        virtual std::string algebra_type() const;
+
+        // Return if the element is a precise algebric element
+        virtual bool is_multiplication_neutral() const{return a_numerator == a_denominator;};
+
+        // Operates this element with another one
+        virtual void operate(Algebra_Element* other, std::string operation);
 
         // Returns the absolute value of the fraction
         __Fraction_Base abs() const;

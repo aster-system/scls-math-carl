@@ -492,7 +492,7 @@ namespace scls {
 
             // Apply the function
             T to_return = T(1);
-            if(applied_function() != 0){to_return = scls::Fraction::from_double(applied_function()->real_value(&final_formula));}
+            if(applied_function() != 0){to_return = Fraction::from_double(applied_function()->real_value(&final_formula));}
             else{to_return = final_formula.polynomial()->known_monomonial_factor();}
 
             // Returns the value
@@ -561,6 +561,58 @@ namespace scls {
         __Formula_Base_Template<T>& operator/=(__Formula_Base_Template<T> value) {__divide(&value);return*this;};
     };
 
+    class Formula_Base : public Algebra_Element {
+    public:
+        // Container of unknowns
+        struct Formula_Unknown : public Algebra_Element::__Algebra_Unknown {std::shared_ptr<Formula_Base> value;void set_value(std::shared_ptr<Algebra_Element> e){value=std::make_shared<Formula_Base>(e);}};;
+
+        // Formula_Base constructor
+        Formula_Base(){};
+        Formula_Base(std::shared_ptr<Algebra_Element> e):a_value(e){};
+        Formula_Base(std::string unknown_name):Formula_Base(){if(string_is_number(unknown_name)){a_value = std::make_shared<Fraction>(Fraction::from_std_string(unknown_name));}else{new_unknown(unknown_name);}};
+
+        // Creates a new algebra element of the same type
+        virtual void algebra_clone(Algebra_Element* b) const {clone(reinterpret_cast<Formula_Base*>(b));};
+        virtual std::shared_ptr<Algebra_Element> algebra_clone() const {return clone();};
+        virtual void clone(Formula_Base* b) const {__clone_base(b);if(a_value.get() != 0){b->a_value = a_value.get()->algebra_clone();}else{b->a_value.reset();};};
+        virtual std::shared_ptr<Formula_Base> clone() const {std::shared_ptr<Formula_Base> b = std::make_shared<Formula_Base>();clone(b.get());b.get()->a_modified = a_modified;return b;};
+        virtual std::shared_ptr<Algebra_Element> new_algebra_element() const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;s.get()->a_modified = false;return s;};
+        virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
+
+        // Type of the object
+        virtual std::string algebra_type() const;
+
+        // Adds an element to this one
+        void add(Formula_Base* formula);
+        virtual void operate(Algebra_Element* other, std::string operation);
+        void multiply(Formula_Base* formula);
+
+        // Creates the unknown
+        virtual Algebra_Element::__Algebra_Unknown* create_unknown();
+
+        // Available operators for this object
+        virtual const std::vector<Algebra_Operator>& operators();
+
+        // Replaces the unknowns
+        virtual void replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const;
+        std::shared_ptr<Formula_Base> replace_unknowns(Unknowns_Container* values) const;
+
+        // Simplify the expression
+        constexpr static char NO_SIMPLIFICATION = 0;
+        constexpr static char SIMPLIFICATION_TERMINATED = 1;
+        constexpr static char SIMPLIFICATION_UNTERMINATED = 2;
+        char simplify_step();
+
+        // Returns the element to a simple std::string
+        virtual std::string to_mathml(Textual_Math_Settings* settings) const;
+        virtual std::string to_std_string(Textual_Math_Settings* settings) const;
+
+    private:
+        // If the element is modified or not
+        bool a_modified = true;
+        // Value of the formula
+        std::shared_ptr<Algebra_Element> a_value;
+    };
 }
 
 #endif // SCLS_MATH_FORMULA

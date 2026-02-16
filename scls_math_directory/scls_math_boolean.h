@@ -82,6 +82,9 @@ namespace scls {
     	virtual std::shared_ptr<Algebra_Element> new_algebra_element() const {std::shared_ptr<Boolean> s = std::make_shared<Boolean>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
     	virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const {std::shared_ptr<Boolean> s = std::make_shared<Boolean>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
 
+    	// Type of the object
+    	virtual std::string algebra_type() const;
+
     	// Creates the unknown
     	virtual Algebra_Element::__Algebra_Unknown* create_unknown(){clear();a_unknown = std::make_shared<__Boolean_Unknown>();return a_unknown.get();};
 
