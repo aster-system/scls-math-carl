@@ -92,7 +92,7 @@ namespace scls {
         void operate(Algebra_Element* other, std::string operation){if(operation == std::string("+")){add_or(other);}else if(operation == std::string(".")){add_and(other);}};
 
         // Available operators for this object
-        virtual const std::vector<Algebra_Element::Algebra_Operator>& operators();
+        virtual const Algebra_Operators& operators() const;
 
     	// Replaces the unknowns
         virtual void replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const;

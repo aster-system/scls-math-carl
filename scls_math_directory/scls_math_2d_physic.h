@@ -24,6 +24,9 @@
 // You should have received a copy of the GNU General Public License along with SCLS. If not, see <https://www.gnu.org/licenses/>.
 //
 
+#ifndef SCLS_MATH_2D_PHYSIC
+#define SCLS_MATH_2D_PHYSIC
+
 // Include the good header file
 #include "scls_math_geometry_core.h"
 
@@ -175,6 +178,8 @@ namespace scls {
 
         // Physic_Object constructor
         Physic_Object(std::weak_ptr<scls::Transform_Object_2D> attached_transform):a_attached_transform(attached_transform){};
+        // Physic_Object destructor
+        ~Physic_Object(){};
 
         // Deletes the object
         void delete_object();
@@ -187,6 +192,7 @@ namespace scls {
         void add_collision(std::shared_ptr<Collision> collision);
         void add_collision(double x_1, double y_1, double x_2, double y_2);
         void add_collision(double x_1, double y_1, double x_2, double y_2, double restitution);
+        void add_collisions(std::vector<Point_2D> points);
         // Checks if a collision occurs with an another collision
         void check_collision(std::shared_ptr<Collision> collision, Physic_Object* other_object);
         // Returns a new a collision to the graphic object
@@ -354,3 +360,5 @@ namespace scls {
         std::vector<std::shared_ptr<Physic_Object>> a_physic_objects;
     };
 }
+
+#endif // SCLS_MATH_2D_PHYSIC

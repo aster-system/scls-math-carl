@@ -37,8 +37,8 @@ namespace scls {
 	//*********
 
 	// Available operators for this object
-	std::vector<Algebra_Element::Algebra_Operator> boolean_operators = {scls::Algebra_Element::Algebra_Operator("."), scls::Algebra_Element::Algebra_Operator("+")};
-	const std::vector<Algebra_Element::Algebra_Operator>& Boolean::operators(){return boolean_operators;}
+	Algebra_Element::Algebra_Operators boolean_operators = Algebra_Element::Algebra_Operators({scls::Algebra_Element::Algebra_Operator("."), scls::Algebra_Element::Algebra_Operator("+")}, {});
+	const Algebra_Element::Algebra_Operators& Boolean::operators() const {return boolean_operators;}
 
 	// Type of the object
 	std::string Boolean::algebra_type() const{return std::string("boolean");};

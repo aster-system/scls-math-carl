@@ -189,6 +189,16 @@ namespace scls {
         collision.get()->set_x_2(x_2);collision.get()->set_y_2(y_2);
         collision.get()->set_type(Collision_Type::GCT_Line);
     };
+    void Physic_Object::add_collisions(std::vector<Point_2D> points) {
+    	for(std::size_t i = 0;i<points.size() - 1;i++) {
+			scls::Point_2D start = points.at(i) * attached_transform()->absolute_scale() + attached_transform()->absolute_position();
+			scls::Point_2D end = points.at(i + 1) * attached_transform()->absolute_scale() + attached_transform()->absolute_position();
+			add_collision(start.x(), start.y(), end.x(), end.y());
+		}
+    	scls::Point_2D start = points.at(points.size() - 1) * attached_transform()->absolute_scale() + attached_transform()->absolute_position();
+    	scls::Point_2D end = points.at(0) * attached_transform()->absolute_scale() + attached_transform()->absolute_position();
+    	add_collision(start.x(), start.y(), end.x(), end.y());
+    }
 
     // Checks if a collision occurs with an another object
     struct Collision_Result{
@@ -654,7 +664,7 @@ namespace scls {
 
         // Create the cases
         a_physic_map = std::vector<std::vector<std::shared_ptr<Physic_Case>>>(width, std::vector<std::shared_ptr<Physic_Case>>(height));
-        for(int i = 0;i<width;i++){for(int j = 0;j<height;j++){a_physic_map[i][j]=std::make_shared<Physic_Case>();a_physic_map[i][j].get()->position = scls::Point_2D(a_physic_map_start_x + i, j);}}
+        for(int i = 0;i<width;i++){for(int j = 0;j<height;j++){a_physic_map[i][j]=std::make_shared<Physic_Case>();a_physic_map[i][j].get()->position = scls::Point_2D(a_physic_map_start_x + i, a_physic_map_start_y + j);}}
     }
 
     // Creates and return a new physic object
@@ -886,11 +896,12 @@ namespace scls {
         // Dynamic objects
         for(int i = 0;i<static_cast<int>(dynamic_objects_physic.size());i++) {
             // Get the needed datas
-            int needed_height = std::ceil(dynamic_objects_physic.at(i)->max_absolute_y_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_y_next());
-            int needed_width = std::ceil(dynamic_objects_physic.at(i)->max_absolute_x_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_x_next());
-            if(needed_width <= 0){needed_width = 1;};
             int x_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_x_next());
             int y_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_y_next());
+            int needed_height = std::ceil(dynamic_objects_physic.at(i)->max_absolute_y_next()) - y_start;
+            int needed_width = std::ceil(dynamic_objects_physic.at(i)->max_absolute_x_next()) - x_start;
+            if(needed_height < 1){needed_height = 1;};
+            if(needed_width < 1){needed_width = 1;};
 
             // Check the cases
             for(int j = 0;j<needed_width;j++) {

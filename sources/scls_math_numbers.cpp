@@ -69,6 +69,9 @@ namespace scls {
     //
     //*********
 
+    // Algebra_Operators constructor
+    Algebra_Element::Algebra_Operators::Algebra_Operators(std::vector<Algebra_Element::Algebra_Operator> needed_operators, std::vector<Algebra_Element::Algebra_Operator> needed_functions):a_functions(needed_functions),a_operators(needed_operators){};
+
     // Algebra_Element constructor
 	Algebra_Element::Algebra_Element(){}
 	// Algebra_Element destructor
@@ -198,10 +201,22 @@ namespace scls {
 	}
 
 	// Available operators for this object
-	std::vector<Algebra_Element::Algebra_Operator> base_operators;
-	const std::vector<Algebra_Element::Algebra_Operator>& Algebra_Element::operators() {
-		return base_operators;
-	}
+	Algebra_Element::Algebra_Operators base_operators;
+	const Algebra_Element::Algebra_Operators& Algebra_Element::operators() const {return base_operators;}
+	const Algebra_Element::Algebra_Operator* Algebra_Element::function_by_name(std::string operator_name){
+        const std::vector<Algebra_Element::Algebra_Operator>& needed_functions = operators().functions();
+        for(std::size_t i = 0;i<needed_functions.size();i++) {
+            if(needed_functions.at(i).name() == operator_name){return &needed_functions.at(i);}
+        }
+        return 0;
+    };
+    const Algebra_Element::Algebra_Operator* Algebra_Element::operator_by_name(std::string operator_name){
+        const std::vector<Algebra_Element::Algebra_Operator>& needed_operators = operators().operators();
+        for(std::size_t i = 0;i<needed_operators.size();i++) {
+            if(needed_operators.at(i).name() == operator_name){return &needed_operators.at(i);}
+        }
+        return 0;
+    };
 
 	// Replaces the unknowns
 	void Algebra_Element::replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const {
@@ -209,10 +224,14 @@ namespace scls {
 		if(!is_final_element()) {
 			std::shared_ptr<Algebra_Element> c = algebra_elements_const().at(0).get()->algebra_clone();
 			c.get()->replace_unknowns_algebra(element, values);
-			for(int i = 1;i<static_cast<int>(algebra_elements_const().size());i++) {
-				std::shared_ptr<Algebra_Element> b_replaced = algebra_elements_const().at(i).get()->algebra_clone();
-				c = new_algebra_element();b_replaced.get()->replace_unknowns_algebra(c.get(), values);
-				element->operate(c.get(), algebra_operator_name());
+
+			if(algebra_operator_arity() == 1) {element->operate(0, algebra_operator_name());}
+			else {
+                for(int i = 1;i<static_cast<int>(algebra_elements_const().size());i++) {
+                    std::shared_ptr<Algebra_Element> b_replaced = algebra_elements_const().at(i).get()->algebra_clone();
+                    c = new_algebra_element();b_replaced.get()->replace_unknowns_algebra(c.get(), values);
+                    element->operate(c.get(), algebra_operator_name());
+                }
 			}
 		}
 	}
@@ -261,6 +280,12 @@ namespace scls {
     void __Fraction_Base::operate(Algebra_Element* other, std::string operation){
         if(operation == "+"){_add(*reinterpret_cast<__Fraction_Base*>(other));}
         else if(operation == "*"){_multiply(*reinterpret_cast<__Fraction_Base*>(other));}
+        else if(operation == "/"){_divide(*reinterpret_cast<__Fraction_Base*>(other));}
+        else if(operation == "ln"){double d = to_double();d = std::log(d);set_from_double(d);}
+        else if(operation == "exp"){double d = to_double();d = std::exp(d);set_from_double(d);}
+        else if(operation == "cos"){double d = to_double();d = std::cos(d);set_from_double(d);}
+        else if(operation == "sin"){double d = to_double();d = std::sin(d);set_from_double(d);}
+        else if(operation == "tan"){double d = to_double();d = std::tan(d);set_from_double(d);}
     }
 
     // Returns the absolute value of the fraction
@@ -270,12 +295,13 @@ namespace scls {
     __Fraction_Base __Fraction_Base::inverse() const {return __Fraction_Base(a_denominator, a_numerator);};
 
     // Returns a fraction from a double
+    constexpr double from_double_precision = 100000;
     __Fraction_Base __Fraction_Base::from_double(double result) {
         long long result_in_long = static_cast<long long>(result);
         double after_decimal_point = static_cast<double>(result - static_cast<double>(result_in_long));
         if(after_decimal_point == 0){return Fraction(result_in_long, 1);}
-        long long after_decimal_point_in_long = static_cast<long long>(after_decimal_point * 1000000.0);
-        return Fraction(result_in_long, 1) + Fraction(after_decimal_point_in_long, 1000000);
+        long long after_decimal_point_in_long = static_cast<long long>(after_decimal_point * from_double_precision);
+        return Fraction(result_in_long, 1) + Fraction(after_decimal_point_in_long, from_double_precision);
     };
     // Returns a fraction from a std::string
     __Fraction_Base __Fraction_Base::from_std_string(std::string content) {

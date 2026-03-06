@@ -578,23 +578,26 @@ namespace scls {
         virtual std::shared_ptr<Formula_Base> clone() const {std::shared_ptr<Formula_Base> b = std::make_shared<Formula_Base>();clone(b.get());b.get()->a_modified = a_modified;return b;};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element() const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;s.get()->a_modified = false;return s;};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
+        virtual std::shared_ptr<Formula_Base> new_formula(std::string content) const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
 
         // Type of the object
         virtual std::string algebra_type() const;
 
         // Adds an element to this one
         void add(Formula_Base* formula);
-        virtual void operate(Algebra_Element* other, std::string operation);
+        void divide(Formula_Base* formula);
         void multiply(Formula_Base* formula);
+        virtual void operate(Algebra_Element* other, std::string operation);
 
         // Creates the unknown
         virtual Algebra_Element::__Algebra_Unknown* create_unknown();
 
         // Available operators for this object
-        virtual const std::vector<Algebra_Operator>& operators();
+        virtual const Algebra_Operators& operators() const;
 
         // Replaces the unknowns
         virtual void replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const;
+        std::shared_ptr<Formula_Base> replace_unknowns(std::string unknown, scls::Fraction f) const;
         std::shared_ptr<Formula_Base> replace_unknowns(Unknowns_Container* values) const;
 
         // Simplify the expression
@@ -606,6 +609,10 @@ namespace scls {
         // Returns the element to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;
         virtual std::string to_std_string(Textual_Math_Settings* settings) const;
+
+        // Getters and setters
+        inline Algebra_Element* algebra_value() const {return a_value.get();};
+        template <typename T> T* value() const {return reinterpret_cast<T*>(algebra_value());};
 
     private:
         // If the element is modified or not

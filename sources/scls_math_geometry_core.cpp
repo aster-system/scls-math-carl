@@ -92,6 +92,15 @@ namespace scls {
         return to_return;
     }
 
+    // Converts a lot of points with a base
+	std::vector<Point_2D> canonical_points_to_base_points(Plane_Base* base, std::vector<Point_2D> points_to_convert){
+		std::vector<Point_2D> to_return = std::vector<Point_2D>(points_to_convert.size());
+		for(std::size_t i = 0;i<points_to_convert.size();i++) {
+			to_return[i] = Point_2D(base->base_x_to_canonical_x(points_to_convert.at(i).x()), base->base_y_to_canonical_y(-points_to_convert.at(i).y()));
+		}
+		return to_return;
+	}
+
     // Returns the datas point of two crossing lines
     Crossing_Datas check_crossing(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y) {
         Crossing_Datas to_return;
@@ -317,10 +326,10 @@ namespace scls {
 
     // Extremums
     // TO OPTIMISE
-    double Transform_Object_2D::max_absolute_x() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_x() + absolute_max.x();};
-    double Transform_Object_2D::max_absolute_y() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_y() + absolute_max.y();};
-    double Transform_Object_2D::min_absolute_x() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_x() - absolute_max.x();};
-    double Transform_Object_2D::min_absolute_y() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_y() - absolute_max.y();};
+    double Transform_Object_2D::max_absolute_x() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_x() + std::abs(absolute_max.x());};
+    double Transform_Object_2D::max_absolute_y() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_y() + std::abs(absolute_max.y());};
+    double Transform_Object_2D::min_absolute_x() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_x() - std::abs(absolute_max.x());};
+    double Transform_Object_2D::min_absolute_y() const {scls::Point_2D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_y() - std::abs(absolute_max.y());};
     //double Transform_Object_2D::max_absolute_x() const {return absolute_x() + absolute_scale_x() / 2.0;};
     //double Transform_Object_2D::max_absolute_y() const {return absolute_y() + absolute_scale_y() / 2.0;};
     //double Transform_Object_2D::min_absolute_x() const {return absolute_x() - absolute_scale_x() / 2.0;};

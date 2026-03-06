@@ -461,7 +461,7 @@ namespace scls {
 
 
     // Formula operator
-    std::vector<Algebra_Element::Algebra_Operator> formula_operators = {Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")};
+    Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("sin", 1)});
 
     // Type of the object
     std::string Formula_Base::algebra_type() const{return std::string("formula_base");};
@@ -481,21 +481,45 @@ namespace scls {
     // Creates the unknown
     Algebra_Element::__Algebra_Unknown* Formula_Base::create_unknown(){clear();a_unknown = std::make_shared<Formula_Unknown>();return a_unknown.get();};
 
+    // Divides  an element to this one
+    void Formula_Base::divide(Formula_Base* formula) {
+    	if(is_final_element() && formula->is_final_element() && !is_unknown() && !formula->is_unknown()){
+			a_value->operate(reinterpret_cast<Formula_Base*>(formula)->a_value.get(), "/");
+		}
+    	else {
+    		sub_place();
+			set_algebra_operator(std::string("/"));
+			algebra_elements().push_back(formula->algebra_clone());
+		}
+    }
+
     // Operates this element with another one
     void Formula_Base::operate(Algebra_Element* other, std::string operation) {
-        if(!a_modified){a_modified = true;reinterpret_cast<Formula_Base*>(other)->algebra_clone(this);}
-        else if(operation == std::string("+")){add(reinterpret_cast<Formula_Base*>(other));}
-        else if(operation == std::string("*")){multiply(reinterpret_cast<Formula_Base*>(other));}
-        else if(is_final_element() && other->is_final_element() && !is_unknown() && !other->is_unknown()){
-            a_value->operate(reinterpret_cast<Formula_Base*>(other)->a_value.get(), "+");
+        // Datas
+        const Algebra_Element::Algebra_Operator* current_operator = function_by_name(operation);
+        if(current_operator != 0 && current_operator->arity() == 1) {
+            if(is_final_element() && !is_unknown()){
+                a_value->operate(0, operation);
+            }
+            else {sub_place();set_algebra_operator(operation, 1);}
         }
         else {
-            std::shared_ptr<Formula_Base> current = clone();
-            sub_place();set_algebra_operator(operation);
-            algebra_elements().push_back(other->algebra_clone());
+            // Normal operator
+            if(!a_modified){a_modified = true;reinterpret_cast<Formula_Base*>(other)->algebra_clone(this);}
+            else if(operation == std::string("+")){add(reinterpret_cast<Formula_Base*>(other));}
+            else if(operation == std::string("*")){multiply(reinterpret_cast<Formula_Base*>(other));}
+            else if(operation == std::string("/")){divide(reinterpret_cast<Formula_Base*>(other));}
+            else if(is_final_element() && other->is_final_element() && !is_unknown() && !other->is_unknown()){
+                a_value->operate(reinterpret_cast<Formula_Base*>(other)->a_value.get(), "+");
+            }
+            else {
+                std::shared_ptr<Formula_Base> current = clone();
+                sub_place();set_algebra_operator(operation);
+                algebra_elements().push_back(other->algebra_clone());
+            }
         }
     }
-    const std::vector<Algebra_Element::Algebra_Operator>& Formula_Base::operators(){return formula_operators;}
+    const Algebra_Element::Algebra_Operators& Formula_Base::operators() const {return formula_operators;}
 
     // Replaces the unknowns
     void Formula_Base::replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const {
@@ -512,6 +536,10 @@ namespace scls {
 
         // Modified
         reinterpret_cast<Formula_Base*>(element)->a_modified = true;
+    }
+    std::shared_ptr<Formula_Base> Formula_Base::replace_unknowns(std::string unknown, scls::Fraction f) const {
+        Unknowns_Container c;c.create_unknown<Formula_Base::Formula_Unknown>(unknown)->value = new_formula(f.to_std_string(0));
+        return replace_unknowns(&c);
     }
     std::shared_ptr<Formula_Base> Formula_Base::replace_unknowns(Unknowns_Container* values) const {
         // Create the object
@@ -558,7 +586,7 @@ namespace scls {
     // Simplify the expression
     char Formula_Base::simplify_step() {
         // Basic
-        if(algebra_elements().size() == 1){std::shared_ptr<Algebra_Element>temp=algebra_elements().at(0);reinterpret_cast<Formula_Base*>(temp.get())->clone(this);return SIMPLIFICATION_UNTERMINATED;}
+    	if(algebra_operator_arity() != 1 && algebra_elements().size() == 1){std::shared_ptr<Algebra_Element>temp=algebra_elements().at(0);reinterpret_cast<Formula_Base*>(temp.get())->clone(this);return SIMPLIFICATION_UNTERMINATED;}
 
         // Datas
     	bool simplified = false;
@@ -676,12 +704,17 @@ namespace scls {
             else{to_return = algebra_unknown()->name;}
         }
         else {
-            for(int i = 0;i<static_cast<int>(algebra_elements_const().size());i++) {
-                to_return += std::string("(");
-                to_return += algebra_elements_const().at(i).get()->to_std_string(settings);
-                to_return += std::string(")");
-                if(i < static_cast<int>(algebra_elements_const().size()) - 1){to_return += std::string(" ") + algebra_operator_name() + std::string(" ");}
-            }
+        	if(algebra_operator_arity() == 1) {
+        		to_return += algebra_operator_name() + std::string("(") + algebra_elements_const().at(0).get()->to_std_string(settings) + std::string(")");
+        	}
+        	else {
+        		for(int i = 0;i<static_cast<int>(algebra_elements_const().size());i++) {
+					to_return += std::string("(");
+					to_return += algebra_elements_const().at(i).get()->to_std_string(settings);
+					to_return += std::string(")");
+					if(i < static_cast<int>(algebra_elements_const().size()) - 1){to_return += std::string(" ") + algebra_operator_name() + std::string(" ");}
+				}
+        	}
         }
         return to_return;
     };

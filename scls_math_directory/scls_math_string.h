@@ -149,7 +149,7 @@ namespace scls {
 
     // Use parsers methods outside the class
     void __string_to_algebra_element(Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& o);
-    template <typename T> std::shared_ptr<T> string_to_algebra_element(std::string source){std::shared_ptr<T> new_object = std::make_shared<T>();__string_to_algebra_element(new_object.get(), source, new_object.get()->operators());return new_object;};
+    template <typename T> std::shared_ptr<T> string_to_algebra_element(std::string source){std::shared_ptr<T> new_object = std::make_shared<T>();__string_to_algebra_element(new_object.get(), source, new_object.get()->operators().operators());return new_object;};
 }
 
 #endif // SCLS_MATH_STRING

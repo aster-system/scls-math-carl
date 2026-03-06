@@ -132,6 +132,23 @@ namespace scls {
     		std::string a_name = std::string();
     	};
 
+    	class Algebra_Operators {
+    	    // Class containaing all the content needed to parse a part of an algebra element
+        public:
+            // Algebra_Operators constructor
+            Algebra_Operators(){};
+    		Algebra_Operators(std::vector<Algebra_Element::Algebra_Operator> needed_operators, std::vector<Algebra_Element::Algebra_Operator> needed_functions);
+
+    		// Getters and setters
+            const std::vector<Algebra_Operator>& functions() const {return a_functions;};
+            const std::vector<Algebra_Operator>& operators() const {return a_operators;};
+        private:
+            // Loaded normal functions
+            std::vector<Algebra_Element::Algebra_Operator> a_functions;
+            // Loaded normal operators
+            std::vector<Algebra_Element::Algebra_Operator> a_operators;
+    	};
+
     	// Container of unknowns
     	struct __Algebra_Unknown{std::string name = std::string();};
     	class Unknowns_Container {
@@ -189,7 +206,9 @@ namespace scls {
         virtual void operate(Algebra_Element* other, std::string operation) = 0;
 
         // Available operators for this object
-        virtual const std::vector<Algebra_Operator>& operators();
+        virtual const Algebra_Operators& operators() const;
+        const Algebra_Operator* function_by_name(std::string function_name);
+        const Algebra_Operator* operator_by_name(std::string operator_name);
 
         // Replaces the unknowns
         virtual void replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const;
@@ -205,8 +224,10 @@ namespace scls {
         inline const std::vector<std::shared_ptr<Algebra_Element>>& algebra_elements_const() const {return a_elements;};
         inline __Algebra_Unknown* algebra_unknown() const {return a_unknown.get();};
         inline Algebra_Operator* algebra_operator() {return &a_operator;};
+        inline int algebra_operator_arity() const {return a_operator.arity();};
         inline std::string algebra_operator_name() const {return a_operator.name();};
         inline void set_algebra_operator(std::string new_algebra_operator){a_operator = Algebra_Operator(new_algebra_operator);};
+        inline void set_algebra_operator(std::string new_algebra_operator, int new_algebra_arity){a_operator = Algebra_Operator(new_algebra_operator, new_algebra_arity);};
 
         // Virtual functions
 

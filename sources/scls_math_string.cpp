@@ -214,6 +214,7 @@ namespace scls {
             if(last_text_3.size() > 3){last_text_3 = last_text_3.substr(1, last_text_3.size() - 1);}
             if(last_text_4.size() > 4){last_text_4 = last_text_4.substr(1, last_text_4.size() - 1);}
         }
+
         // Handle the "-"
         for(int i = 0;i<static_cast<int>(source.size());i++) {
             // Remove the useless "-"
@@ -310,14 +311,39 @@ namespace scls {
     std::shared_ptr<scls::__Formula_Base::Unknown> Math_Environment::unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
 
     // Use parsers methods outside the class
+    bool string_is_operator(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, std::string to_test) {
+		if(to_test == std::string_view(">")){return true;}
+    	for(std::size_t i = 0;i<operator_order.size();i++) {
+			if(operator_order.at(i).name() == to_test){return true;}
+		}
+		return false;
+	}
+    bool string_is_operator(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, char to_test) {
+    	std::string t = std::string();t += to_test;
+    	return string_is_operator(operator_order, t);
+    }
+    bool string_is_special(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, std::string to_test){
+    	if(to_test == std::string_view("-") || to_test == std::string_view("(")  || to_test == std::string_view(")")){return true;}
+    	else if(string_is_operator(operator_order, to_test)){return true;}
+		return false;
+	}
+    bool string_is_special(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, char to_test){
+    	std::string t = std::string();t += to_test;
+    	return string_is_special(operator_order, t);
+    }
     void __string_to_algebra_element_operator(Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order, int position) {
         // Cut the text operator by * operator
-        std::vector<std::string> cutted = cut_string_out_of_2(source, operator_order.at(position).name(), "(", ")");
+    	std::vector<std::string> cutted = cut_string_out_of_2(source, operator_order.at(position).name(), "(", ")");
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
             std::shared_ptr<Algebra_Element> current_element;
             if(position <= 0) {
-                if(cutted.at(i).size() < 2 || (cutted.at(i).at(0) != '(')) {current_element = element->new_algebra_element(cutted.at(i));}
-                else {current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), cutted.at(i).substr(1, cutted.at(i).size() - 2), operator_order, operator_order.size() - 1);}
+                std::vector<std::string> parts = scls::cut_string_out_of_2(cutted.at(i), std::string(">"), "(", ")");
+                if(parts.at(parts.size() - 1).size() < 2 || (parts.at(parts.size() - 1).at(0) != '(')) {current_element = element->new_algebra_element(parts.at(parts.size() - 1));}
+                else {current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), parts.at(parts.size() - 1).substr(1, parts.at(parts.size() - 1).size() - 2), operator_order, operator_order.size() - 1);}
+
+                if(parts.size() == 2) {
+                	current_element.get()->operate(0, parts.at(0));
+                }
             }
             else{current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), cutted.at(i), operator_order, position - 1);}
             element->operate(current_element.get(), operator_order.at(position).name());
@@ -325,7 +351,68 @@ namespace scls {
     }
     void __string_to_algebra_element(Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order) {
         // Operator order
+    	std::vector<std::string> functions = {"ln", "cos", "sin", "tan", "arcsin", "arccos", "arctan"};
         source = remove_space(source);
+		std::string last_text_2 = std::string();std::string last_text_3 = std::string();std::string last_text_4 = std::string();
+		for(int i = 0;i<static_cast<int>(source.size());i++) {
+			// Remove the useless ")("
+			if(source[i] == '(') {
+				char last_char = 0;
+				if(i > 0){last_char = source[i - 1];}
+				if(last_char == ')') {source.insert(i, "*");i++;}
+				else if(last_char == '-') {source.insert(i, "1*");i++;}
+				else if(!string_is_special(operator_order, last_char)) {
+					std::string total_function = std::string();
+					int current_pos = i - 1;
+					while(current_pos >= 0 && (!string_is_operator(operator_order, source[current_pos]) && source[current_pos]!='(' && source[current_pos]!=')')){total_function=source[current_pos]+total_function;current_pos--;}
+					std::size_t index = 0;char l = -1;
+					for(;index<functions.size();index++) {
+						if(functions.at(index) == last_text_2) {
+							l = 2;break;
+						}
+						else if(functions.at(index) == last_text_3) {
+							l = 3;break;
+						}
+						else if(functions.at(index) == last_text_4) {
+							l = 4;break;
+						}
+					}
+					if(l != -1) {
+						// The part is a function
+						source.insert(i, ">");
+						i++;
+					}
+					else {source.insert(i, "*");i++;}
+				}
+			}
+
+			// Handle last text
+			last_text_2 += source[i];last_text_3 += source[i];last_text_4 += source[i];
+			if(last_text_2.size() > 2){last_text_2 = last_text_2.substr(1, last_text_2.size() - 1);}
+			if(last_text_3.size() > 3){last_text_3 = last_text_3.substr(1, last_text_3.size() - 1);}
+			if(last_text_4.size() > 4){last_text_4 = last_text_4.substr(1, last_text_4.size() - 1);}
+		}
+
+		// Add the necessary "*"
+		std::string operator_to_add = std::string("*");
+		for(int i = 1;i<static_cast<int>(source.size());i++) {
+			// Remove the implicit operator
+			char last_char = source[i - 1];
+			if((string_is_number(last_char) || last_char == ')') && (!string_is_number(source[i])) && !string_is_special(operator_order, source[i])) {
+				source.insert(i, "*");i++;
+			}
+		}
+
+		// Handle the "-"
+		for(int i = 0;i<static_cast<int>(source.size());i++) {
+			// Remove the useless "-"
+			if(i > 0 && static_cast<int>(source[i]) == static_cast<int>('-')) {
+				if(!string_is_operator(operator_order, source[i - 1]) && (i >= static_cast<int>(source.size()) || (static_cast<int>(source[i + 1]) != static_cast<int>('(')))) {
+					source.insert(i, "+");
+					i++;
+				}
+			}
+		}
 
         // Cut the text operator by * operator
         __string_to_algebra_element_operator(element, source, operator_order, operator_order.size() - 1);

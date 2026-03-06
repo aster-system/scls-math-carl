@@ -59,6 +59,32 @@ namespace scls {
     double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z);
     inline double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z){return __rotate_vector_3d(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
 
+    // Base of the graphic
+	class Plane_Base {
+	public:
+		// Plane_Base constructor
+		Plane_Base(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):a_height_unit_in_canonical_base(needed_height_unit_in_canonical_base),a_width_unit_in_canonical_base(needed_width_unit_in_canonical_base),a_x_middle_in_canonical_base(needed_x_unit_in_canonical_base),a_y_middle_in_canonical_base(needed_y_unit_in_canonical_base){};
+
+		// Conversion BASE -> CANONICAL
+		double base_scale_x_to_canonical_scale_x(double x){return x * a_width_unit_in_canonical_base;};
+		double base_x_to_canonical_x(double x){return a_x_middle_in_canonical_base + x * a_width_unit_in_canonical_base;};
+		double base_scale_y_to_canonical_scale_y(double y){return y * a_height_unit_in_canonical_base;};
+		double base_y_to_canonical_y(double y){return a_y_middle_in_canonical_base + y * a_height_unit_in_canonical_base;};
+
+		// Conversion CANONICAL -> BASE
+		double canonical_x_to_base_x(double x){return (x - a_x_middle_in_canonical_base) / a_width_unit_in_canonical_base;};
+		double canonical_y_to_base_y(double y){return (y - a_y_middle_in_canonical_base) / a_height_unit_in_canonical_base;};
+
+	private:
+		// Size of the base
+		double a_height_unit_in_canonical_base = 100;
+		double a_width_unit_in_canonical_base = 100;
+
+		// Coordinates of the base
+		double a_x_middle_in_canonical_base = 0;
+		double a_y_middle_in_canonical_base = 0;
+	};
+
     class Point_2D {
         // Class representing a 2D point
     public:
@@ -154,6 +180,9 @@ namespace scls {
         // Y position of the point
         double a_y = 0;
     }; typedef Point_2D Vector_2D;
+
+    // Converts a lot of points with a base
+    std::vector<Point_2D> canonical_points_to_base_points(Plane_Base* base, std::vector<Point_2D> points_to_convert);
 
     // Operators
     bool operator==(const Point_2D object_1, const Point_2D object_2);
