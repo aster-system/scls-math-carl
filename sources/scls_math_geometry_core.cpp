@@ -286,6 +286,9 @@ namespace scls {
     // Transform_Object_2D destructor
     Transform_Object_2D::~Transform_Object_2D(){if(parent() != 0){parent()->remove_child(this);}};
 
+    // Soft-resets the transform
+    void Transform_Object_2D::soft_reset(){if(a_delta_time != 0){a_real_velocity = (absolute_position() - a_last_position) / a_delta_time.to_double();}a_delta_time=0;a_last_position = absolute_position();a_moved_during_this_frame = false;};
+
     // Absolute position handling
     // Returns the absolute X position
     double Transform_Object_2D::absolute_x() const {
@@ -356,6 +359,7 @@ namespace scls {
     void Transform_Object_2D::update_raw_velocity(){a_raw_velocity = a_velocity;};
 
     // Getters and setters
+    Point_2D Transform_Object_2D::real_velocity() const{return a_real_velocity;}
     Point_2D Transform_Object_2D::raw_velocity() const {return a_raw_velocity;}
     void Transform_Object_2D::set_position(scls::Fraction new_x, scls::Fraction new_y){a_position.set_x(new_x.to_double());a_position.set_y(new_y.to_double());a_moved_during_this_frame = true;}
     void Transform_Object_2D::set_position(Point_2D new_position){a_position.set_x(new_position.x());a_position.set_y(new_position.y());a_moved_during_this_frame = true;}

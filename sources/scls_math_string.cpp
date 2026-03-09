@@ -215,6 +215,8 @@ namespace scls {
             if(last_text_4.size() > 4){last_text_4 = last_text_4.substr(1, last_text_4.size() - 1);}
         }
 
+        std::cout << "E " << source << std::endl;
+
         // Handle the "-"
         for(int i = 0;i<static_cast<int>(source.size());i++) {
             // Remove the useless "-"

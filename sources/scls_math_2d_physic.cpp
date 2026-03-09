@@ -919,7 +919,8 @@ namespace scls {
             if(!dynamic_objects_physic.at(i).get()->ignore_dynamic_collisions()){
                 for(int j = i + 1;j<static_cast<int>(dynamic_objects_physic.size());j++){
                     for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
-                        if(dynamic_objects_physic.at(i).get() != dynamic_objects_physic.at(j).get()) {
+                        //dynamic_objects_physic.at(i).get()->attached_transform()->position().distance(dynamic_objects_physic.at(j).get()->attached_transform()->position()) < 0.1 &&
+                    	if(dynamic_objects_physic.at(i).get() != dynamic_objects_physic.at(j).get()) {
                             dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
                         }
                     }

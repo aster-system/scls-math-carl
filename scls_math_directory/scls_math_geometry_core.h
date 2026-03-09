@@ -128,7 +128,7 @@ namespace scls {
         //*********
 
         // Distance from another object
-        inline double distance(Point_2D point) const {return std::sqrt(std::pow((a_x - point.a_x), 2) + std::pow((a_y - point.a_y), 2));};
+        inline double distance(Point_2D point) const {return std::sqrt((a_x - point.a_x) * (a_x - point.a_x) + (a_y - point.a_y) * (a_y - point.a_y));};
         // Returns the norm of the vector
         inline double norm() const {return std::sqrt(std::pow(a_x, 2) + std::pow(a_y, 2));};
         // Normalizes the vector
@@ -360,7 +360,7 @@ namespace scls {
         ~Transform_Object_2D();
 
         // Soft-resets the transform
-        inline void soft_reset(){a_moved_during_this_frame = false;};
+        void soft_reset();
 
         // Getters and setters
         inline std::vector<std::shared_ptr<Transform_Object_2D>>& children() {return a_children;};
@@ -453,6 +453,7 @@ namespace scls {
 
         // Getters and setters
         Point_2D raw_velocity() const;
+        Point_2D real_velocity() const;
         void set_position(Fraction new_x, Fraction new_y);
         void set_position(Point_2D new_position);
         void set_raw_velocity(Point_2D new_raw_velocity);
@@ -561,8 +562,13 @@ namespace scls {
         //
         //*********
 
+        // Last position of the object
+        Point_2D a_last_position;
         // Position of the object
         Point_2D a_position;
+
+        // Real mesured velocity
+        Point_2D a_real_velocity;
 
         // Velocity (and raw velocity) of the object
         Point_2D a_raw_velocity;
