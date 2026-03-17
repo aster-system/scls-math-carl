@@ -186,6 +186,8 @@ namespace scls {
         bool is_unknown() const;
 
         // Return if the element is a precise algebric element
+        virtual bool is_addition_neutral() const {return false;};
+        virtual bool is_multiplication_absorbing() const{return false;};
         virtual bool is_multiplication_neutral() const{return false;};
 
         // Creates a new algebra element of the same type
@@ -216,6 +218,9 @@ namespace scls {
         // Returns the first known algebra element of this element
         Algebra_Element* known_algebra_element();
 
+        // Simplify the element
+        virtual void simplify(){};
+
         // Sub-places the element
         void sub_place();
 
@@ -223,6 +228,7 @@ namespace scls {
         inline std::vector<std::shared_ptr<Algebra_Element>>& algebra_elements() {return a_elements;};
         inline const std::vector<std::shared_ptr<Algebra_Element>>& algebra_elements_const() const {return a_elements;};
         inline __Algebra_Unknown* algebra_unknown() const {return a_unknown.get();};
+        inline std::string algebra_unknown_name() const {return a_unknown.get()->name;};
         inline Algebra_Operator* algebra_operator() {return &a_operator;};
         inline int algebra_operator_arity() const {return a_operator.arity();};
         inline std::string algebra_operator_name() const {return a_operator.name();};
@@ -321,13 +327,17 @@ namespace scls {
         virtual std::string algebra_type() const;
 
         // Return if the element is a precise algebric element
+        virtual bool is_addition_neutral() const {return a_numerator == 0;};
         virtual bool is_multiplication_neutral() const{return a_numerator == a_denominator;};
+        virtual bool is_multiplication_absorbing() const {return a_numerator == 0;};
 
         // Operates this element with another one
         virtual void operate(Algebra_Element* other, std::string operation);
 
         // Returns the absolute value of the fraction
         __Fraction_Base abs() const;
+        // Crop the fraction
+        void crop(int limit);
         // Returns a fraction from a double
         static __Fraction_Base from_double(double result);
         // Returns a fraction from a std::string
@@ -344,6 +354,8 @@ namespace scls {
         __Fraction_Base normalized(int limit) const;
         // Sets this fraction as a double
         void set_from_double(double result);
+        // Simplify the element
+        virtual void simplify();
         // Returns the fraction in int
         long long to_int() const;
         // Returns the fraction in double

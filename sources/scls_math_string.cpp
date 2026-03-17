@@ -202,6 +202,7 @@ namespace scls {
                     if(contains_function(total_function)) {
                         // The part is a function
                         source.insert(i, ">");
+                        if(i > static_cast<int>(total_function.size()) + 1 && source.at(i - (total_function.size() + 1)) == '-'){source.insert(i - total_function.size(), std::string("1*"));}
                         i++;
                     }
                     else {source.insert(i, "*");i++;}
@@ -214,8 +215,6 @@ namespace scls {
             if(last_text_3.size() > 3){last_text_3 = last_text_3.substr(1, last_text_3.size() - 1);}
             if(last_text_4.size() > 4){last_text_4 = last_text_4.substr(1, last_text_4.size() - 1);}
         }
-
-        std::cout << "E " << source << std::endl;
 
         // Handle the "-"
         for(int i = 0;i<static_cast<int>(source.size());i++) {
@@ -344,16 +343,21 @@ namespace scls {
                 else {current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), parts.at(parts.size() - 1).substr(1, parts.at(parts.size() - 1).size() - 2), operator_order, operator_order.size() - 1);}
 
                 if(parts.size() == 2) {
-                	current_element.get()->operate(0, parts.at(0));
+                    std::string needed_function = parts.at(0);
+                    if(needed_function == std::string_view("random")) {current_element = element->new_algebra_element(scls::random_fraction(0, 1).to_std_string(0));}
+                    else if(needed_function == std::string_view("repetition")) {
+
+                    }
+                    else {current_element.get()->operate(0, parts.at(0));}
                 }
             }
             else{current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), cutted.at(i), operator_order, position - 1);}
             element->operate(current_element.get(), operator_order.at(position).name());
         }
     }
-    void __string_to_algebra_element(Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order) {
+    void Math_Environment::string_to_algebra_element(Math_Environment* env, Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order) {
         // Operator order
-    	std::vector<std::string> functions = {"ln", "cos", "sin", "tan", "arcsin", "arccos", "arctan"};
+    	std::vector<std::string> functions = {"ln", "exp", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "random", "repetition"};
         source = remove_space(source);
 		std::string last_text_2 = std::string();std::string last_text_3 = std::string();std::string last_text_4 = std::string();
 		for(int i = 0;i<static_cast<int>(source.size());i++) {
@@ -368,20 +372,12 @@ namespace scls {
 					int current_pos = i - 1;
 					while(current_pos >= 0 && (!string_is_operator(operator_order, source[current_pos]) && source[current_pos]!='(' && source[current_pos]!=')')){total_function=source[current_pos]+total_function;current_pos--;}
 					std::size_t index = 0;char l = -1;
-					for(;index<functions.size();index++) {
-						if(functions.at(index) == last_text_2) {
-							l = 2;break;
-						}
-						else if(functions.at(index) == last_text_3) {
-							l = 3;break;
-						}
-						else if(functions.at(index) == last_text_4) {
-							l = 4;break;
-						}
-					}
+					for(;index<functions.size();index++) {if(functions.at(index) == total_function) {l=0;break;}}
+
 					if(l != -1) {
 						// The part is a function
 						source.insert(i, ">");
+						if(i > static_cast<int>(total_function.size()) + 1 && source.at(i - (total_function.size() + 1)) == '-'){source.insert(i - total_function.size(), std::string("1*"));}
 						i++;
 					}
 					else {source.insert(i, "*");i++;}

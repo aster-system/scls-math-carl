@@ -231,6 +231,7 @@ namespace scls {
                     std::shared_ptr<Algebra_Element> b_replaced = algebra_elements_const().at(i).get()->algebra_clone();
                     c = new_algebra_element();b_replaced.get()->replace_unknowns_algebra(c.get(), values);
                     element->operate(c.get(), algebra_operator_name());
+                    element->simplify();
                 }
 			}
 		}
@@ -295,7 +296,7 @@ namespace scls {
     __Fraction_Base __Fraction_Base::inverse() const {return __Fraction_Base(a_denominator, a_numerator);};
 
     // Returns a fraction from a double
-    constexpr double from_double_precision = 100000;
+    constexpr double from_double_precision = 1000;
     __Fraction_Base __Fraction_Base::from_double(double result) {
         long long result_in_long = static_cast<long long>(result);
         double after_decimal_point = static_cast<double>(result - static_cast<double>(result_in_long));
@@ -314,8 +315,11 @@ namespace scls {
         return Fraction(std::stoll(cutted[0]), std::stoll(cutted[1]));
     };
 
+    // Crop the fraction
+    void __Fraction_Base::crop(int limit){int a_den = std::ceil(std::log10(std::abs(a_denominator)));int a_num = std::ceil(std::log10(std::abs(a_numerator)));if(a_den > limit || a_num > limit){int to_divide = std::max(a_den, a_num);a_denominator /= std::pow(10, to_divide - limit);if(a_denominator<=0){a_denominator=1;}a_numerator /= std::pow(10, to_divide - limit);}}
+
     // Normalize the fraction
-    int __normalize_value = 8;int __normalize_limit = 0;
+    int __normalize_value = 0;int __normalize_limit = 0;
     void __Fraction_Base::normalize(){if(__normalize_value > 0){normalize(__normalize_value);}else{__normalize();}};
     void __Fraction_Base::normalize(int limit){if(std::abs(a_denominator) > std::pow(10, limit) && std::abs(a_numerator) > std::pow(10, limit)){int value = std::ceil(std::log10(std::max(std::abs(a_denominator), std::abs(a_numerator)))) - limit;a_denominator/=std::pow(10, value);a_numerator/=std::pow(10, value);}normalize_force();};
     __Fraction_Base __Fraction_Base::normalized()const{__Fraction_Base other=*this;other.normalize();return other;};
@@ -347,6 +351,8 @@ namespace scls {
 
     // Sets this fraction as a double
     void __Fraction_Base::set_from_double(double result) {__Fraction_Base new_value = from_double(result);a_denominator = new_value.a_denominator;a_numerator = new_value.a_numerator;};
+    // Simplify the element
+    void __Fraction_Base::simplify(){normalize_force();};
     // Returns the fraction in int
     long long __Fraction_Base::to_int() const {if(a_denominator == 0) return 0; return a_numerator / a_denominator;};
     // Returns the fraction in double
@@ -468,7 +474,7 @@ namespace scls {
     std::ostream& operator<<(std::ostream& os, const Fraction& obj){ os << "Fraction : " << obj.numerator() << " / " << obj.denominator() << " = " << obj.to_double(); return os; }
 
     // Returns a random fraction
-    Fraction random_fraction(Fraction min_value, Fraction max_value, int precision){return (min_value + (max_value - min_value) * Fraction(rand()%precision, precision)).normalized();}
+    Fraction random_fraction(Fraction min_value, Fraction max_value, int precision){return (min_value + (max_value - min_value) * Fraction(random_int_between_included(0, precision), precision)).normalized();}
     Fraction random_fraction(Fraction min_value, Fraction max_value){return random_fraction(min_value, max_value, 1000);}
     // Function to sort a std::vector of fraction
     void remove_duplication_sorted_fractions(std::vector<Fraction>& fractions){for(int i = 1;i<static_cast<int>(fractions.size());i++){if(fractions.at(i)==fractions.at(i-1)){fractions.erase(fractions.begin()+i);i--;}}}

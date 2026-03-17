@@ -568,6 +568,7 @@ namespace scls {
 
         // Formula_Base constructor
         Formula_Base(){};
+        Formula_Base(Fraction e):a_value(std::make_shared<Fraction>(e)){};
         Formula_Base(std::shared_ptr<Algebra_Element> e):a_value(e){};
         Formula_Base(std::string unknown_name):Formula_Base(){if(string_is_number(unknown_name)){a_value = std::make_shared<Fraction>(Fraction::from_std_string(unknown_name));}else{new_unknown(unknown_name);}};
 
@@ -583,11 +584,15 @@ namespace scls {
         // Type of the object
         virtual std::string algebra_type() const;
 
+        // Returns a part of the formula
+        Formula_Base* formula_element(int index);
+
         // Adds an element to this one
         void add(Formula_Base* formula);
         void divide(Formula_Base* formula);
         void multiply(Formula_Base* formula);
         virtual void operate(Algebra_Element* other, std::string operation);
+        virtual void operate(Fraction other, std::string operation);
 
         // Creates the unknown
         virtual Algebra_Element::__Algebra_Unknown* create_unknown();
@@ -600,6 +605,8 @@ namespace scls {
         std::shared_ptr<Formula_Base> replace_unknowns(std::string unknown, scls::Fraction f) const;
         std::shared_ptr<Formula_Base> replace_unknowns(Unknowns_Container* values) const;
 
+        // Simplify the element
+        virtual void simplify(){while(simplify_step() != scls::Formula_Base::NO_SIMPLIFICATION){}};
         // Simplify the expression
         constexpr static char NO_SIMPLIFICATION = 0;
         constexpr static char SIMPLIFICATION_TERMINATED = 1;
@@ -620,6 +627,12 @@ namespace scls {
         // Value of the formula
         std::shared_ptr<Algebra_Element> a_value;
     };
+
+    // Derivate a formula
+    std::shared_ptr<scls::Formula_Base> derivate(scls::Formula_Base* f, std::string unknown);
+
+    // Apply a McLaurin serie
+    std::shared_ptr<scls::Formula_Base> mclaurin(scls::Formula_Base* f, std::string unknown, int step);
 }
 
 #endif // SCLS_MATH_FORMULA

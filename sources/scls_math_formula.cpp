@@ -461,14 +461,19 @@ namespace scls {
 
 
     // Formula operator
-    Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("sin", 1)});
+    Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("sin", 1), Algebra_Element::Algebra_Operator("tan", 1)});
 
     // Type of the object
     std::string Formula_Base::algebra_type() const{return std::string("formula_base");};
 
+    // Returns a part of the formula
+    Formula_Base* Formula_Base::formula_element(int index){return reinterpret_cast<Formula_Base*>(algebra_elements_const().at(index).get());}
+
     // Adds an element to this one
     void Formula_Base::add(Formula_Base* formula){
-        if(is_final_element() && !is_unknown() && a_value.get() == 0){formula->clone(this);}
+        if(formula->is_final_element() && formula->is_known() && (formula->a_value.get() == 0 || formula->a_value.get()->is_addition_neutral())){return;}
+
+        if(is_final_element() && !is_unknown() && (a_value.get() == 0 || a_value.get()->is_addition_neutral())){formula->clone(this);}
         else if(is_final_element() && formula->is_final_element() && !is_unknown() && !formula->is_unknown()){
             a_value->operate(formula->a_value.get(), "+");
         }
@@ -519,6 +524,7 @@ namespace scls {
             }
         }
     }
+    void Formula_Base::operate(Fraction other, std::string operation){std::shared_ptr<Formula_Base> temp = std::make_shared<Formula_Base>(other);operate(temp.get(), operation);}
     const Algebra_Element::Algebra_Operators& Formula_Base::operators() const {return formula_operators;}
 
     // Replaces the unknowns
@@ -532,10 +538,13 @@ namespace scls {
             }
             else {reinterpret_cast<Formula_Base*>(element)->a_value = a_value.get()->algebra_clone();}
         }
-        else {Algebra_Element::replace_unknowns_algebra(element, values); }
+        else {Algebra_Element::replace_unknowns_algebra(element, values);}
 
         // Modified
         reinterpret_cast<Formula_Base*>(element)->a_modified = true;
+
+        // Simplification
+        while(reinterpret_cast<Formula_Base*>(element)->simplify_step() != scls::Formula_Base::NO_SIMPLIFICATION){}
     }
     std::shared_ptr<Formula_Base> Formula_Base::replace_unknowns(std::string unknown, scls::Fraction f) const {
         Unknowns_Container c;c.create_unknown<Formula_Base::Formula_Unknown>(unknown)->value = new_formula(f.to_std_string(0));
@@ -555,7 +564,10 @@ namespace scls {
 
     // Multiplies an element to this one
     void Formula_Base::multiply(Formula_Base* formula){
-        if(is_final_element() && !is_unknown() && a_value.get()->is_multiplication_neutral()){formula->clone(this);}
+        if(is_final_element() && is_known() && (a_value.get() == 0 || a_value.get()->is_multiplication_absorbing())){return;}
+    	else if(formula->is_final_element() && formula->is_known() && (formula->a_value.get() == 0 || formula->a_value.get()->is_multiplication_absorbing())){std::shared_ptr<Algebra_Element>v=std::make_shared<Fraction>(0);clear();a_value=v;return;}
+    	else if(formula->is_final_element() && formula->is_known() && formula->a_value.get()->is_multiplication_neutral()){return;}
+        else if(is_final_element() && is_known() && a_value.get()->is_multiplication_neutral()){formula->clone(this);}
         else if(is_final_element() && formula->is_final_element() && !is_unknown() && !formula->is_unknown()){
             a_value->operate(reinterpret_cast<Formula_Base*>(formula)->a_value.get(), "*");
         }
@@ -587,6 +599,7 @@ namespace scls {
     char Formula_Base::simplify_step() {
         // Basic
     	if(algebra_operator_arity() != 1 && algebra_elements().size() == 1){std::shared_ptr<Algebra_Element>temp=algebra_elements().at(0);reinterpret_cast<Formula_Base*>(temp.get())->clone(this);return SIMPLIFICATION_UNTERMINATED;}
+        if(is_final_element() && is_known() && a_value.get() != 0){value<Fraction>()->normalize_force();value<Fraction>()->crop(9);}
 
         // Datas
     	bool simplified = false;
@@ -619,9 +632,9 @@ namespace scls {
                             Formula_Base* second_object = reinterpret_cast<Formula_Base*>(algebra_elements().at(i).get()->known_algebra_element());
 
                             if(true) {
-                            	if(first_object != 0 && second_object != 0) {first_object->a_value.get()->operate(second_object->a_value.get(), "+");}
-								else if(second_object != 0){second_object->a_value.get()->operate(second_object->new_algebra_element("1").get(), "+");algebra_elements()[j] = algebra_elements()[i];}
-								else if(first_object != 0) {first_object->a_value.get()->operate(first_object->new_algebra_element("1").get(), "+");}
+                                if(first_object != 0 && second_object != 0) {first_object->a_value.get()->operate(second_object->a_value.get(), "+");}
+								else if(second_object != 0){std::shared_ptr<Algebra_Element> one = std::make_shared<Fraction>(1);second_object->a_value.get()->operate(one.get(), "+");algebra_elements()[j] = algebra_elements()[i].get()->algebra_clone();}
+								else if(first_object != 0) {std::shared_ptr<Algebra_Element> one = std::make_shared<Fraction>(1);first_object->a_value.get()->operate(one.get(), "+");}
 								else{std::shared_ptr<Algebra_Element>f=new_algebra_element("2");reinterpret_cast<Formula_Base*>(algebra_elements().at(j).get())->multiply(reinterpret_cast<Formula_Base*>(f.get()));}
 								algebra_elements().erase(algebra_elements().begin() + i);--i;simplified = true;break;
                             }
@@ -686,8 +699,10 @@ namespace scls {
         }
 
         for(std::size_t i = 0;i<algebra_elements().size();i++) {
-        	if(reinterpret_cast<Formula_Base*>(algebra_elements().at(i).get())->simplify_step() != NO_SIMPLIFICATION){
-        		return SIMPLIFICATION_UNTERMINATED;
+            Formula_Base* current_formula = reinterpret_cast<Formula_Base*>(algebra_elements().at(i).get());
+            if(current_formula->is_final_element() && current_formula->is_known() && current_formula->a_value.get() == 0) {algebra_elements().erase(algebra_elements().begin() + i);i--;}
+        	else if(current_formula->simplify_step() != NO_SIMPLIFICATION){
+                return SIMPLIFICATION_UNTERMINATED;
         	}
 		}
 
@@ -718,4 +733,124 @@ namespace scls {
         }
         return to_return;
     };
+
+    // Derivate a formula
+    long long factorial(long long f){if(f == 0){return 1;}return f * factorial(f - 1);}
+    std::shared_ptr<scls::Formula_Base> derivate(scls::Formula_Base* f, std::string unknown) {
+        std::shared_ptr<scls::Formula_Base> to_return = std::make_shared<scls::Formula_Base>();
+
+        if(f->is_final_element()) {
+            if(f->is_known() || f->algebra_unknown_name() != unknown){to_return = std::make_shared<scls::Formula_Base>(scls::Fraction(0));}
+            else {to_return = std::make_shared<scls::Formula_Base>(scls::Fraction(1));}
+        }
+        else if(f->algebra_elements_const().size() == 1){
+            std::string function_name = f->algebra_operator_name();
+            std::shared_ptr<scls::Formula_Base> content = f->formula_element(0)->clone();
+            std::shared_ptr<scls::Formula_Base> content_derivated = derivate(content.get(), unknown);
+
+            // Get the good function
+            to_return = content;
+            std::string new_function = std::string();
+            if(function_name == std::string_view("cos")){new_function = std::string("sin");}
+            else if(function_name == std::string_view("sin")){new_function = std::string("cos");}
+            else if(function_name == std::string_view("exp")){new_function = std::string("exp");}
+            else if(function_name == std::string_view("tan")){new_function = std::string("tan");}
+            if(new_function != std::string_view()){
+                to_return.get()->sub_place();
+                to_return.get()->set_algebra_operator(new_function, 1);
+            }
+
+            // Post-function operation
+            if(function_name == std::string_view("cos")){to_return.get()->operate(-1, "*");}
+            else if(function_name == std::string_view("ln")){std::shared_ptr<scls::Formula_Base> temp = to_return.get()->clone();to_return = std::make_shared<scls::Formula_Base>(scls::Fraction(1));to_return.get()->operate(temp.get(), std::string("/"));}
+            else if(function_name == std::string_view("tan")){std::shared_ptr<scls::Formula_Base> temp = std::make_shared<scls::Formula_Base>(scls::Fraction(1));to_return.get()->operate(to_return.get(), std::string("*"));to_return.get()->operate(temp.get(), std::string("+"));}
+
+            // Post composition operation
+            to_return.get()->operate(content_derivated.get(), "*");
+        }
+        else {
+            std::string needed_operator = f->algebra_operator_name();
+            if(needed_operator == std::string_view("+")) {
+                to_return = derivate(f->formula_element(0), unknown);
+
+                for(std::size_t i = 1;i<f->algebra_elements_const().size();i++) {
+                    std::shared_ptr<scls::Formula_Base> current_derivate = derivate(f->formula_element(i), unknown);
+
+                    // Chain rule
+                    to_return.get()->operate(current_derivate.get(), "+");
+                }
+            }
+            else if(needed_operator == std::string_view("*")) {
+                to_return = f->formula_element(0)->clone();
+                std::shared_ptr<scls::Formula_Base> next_derivate = derivate(to_return.get(), unknown);
+
+                for(std::size_t i = 1;i<f->algebra_elements_const().size();i++) {
+                    std::shared_ptr<scls::Formula_Base> current = f->formula_element(i)->clone();
+                    std::shared_ptr<scls::Formula_Base> current_derivate = derivate(f->formula_element(i), unknown);
+                    std::shared_ptr<scls::Formula_Base> to_return_current = to_return.get()->clone();
+                    std::shared_ptr<scls::Formula_Base> to_return_derivate = next_derivate.get()->clone();
+
+                    // Chain rule
+                    to_return.get()->operate(current.get(), "*");
+                    to_return_current.get()->operate(current_derivate.get(), "*");
+                    to_return_derivate.get()->operate(current.get(), "*");
+                    to_return_current.get()->operate(to_return_derivate.get(), "+");
+                    next_derivate = to_return_current;
+                }
+
+                to_return = next_derivate;
+            }
+            else if(needed_operator == std::string_view("/")) {
+                to_return = f->formula_element(0)->clone();
+                std::shared_ptr<scls::Formula_Base> next_derivate = derivate(to_return.get(), unknown);
+
+                for(std::size_t i = 1;i<f->algebra_elements_const().size();i++) {
+                    std::shared_ptr<scls::Formula_Base> current = f->formula_element(i)->clone();
+                    std::shared_ptr<scls::Formula_Base> current_derivate = derivate(f->formula_element(i), unknown);
+                    std::shared_ptr<scls::Formula_Base> to_return_current = to_return.get()->clone();
+                    std::shared_ptr<scls::Formula_Base> to_return_derivate = next_derivate.get()->clone();
+
+                    // Chain rule
+                    to_return.get()->operate(current.get(), "*");
+                    to_return_current.get()->operate(current_derivate.get(), "*");
+                    to_return_derivate.get()->operate(current.get(), "*");
+                    std::shared_ptr<scls::Formula_Base>temp=std::make_shared<Formula_Base>(Fraction(-1));
+                    to_return_current.get()->operate(temp.get(), "*");
+                    to_return_current.get()->operate(to_return_derivate.get(), "+");
+                    current.get()->operate(current.get(), "*");
+                    to_return_current.get()->operate(current.get(), "/");
+                    next_derivate = to_return_current;
+                }
+
+                to_return = next_derivate;
+            }
+        }
+
+        return to_return;
+    }
+
+    // Apply a McLaurin serie
+    std::shared_ptr<scls::Formula_Base> mclaurin(scls::Formula_Base* f, std::shared_ptr<scls::Formula_Base>& f_derivated, std::string unknown, int step) {
+        if(step == 0){return f->replace_unknowns(unknown, 0);}
+
+        // Sub-part
+        std::shared_ptr<scls::Formula_Base> o = mclaurin(f, f_derivated, unknown, step - 1);
+
+        f_derivated = derivate(f_derivated.get(), unknown);
+        while(f_derivated.get()->simplify_step() != scls::Formula_Base::NO_SIMPLIFICATION){}
+        std::shared_ptr<scls::Formula_Base> to_return = f_derivated.get()->replace_unknowns(unknown, 0);
+        to_return.get()->operate(scls::Fraction(factorial(step)), "/");
+
+        // Add the unknowns
+        std::shared_ptr<scls::Formula_Base> unknown_formula = std::make_shared<scls::Formula_Base>(unknown);
+        std::shared_ptr<scls::Formula_Base> unknown_formula_const = unknown_formula.get()->clone();
+        for(int i = 0;i<step-1;i++){unknown_formula.get()->operate(unknown_formula_const.get(), "*");}
+        to_return.get()->operate(unknown_formula.get(), "*");
+
+        to_return.get()->operate(o.get(), "+");
+
+        while(to_return.get()->simplify_step() != scls::Formula_Base::NO_SIMPLIFICATION){}
+        return to_return;
+    }
+    std::shared_ptr<scls::Formula_Base> mclaurin(scls::Formula_Base* f, std::string unknown, int step){std::shared_ptr<scls::Formula_Base>temp=f->clone();return mclaurin(f, temp, unknown, step);}
 }

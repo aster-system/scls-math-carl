@@ -51,6 +51,9 @@ namespace scls {
             // Math_Environment destructor
             virtual ~Math_Environment(){};
 
+            // Converts a string to an algebra element
+            static void string_to_algebra_element(Math_Environment* env, Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& o);
+
             // Clears the environment
             void clear();
 
@@ -148,8 +151,7 @@ namespace scls {
     std::shared_ptr<__Formula> replace_unknown(__Formula_Base used_formula, std::string unknown, std::string new_value);
 
     // Use parsers methods outside the class
-    void __string_to_algebra_element(Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& o);
-    template <typename T> std::shared_ptr<T> string_to_algebra_element(std::string source){std::shared_ptr<T> new_object = std::make_shared<T>();__string_to_algebra_element(new_object.get(), source, new_object.get()->operators().operators());return new_object;};
+    template <typename T> std::shared_ptr<T> string_to_algebra_element(std::string source){std::shared_ptr<T> new_object = std::make_shared<T>();Math_Environment::string_to_algebra_element(0, new_object.get(), source, new_object.get()->operators().operators());return new_object;};
 }
 
 #endif // SCLS_MATH_STRING
