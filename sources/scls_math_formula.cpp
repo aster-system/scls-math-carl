@@ -461,7 +461,7 @@ namespace scls {
 
 
     // Formula operator
-    Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("sin", 1), Algebra_Element::Algebra_Operator("tan", 1)});
+    Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("sqrt", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("sin", 1), Algebra_Element::Algebra_Operator("tan", 1)});
 
     // Type of the object
     std::string Formula_Base::algebra_type() const{return std::string("formula_base");};
@@ -486,6 +486,16 @@ namespace scls {
     // Creates the unknown
     Algebra_Element::__Algebra_Unknown* Formula_Base::create_unknown(){clear();a_unknown = std::make_shared<Formula_Unknown>();return a_unknown.get();};
 
+    // Returns the definition domain
+    Set_Number Formula_Base::definition_domain() {
+        Set_Number to_return = Set_Number::real();
+
+        // Do the needed_intersection
+        for(std::size_t i = 0;i<algebra_elements().size();i++){to_return = to_return.intersection(formula_element(i)->definition_domain());}
+
+        return to_return;
+    }
+
     // Divides  an element to this one
     void Formula_Base::divide(Formula_Base* formula) {
     	if(is_final_element() && formula->is_final_element() && !is_unknown() && !formula->is_unknown()){
@@ -496,6 +506,23 @@ namespace scls {
 			set_algebra_operator(std::string("/"));
 			algebra_elements().push_back(formula->algebra_clone());
 		}
+    }
+
+    // Returns if a precise number is defined or not
+    bool Formula_Base::is_defined(Fraction f) {
+        if(!is_final_element()) {
+
+        }
+
+        return true;
+    }
+    bool Formula_Base::is_fully_defined(Fraction f_1, Fraction f_2) {
+
+
+        // Do the needed_intersection
+        for(std::size_t i = 0;i<algebra_elements().size();i++){if(!formula_element(i)->is_fully_defined(f_1, f_2)){return false;}}
+
+        return true;
     }
 
     // Operates this element with another one

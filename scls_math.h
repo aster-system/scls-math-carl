@@ -80,10 +80,12 @@
     // Root of SCLS Math
     #include "scls_math_directory/scls_math_complex.h"
 	#include "scls_math_directory/scls_math_numbers.h"
+	#include "scls_math_directory/scls_math_set.h"
 	#include "scls_math_directory/scls_math_statistic.h"
 	#include "scls_math_directory/scls_math_string.h"
     // Algebra in SCLS Math
     #include "scls_math_directory/scls_math_boolean.h"
+    #include "scls_math_directory/scls_math_graph.h"
     #include "scls_math_directory/scls_math_matrix.h"
     // Geometry in SCLS Math
     #include "scls_math_directory/scls_math_2d_physic.h"

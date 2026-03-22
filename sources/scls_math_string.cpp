@@ -357,17 +357,22 @@ namespace scls {
     }
     void Math_Environment::string_to_algebra_element(Math_Environment* env, Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order) {
         // Operator order
-    	std::vector<std::string> functions = {"ln", "exp", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "random", "repetition"};
+    	std::vector<std::string> functions = {"ln", "exp", "sqrt", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "random", "repetition"};
         source = remove_space(source);
-		std::string last_text_2 = std::string();std::string last_text_3 = std::string();std::string last_text_4 = std::string();
+
+        // First / last elements
+        if(source.size() > 0 && source.at(0) == '-'){source.insert(1, std::string("1*"));}
+
+        // Handle the parenthesis
 		for(int i = 0;i<static_cast<int>(source.size());i++) {
 			// Remove the useless ")("
 			if(source[i] == '(') {
 				char last_char = 0;
 				if(i > 0){last_char = source[i - 1];}
+
 				if(last_char == ')') {source.insert(i, "*");i++;}
 				else if(last_char == '-') {source.insert(i, "1*");i++;}
-				else if(!string_is_special(operator_order, last_char)) {
+				else if(i > 0 && !string_is_special(operator_order, last_char)) {
 					std::string total_function = std::string();
 					int current_pos = i - 1;
 					while(current_pos >= 0 && (!string_is_operator(operator_order, source[current_pos]) && source[current_pos]!='(' && source[current_pos]!=')')){total_function=source[current_pos]+total_function;current_pos--;}
@@ -383,12 +388,6 @@ namespace scls {
 					else {source.insert(i, "*");i++;}
 				}
 			}
-
-			// Handle last text
-			last_text_2 += source[i];last_text_3 += source[i];last_text_4 += source[i];
-			if(last_text_2.size() > 2){last_text_2 = last_text_2.substr(1, last_text_2.size() - 1);}
-			if(last_text_3.size() > 3){last_text_3 = last_text_3.substr(1, last_text_3.size() - 1);}
-			if(last_text_4.size() > 4){last_text_4 = last_text_4.substr(1, last_text_4.size() - 1);}
 		}
 
 		// Add the necessary "*"
@@ -402,13 +401,16 @@ namespace scls {
 		}
 
 		// Handle the "-"
-		for(int i = 0;i<static_cast<int>(source.size());i++) {
+		for(int i = 0;i<static_cast<int>(source.size()) - 1;i++) {
 			// Remove the useless "-"
-			if(i > 0 && static_cast<int>(source[i]) == static_cast<int>('-')) {
+			if(static_cast<int>(source[i]) == static_cast<int>('-') && i > 0) {
 				if(!string_is_operator(operator_order, source[i - 1]) && (i >= static_cast<int>(source.size()) || (static_cast<int>(source[i + 1]) != static_cast<int>('(')))) {
-					source.insert(i, "+");
-					i++;
-				}
+                    source.insert(i, "+");
+                    i++;
+                }
+
+                // Add some other explicit "-"
+                if(!scls::string_is_number(source[i + 1])){source.insert(i + 1, "1*");i++;}
 			}
 		}
 

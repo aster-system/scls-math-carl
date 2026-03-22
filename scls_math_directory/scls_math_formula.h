@@ -28,6 +28,7 @@
 #define SCLS_MATH_FORMULA
 
 #include "scls_math_polynomial.h"
+#include "scls_math_set.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
@@ -612,6 +613,13 @@ namespace scls {
         constexpr static char SIMPLIFICATION_TERMINATED = 1;
         constexpr static char SIMPLIFICATION_UNTERMINATED = 2;
         char simplify_step();
+
+        // Returns the definition domain
+        Set_Number definition_domain();
+
+        // Returns if a precise number is defined or not
+        bool is_defined(Fraction f);
+        bool is_fully_defined(Fraction f_1, Fraction f_2);
 
         // Returns the element to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;

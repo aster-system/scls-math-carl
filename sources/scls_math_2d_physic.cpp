@@ -830,7 +830,7 @@ namespace scls {
     }
 
     // Updates the physic
-    scls::Point_2D gravity = scls::Point_2D(0, -9.8);
+    scls::Point_2D gravity = scls::Point_2D(0, -20.8);
     int Physic_Engine::update_physic(double used_delta_time) {int needed_upate = update_physic_early(used_delta_time);needed_upate += update_physic_late(used_delta_time);return needed_upate;};
     int Physic_Engine::update_physic_early(double used_delta_time) {
         scls::Fraction delta_time_fraction = scls::Fraction::from_double(used_delta_time);
