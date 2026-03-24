@@ -79,6 +79,7 @@
 
     // Root of SCLS Math
     #include "scls_math_directory/scls_math_complex.h"
+	#include "scls_math_directory/scls_math_extendable_int.h"
 	#include "scls_math_directory/scls_math_numbers.h"
 	#include "scls_math_directory/scls_math_set.h"
 	#include "scls_math_directory/scls_math_statistic.h"
