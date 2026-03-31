@@ -68,187 +68,9 @@ namespace scls {
         else if(used_function == "random"){formula->set_polynomial(random_fraction(0, 1));}
         else if(used_function == "repetition"){formula->set_polynomial(environment->repetition(formula->value_to_double()));}
 	}
-    std::shared_ptr<__Formula> String_To_Formula_Parse::__string_to_formula_base(std::string base, std::string used_function, const Math_Environment* environment) {
-        std::shared_ptr<__Formula> formula = std::make_shared<__Formula>();
-
-        if(base.size() < 2 || (base[0] != '(')) {
-            // Simple form
-            // Get the needed datas
-            unsigned int number_i = 0; std::string number_part_1 = ""; std::string number_part_2 = ""; std::string unknow_part = "";
-            while(number_i < base.size() && __string_is_number(base[number_i])){number_part_1+=base[number_i];number_i++;}
-            while(number_i < base.size() && !__string_is_number(base[number_i])){unknow_part+=base[number_i];number_i++;}
-            while(number_i < base.size() && __string_is_number(base[number_i])){number_part_2+=base[number_i];number_i++;}
-            // Add the monomonial
-            //Complex number = string_to_complex(number_part_1);
-            Fraction number = scls::Fraction::from_std_string(number_part_1);
-            if(unknow_part != "" && number_part_1 == "") number = 1;
-            if(number_part_2 != "") number *= scls::Fraction::from_std_string(number_part_2);
-            __Monomonial to_add(number, unknow_part);
-            Polynomial current_polymonial;
-            current_polymonial.add_monomonial(to_add);
-            formula.get()->set_polynomial(&current_polymonial);
-        }
-        else {
-            // Parenthesis form
-            String_To_Formula_Parse new_parser(level() + 1);new_parser.a_functions = a_functions;
-            formula = new_parser.string_to_formula(base.substr(1, base.size() - 2), environment);
-        }
-
-        // Create the formula
-        __string_to_formula_function(formula.get(), used_function, environment);
-        return formula;
-    };
-
-    // Converts a std::string to a Formula
-    std::shared_ptr<__Formula> String_To_Formula_Parse::string_to_formula(std::string source){return string_to_formula(source, 0);}
-    std::shared_ptr<__Formula> String_To_Formula_Parse::__string_to_formula_without_exponent(std::string source, const Math_Environment* environment) {
-        // Format the text as needed
-        std::vector<std::string> cutted;
-
-        // Prepare the needed datas
-        std::shared_ptr<__Formula> formula = std::make_shared<__Formula>();
-
-        // Cut the text operator by > operator
-        cutted = cut_string_out_of_2(source, ">", "(", ")");
-        if(cutted.size() > 1) {
-            // At least one function applied
-            for(int i = 1;i<static_cast<int>(cutted.size());i+=2) {
-                std::shared_ptr<__Formula> current_polymonial = __string_to_formula_base(cutted[i], cutted[i - 1], environment);
-                formula.get()->add(current_polymonial.get());
-            }
-        }
-        else if(cutted.size() > 0) {formula = __string_to_formula_base(cutted[0], std::string(), environment);}
-
-        // Return the result
-        return formula;
-    };
-    std::shared_ptr<__Formula> String_To_Formula_Parse::__string_to_formula_without_division(std::string source, const Math_Environment* environment) {
-        // Format the text as needed
-        std::vector<std::string> cutted;
-
-        // Prepare the needed datas
-        std::shared_ptr<__Formula> formula = std::make_shared<__Formula>(); bool to_return_modified = false;
-
-        // Cut the text operator by ^ operator
-        cutted = cut_string_out_of_2(source, "^", "(", ")");
-        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            std::shared_ptr<__Formula> current_polymonial = __string_to_formula_without_exponent(cutted[i], environment);
-            if(to_return_modified){
-                if(current_polymonial.get()->is_simple_polynomial()){
-                    Polynomial_Base* p = current_polymonial.get()->polynomial();
-                    if(p->is_known()){
-                        double r = current_polymonial.get()->value_to_double(0);std::shared_ptr<__Formula> f = formula.get()->clone();
-                        if(r > 0){for(int j=1;j<r;j++){f.get()->multiply(formula.get());}}
-                        else{f.get()->clear();(*f.get()) = 1;for(int j=0;j<-r;j++){f.get()->divide(formula.get());}}
-                        formula->paste(f.get());
-                    }
-                }
-            }
-            else {formula = current_polymonial;to_return_modified = true;}
-        }
-
-        // Return the result
-        return formula;
-    };
-    std::shared_ptr<__Formula> String_To_Formula_Parse::__string_to_formula_without_multiplication(std::string source, const Math_Environment* environment) {
-        // Format the text as needed
-        std::vector<std::string> cutted;
-
-        // Prepare the needed datas
-        std::shared_ptr<__Formula> formula = std::make_shared<__Formula>(); bool to_return_modified = false;
-
-        // Cut the text operator by / operator
-        cutted = cut_string_out_of_2(source, "/", "(", ")");
-        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            std::shared_ptr<__Formula> current_polymonial = __string_to_formula_without_division(cutted[i], environment);
-            if(to_return_modified) {formula.get()->divide(current_polymonial.get());}
-            else {formula.get()->__add(current_polymonial.get());to_return_modified=true;}
-        }
-
-        // Return the result
-        return formula;
-    };
-    std::shared_ptr<__Formula> String_To_Formula_Parse::__string_to_formula_without_addition(std::string source, const Math_Environment* environment) {
-        // Format the text as needed
-        std::vector<std::string> cutted;
-
-        // Prepare the needed datas
-        std::shared_ptr<__Formula> formula = std::make_shared<__Formula>(); bool to_return_modified = false;
-
-        // Cut the text operator by * operator
-        cutted = cut_string_out_of_2(source, "*", "(", ")");
-        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            std::shared_ptr<__Formula> current_polymonial = __string_to_formula_without_multiplication(cutted[i], environment);
-            if(to_return_modified) {formula.get()->__multiply(current_polymonial.get());}
-            else {formula.get()->__add(current_polymonial.get());to_return_modified=true;}
-        }
-
-        // Return the result
-        return formula;
-    };
-    std::shared_ptr<__Formula> String_To_Formula_Parse::string_to_formula(std::string source, const Math_Environment* environment) {
-        // Format the text as needed
-        source = remove_space(source);
-        std::string last_text_2 = std::string();std::string last_text_3 = std::string();std::string last_text_4 = std::string();
-        for(int i = 0;i<static_cast<int>(source.size());i++) {
-            // Remove the useless ")("
-            if(i > 0 && source[i] == '(') {
-                if(source[i - 1] == ')') {source.insert(i, "*");i++;}
-                else if(source[i - 1] == '-') {source.insert(i, "1*");i++;}
-                else if(!__string_is_operator(source[i - 1])) {
-                    std::string total_function = std::string();
-                    int current_pos = i - 1;
-                    while(current_pos >= 0 && (!__string_is_operator(source[current_pos]) && source[current_pos]!='(' && source[current_pos]!=')')){total_function=source[current_pos]+total_function;current_pos--;}
-                    if(contains_function(total_function)) {
-                        // The part is a function
-                        source.insert(i, ">");
-                        if(i > static_cast<int>(total_function.size()) + 1 && source.at(i - (total_function.size() + 1)) == '-'){source.insert(i - total_function.size(), std::string("1*"));}
-                        i++;
-                    }
-                    else {source.insert(i, "*");i++;}
-                }
-            }
-
-            // Handle last text
-            last_text_2 += source[i];last_text_3 += source[i];last_text_4 += source[i];
-            if(last_text_2.size() > 2){last_text_2 = last_text_2.substr(1, last_text_2.size() - 1);}
-            if(last_text_3.size() > 3){last_text_3 = last_text_3.substr(1, last_text_3.size() - 1);}
-            if(last_text_4.size() > 4){last_text_4 = last_text_4.substr(1, last_text_4.size() - 1);}
-        }
-
-        // Handle the "-"
-        for(int i = 0;i<static_cast<int>(source.size());i++) {
-            // Remove the useless "-"
-            if(i > 0 && static_cast<int>(source[i]) == static_cast<int>('-')) {
-                if(!__string_is_operator(source[i - 1]) && (i >= static_cast<int>(source.size()) || (static_cast<int>(source[i + 1]) != static_cast<int>('(')))) {
-                    source.insert(i, "+");
-                    i++;
-                }
-            }
-        }
-
-        // Prepare the needed datas
-        std::vector<std::string> cutted;
-        std::shared_ptr<__Formula> formula = std::make_shared<__Formula>();
-
-        // Cut the text operator by + operator
-        cutted = cut_string_out_of_2(source, "+", "(", ")");
-        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            std::shared_ptr<__Formula> current_polymonial = __string_to_formula_without_addition(cutted[i], environment);
-            formula.get()->__add(current_polymonial.get());
-        }
-
-        // Return the result
-        formula.get()->check_formula();
-        return formula;
-    };
 
     // Returns if a std::string is an operator or not
     bool String_To_Formula_Parse::__string_is_operator(char text) const {return (text == '+' || text == '-' || text == '*' || text == '/' || text == '>' || text == '^');};
-
-    // Use parsers methods outside the class
-    std::shared_ptr<__Formula> string_to_formula(std::string source){String_To_Formula_Parse parser;return parser.string_to_formula(source);};
-    std::shared_ptr<__Formula> replace_unknown(__Formula* used_formula, std::string unknown, std::string new_value) {std::shared_ptr<__Formula>f=string_to_formula(new_value);return used_formula->replace_unknown(unknown, f.get());};
 
     // Math_Environment constructor
     Math_Environment::Math_Environment(){clear();};
@@ -284,32 +106,35 @@ namespace scls {
     void Math_Environment::set_repetition(int value){if(static_cast<int>(a_repetitions.size()) > 0){a_repetitions[a_repetitions.size() - 1] = value;}};
 
     // Returns a formula value
-    std::shared_ptr<__Formula> Math_Environment::value_formula(std::string base)const{std::shared_ptr<__Formula> formula = parser()->string_to_formula(base, this);return formula.get()->replace_unknowns(a_unknowns.get());}
+    std::shared_ptr<Formula_Base> Math_Environment::value_formula(std::string base)const{std::shared_ptr<Formula_Base> new_object = std::make_shared<Formula_Base>();string_to_algebra_element(0, new_object.get(), base, new_object.get()->operators().operators());return new_object.get()->replace_unknowns(a_unknowns.get());}
     // Returns a number value
     double Math_Environment::value_double(std::string base)const{return value_number(base).to_double();}
-    scls::Fraction Math_Environment::value_number(std::string base)const{return value_formula(base).get()->value(a_unknowns.get()).real();}
+    Fraction Math_Environment::value_number(std::string base)const{return *value_formula(base).get()->replace_unknowns(a_unknowns.get()).get()->value<Fraction>();}
     // Returns a Point_2D value
-    scls::Point_2D_Formula Math_Environment::value_point_2d(std::string base)const{
+    Point_2D_Formula Math_Environment::value_point_2d(std::string base)const{
         // Format the text
         while(base.size() > 0 && base.at(0) == '('){base = base.substr(1, base.size() - 1);}
         while(base.size() > 0 && base.at(base.size() - 1) == ')'){base = base.substr(0, base.size() - 1);}
 
         // Get the point
-        base = scls::replace(base, std::string(";"), std::string(","));
-        std::vector<std::string> cutted = scls::cut_string(base, std::string(","));
-        if(cutted.size() != 2) {scls::print(std::string("PLEOS Text Environment"), std::string("Can't get a point 2D from \"") + base + std::string("\"."));return scls::Point_2D(0, 0);}
-        return scls::Point_2D_Formula(value_number(cutted.at(0)), value_number(cutted.at(1)));
+        base = replace(base, std::string(";"), std::string(","));
+        std::vector<std::string> cutted = cut_string(base, std::string(","));
+        if(cutted.size() != 2) {print(std::string("PLEOS Text Environment"), std::string("Can't get a point 2D from \"") + base + std::string("\"."));return Point_2D(0, 0);}
+        return Point_2D_Formula(value_number(cutted.at(0)), value_number(cutted.at(1)));
     };
 
     // Handle unknowns
     // Creates a unknown
-    scls::__Formula_Base::Unknown* Math_Environment::create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
-    std::shared_ptr<scls::__Formula_Base::Unknown> Math_Environment::create_unknown_shared_ptr(std::string name){return a_unknowns.get()->create_unknown_shared_ptr(name);};
+    Formula_Base::Formula_Unknown* Math_Environment::create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
+    std::shared_ptr<Formula_Base::Formula_Unknown> Math_Environment::create_unknown_shared_ptr(std::string name){return a_unknowns.get()->create_unknown_shared_ptr(name);};
+    // Sets the value of an unknown by its name
+    void Math_Environment::set_unknown_value_by_name(std::string name, Fraction new_value){set_unknown_value_by_name(name, Formula_Base::new_formula(new_value));}
+    void Math_Environment::set_unknown_value_by_name(std::string name, std::shared_ptr<Formula_Base> new_value){reinterpret_cast<Formula_Base::Formula_Unknown*>(create_unknown(name))->value = new_value;}
     // Returns a value by its name
-    scls::Fraction Math_Environment::value_by_name(std::string name)const{scls::__Formula_Base::Unknown*unknow=unknown_by_name(name);if(unknow==0||unknow->value.get()==0){return 0;}return (reinterpret_cast<__Formula_Base_Template<Complex>*>(unknow->value.get())->value(0).real());};
+    Fraction Math_Environment::value_by_name(std::string name)const{Formula_Base::Formula_Unknown*unknown=unknown_by_name(name);if(unknown==0||unknown->value.get()==0){return 0;}return (*unknown->value.get()->value<scls::Fraction>());};
     // Returns a unknown by its name
-    scls::__Formula_Base::Unknown* Math_Environment::unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
-    std::shared_ptr<scls::__Formula_Base::Unknown> Math_Environment::unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
+    Formula_Base::Formula_Unknown* Math_Environment::unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
+    std::shared_ptr<Formula_Base::Formula_Unknown> Math_Environment::unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
 
     // Use parsers methods outside the class
     bool string_is_operator(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, std::string to_test) {
@@ -338,13 +163,13 @@ namespace scls {
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
             std::shared_ptr<Algebra_Element> current_element;
             if(position <= 0) {
-                std::vector<std::string> parts = scls::cut_string_out_of_2(cutted.at(i), std::string(">"), "(", ")");
+                std::vector<std::string> parts = cut_string_out_of_2(cutted.at(i), std::string(">"), "(", ")");
                 if(parts.at(parts.size() - 1).size() < 2 || (parts.at(parts.size() - 1).at(0) != '(')) {current_element = element->new_algebra_element(parts.at(parts.size() - 1));}
                 else {current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), parts.at(parts.size() - 1).substr(1, parts.at(parts.size() - 1).size() - 2), operator_order, operator_order.size() - 1);}
 
                 if(parts.size() == 2) {
                     std::string needed_function = parts.at(0);
-                    if(needed_function == std::string_view("random")) {current_element = element->new_algebra_element(scls::random_fraction(0, 1).to_std_string(0));}
+                    if(needed_function == std::string_view("random")) {current_element = element->new_algebra_element(random_fraction(0, 1).to_std_string(0));}
                     else if(needed_function == std::string_view("repetition")) {
 
                     }
@@ -410,7 +235,7 @@ namespace scls {
                 }
 
                 // Add some other explicit "-"
-                if(!scls::string_is_number(source[i + 1])){source.insert(i + 1, "1*");i++;}
+                if(!string_is_number(source[i + 1])){source.insert(i + 1, "1*");i++;}
 			}
 		}
 

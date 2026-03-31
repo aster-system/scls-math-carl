@@ -565,13 +565,38 @@ namespace scls {
     class Formula_Base : public Algebra_Element {
     public:
         // Container of unknowns
-        struct Formula_Unknown : public Algebra_Element::__Algebra_Unknown {std::shared_ptr<Formula_Base> value;void set_value(std::shared_ptr<Algebra_Element> e){value=std::make_shared<Formula_Base>(e);}};;
+        struct Formula_Unknown : public Algebra_Element::__Algebra_Unknown {std::shared_ptr<Formula_Base> value;void set_value(std::shared_ptr<Formula_Base> e){value=e;}void set_value(std::shared_ptr<Fraction> e){value=std::make_shared<Formula_Base>(e);}};;
+        class Unknowns_Container : public Algebra_Element::Unknowns_Container {
+		public:
+			// Unknowns_Container constructor
+			Unknowns_Container(){};
+
+			// Clears the container
+			virtual void clear(){a_unknowns.clear();};
+
+			// Handle unknown
+			// Creates a unknown
+			Formula_Unknown* create_unknown(std::string name){return create_unknown_shared_ptr(name).get();};
+            std::shared_ptr<Formula_Unknown> create_unknown_shared_ptr(std::string name){std::shared_ptr<Formula_Unknown> temp=unknown_shared_ptr_by_name(name);if(temp.get()!=0){return temp;}std::shared_ptr<Formula_Unknown> unknown=std::make_shared<Formula_Unknown>();a_unknowns.push_back(unknown);unknown.get()->name=name;return unknown;};
+			virtual std::shared_ptr<__Algebra_Unknown> create_algebra_unknown_shared_ptr(std::string name){return create_unknown_shared_ptr(name);};
+			// Returns an unknown by its name
+			virtual std::shared_ptr<Algebra_Element::__Algebra_Unknown> algebra_unknown_shared_ptr_by_name(std::string name)const{return unknown_shared_ptr_by_name(name);};
+            Formula_Unknown* unknown_by_name(std::string name)const{return unknown_shared_ptr_by_name(name).get();};
+            std::shared_ptr<Formula_Unknown> unknown_shared_ptr_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns.at(i).get()->name == name){return a_unknowns.at(i);}} return std::shared_ptr<Formula_Unknown>();};
+
+		private:
+			// Unknowns
+			std::vector<std::shared_ptr<Formula_Unknown>> a_unknowns;
+		};
 
         // Formula_Base constructor
         Formula_Base(){};
         Formula_Base(Fraction e):a_value(std::make_shared<Fraction>(e)){};
         Formula_Base(std::shared_ptr<Algebra_Element> e):a_value(e){};
         Formula_Base(std::string unknown_name):Formula_Base(){if(string_is_number(unknown_name)){a_value = std::make_shared<Fraction>(Fraction::from_std_string(unknown_name));}else{new_unknown(unknown_name);}};
+
+        // Creates a new formula
+        static std::shared_ptr<Formula_Base> new_formula(Fraction content) {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>(content);s.get()->a_this_object=s;return s;};
 
         // Creates a new algebra element of the same type
         virtual void algebra_clone(Algebra_Element* b) const {clone(reinterpret_cast<Formula_Base*>(b));};
@@ -602,7 +627,7 @@ namespace scls {
         virtual const Algebra_Operators& operators() const;
 
         // Replaces the unknowns
-        virtual void replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const;
+        virtual void replace_unknowns_algebra(Algebra_Element* element, Algebra_Element::Unknowns_Container* values) const;
         std::shared_ptr<Formula_Base> replace_unknowns(std::string unknown, scls::Fraction f) const;
         std::shared_ptr<Formula_Base> replace_unknowns(Unknowns_Container* values) const;
 

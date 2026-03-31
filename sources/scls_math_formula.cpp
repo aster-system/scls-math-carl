@@ -555,15 +555,18 @@ namespace scls {
     const Algebra_Element::Algebra_Operators& Formula_Base::operators() const {return formula_operators;}
 
     // Replaces the unknowns
-    void Formula_Base::replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const {
+    void Formula_Base::replace_unknowns_algebra(Algebra_Element* element, Algebra_Element::Unknowns_Container* values_raw) const {
+        Formula_Base::Unknowns_Container* values = reinterpret_cast<Formula_Base::Unknowns_Container*>(values_raw);
+
         // The element is final
         if(is_final_element()) {
             if(is_unknown()){
-                Formula_Unknown* current = reinterpret_cast<Formula_Unknown*>(values->unknown_by_name(algebra_unknown()->name));
+                Formula_Unknown* current = reinterpret_cast<Formula_Unknown*>(values->algebra_unknown_by_name(algebra_unknown()->name));
                 if(current == 0){algebra_clone(element);}
                 else{current->value.get()->clone(reinterpret_cast<Formula_Base*>(element));}
             }
-            else {reinterpret_cast<Formula_Base*>(element)->a_value = a_value.get()->algebra_clone();}
+            else if(a_value.get() != 0) {reinterpret_cast<Formula_Base*>(element)->a_value = a_value.get()->algebra_clone();}
+            else{reinterpret_cast<Formula_Base*>(element)->a_value = std::make_shared<Fraction>(0);}
         }
         else {Algebra_Element::replace_unknowns_algebra(element, values);}
 
@@ -574,7 +577,7 @@ namespace scls {
         while(reinterpret_cast<Formula_Base*>(element)->simplify_step() != scls::Formula_Base::NO_SIMPLIFICATION){}
     }
     std::shared_ptr<Formula_Base> Formula_Base::replace_unknowns(std::string unknown, scls::Fraction f) const {
-        Unknowns_Container c;c.create_unknown<Formula_Base::Formula_Unknown>(unknown)->value = new_formula(f.to_std_string(0));
+        Unknowns_Container c;c.create_unknown(unknown)->value = new_formula(f.to_std_string(0));
         return replace_unknowns(&c);
     }
     std::shared_ptr<Formula_Base> Formula_Base::replace_unknowns(Unknowns_Container* values) const {

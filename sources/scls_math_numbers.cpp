@@ -218,6 +218,29 @@ namespace scls {
         return 0;
     };
 
+    // Returns a list of all the unknowns
+    std::vector<std::string> Algebra_Element::all_unknowns_name() const {
+        std::vector<std::string> to_return = std::vector<std::string>();
+        if(is_unknown()){to_return.push_back(algebra_unknown_name());}
+        else if(!is_known()){
+            for(std::size_t i = 0;i<a_elements.size();i++) {
+                std::vector<std::string> current = a_elements.at(i).get()->all_unknowns_name();
+                for(std::size_t j = 0;j<current.size();j++) {
+                    bool good = true;
+                    for(std::size_t k = 0;k<to_return.size();k++) {
+                        if(current.at(j) == to_return.at(k)){
+                            good = false;
+                            break;
+                        }
+                    }
+                    if(good){to_return.push_back(current.at(j));}
+                }
+            }
+        }
+
+        return to_return;
+    }
+
 	// Replaces the unknowns
 	void Algebra_Element::replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const {
 		// The element is final

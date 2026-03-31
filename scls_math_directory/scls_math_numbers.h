@@ -157,15 +157,15 @@ namespace scls {
 			Unknowns_Container(){};
 
 			// Clears the container
-			void clear();
+			virtual void clear(){a_unknowns.clear();};
 
 			// Handle unknown
 			// Creates a unknown
-			template <typename T> T* create_unknown(std::string name){return create_unknown_shared_ptr<T>(name).get();};
-			template <typename T> std::shared_ptr<T> create_unknown_shared_ptr(std::string name){std::shared_ptr<Algebra_Element::__Algebra_Unknown> temp=unknown_shared_ptr_by_name(name);if(temp.get()!=0){return std::shared_ptr<T>();}std::shared_ptr<T> unknown=std::make_shared<T>();a_unknowns.push_back(unknown);unknown.get()->name=name;return unknown;};
+			__Algebra_Unknown* create_unknown(std::string name){return create_algebra_unknown_shared_ptr(name).get();};
+            virtual std::shared_ptr<__Algebra_Unknown> create_algebra_unknown_shared_ptr(std::string name){std::shared_ptr<__Algebra_Unknown> temp=algebra_unknown_shared_ptr_by_name(name);if(temp.get()!=0){return temp;}std::shared_ptr<__Algebra_Unknown> unknown=std::make_shared<Algebra_Element::__Algebra_Unknown>();a_unknowns.push_back(unknown);unknown.get()->name=name;return unknown;};
 			// Returns an unknown by its name
-			Algebra_Element::__Algebra_Unknown* unknown_by_name(std::string name)const{return unknown_shared_ptr_by_name(name).get();};
-			std::shared_ptr<Algebra_Element::__Algebra_Unknown> unknown_shared_ptr_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns.at(i).get()->name == name){return a_unknowns.at(i);}} return std::shared_ptr<Algebra_Element::__Algebra_Unknown>();};
+			Algebra_Element::__Algebra_Unknown* algebra_unknown_by_name(std::string name)const{return algebra_unknown_shared_ptr_by_name(name).get();};
+			virtual std::shared_ptr<Algebra_Element::__Algebra_Unknown> algebra_unknown_shared_ptr_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns.at(i).get()->name == name){return a_unknowns.at(i);}} return std::shared_ptr<Algebra_Element::__Algebra_Unknown>();};
 
 		private:
 			// Unknowns
@@ -211,6 +211,9 @@ namespace scls {
         virtual const Algebra_Operators& operators() const;
         const Algebra_Operator* function_by_name(std::string function_name);
         const Algebra_Operator* operator_by_name(std::string operator_name);
+
+        // Returns a list of all the unknowns
+        std::vector<std::string> all_unknowns_name() const;
 
         // Replaces the unknowns
         virtual void replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const;

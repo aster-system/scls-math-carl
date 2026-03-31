@@ -44,11 +44,13 @@ namespace scls {
 	std::string Boolean::algebra_type() const{return std::string("boolean");};
 
     // Replaces the unknowns
-	void Boolean::replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const {
+	void Boolean::replace_unknowns_algebra(Algebra_Element* element, Algebra_Element::Unknowns_Container* values_raw) const {
+	    Boolean::Unknowns_Container* values = reinterpret_cast<Boolean::Unknowns_Container*>(values_raw);
+
 		// The element is final
 		if(is_final_element()) {
 			if(is_unknown()){
-				__Boolean_Unknown* current = reinterpret_cast<__Boolean_Unknown*>(values->unknown_by_name(algebra_unknown()->name));
+				__Boolean_Unknown* current = reinterpret_cast<__Boolean_Unknown*>(values->algebra_unknown_by_name(algebra_unknown()->name));
 				if(current == 0){algebra_clone(element);}
 				else{reinterpret_cast<Boolean*>(element)->a_value = current->value;}
 			}
@@ -104,7 +106,7 @@ namespace scls {
         int unknowns_number = std::pow(2, needed_unknowns.size());
         for(int i = 0;i<unknowns_number;i++) {
             Unknowns_Container a = Unknowns_Container();
-            for(int j = 0;j<static_cast<int>(needed_unknowns.size());j++){bool result = (static_cast<int>(floor(static_cast<double>(i) / pow(2,needed_unknowns.size() - (1 + j)))) % 2) == 1;a.create_unknown<Boolean_Unknown>(needed_unknowns.at(j))->value = result;unknowns_value[j] = result;}
+            for(int j = 0;j<static_cast<int>(needed_unknowns.size());j++){bool result = (static_cast<int>(floor(static_cast<double>(i) / pow(2,needed_unknowns.size() - (1 + j)))) % 2) == 1;a.create_unknown(needed_unknowns.at(j))->value = result;unknowns_value[j] = result;}
             for(int j = 0;j<static_cast<int>(needed_unknowns.size());j++){to_return += std::to_string(static_cast<int>(unknowns_value.at(j))) + std::string(" | ");}
             for(int j = 0;j<static_cast<int>(last_part.size())/2;j++){to_return += std::string(" ");}
             to_return += replace_unknowns(&a).get()->to_std_string(0) + std::string("\n") + diff + std::string("\n");

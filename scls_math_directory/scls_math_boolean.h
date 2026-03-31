@@ -27,7 +27,7 @@
 #ifndef SCLS_MATH_BOOLEAN
 #define SCLS_MATH_BOOLEAN
 
-#include "scls_math_polynomial.h"
+#include "scls_math_formula.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
@@ -38,10 +38,126 @@ namespace scls {
 	//
 	//*********
 
+	class Proposition {
+		// Mathematical proposition
+	public:
+		// Proposition constructor
+		Proposition(){};
+		// Proposition destructor
+		virtual ~Proposition() = default;
+
+		// Evaluate the proposition
+		virtual bool is_true() = 0;
+
+	private:
+
+	};
+
+	class Relation : public Proposition {
+		// Class representing a relation module
+	public:
+		// Relation constructor
+		Relation():Proposition(){};
+		// Relation destructor
+		virtual ~Relation() = default;
+
+		// Returns if a value is in relation with another
+		virtual bool is_in_relation(std::vector<std::shared_ptr<Formula_Base>> objects) = 0;
+
+		// Evaluate the proposition
+		virtual bool is_true(){return false;}
+	};
+
+	class Relation_Module : public Relation {
+		// Class representing a relation module
+	public:
+		// Relation_Module constructor
+		Relation_Module(scls::Fraction modulo):a_modulo(modulo){};
+		Relation_Module(){};
+
+		// Returns if a value is in relation with another
+		scls::Fraction congruence_class(scls::Fraction f_1) {
+			scls::Fraction to_return = f_1 - ((f_1 / a_modulo).to_double_floor()) * a_modulo;
+			if(to_return < 0){to_return += a_modulo;}
+			return to_return;
+		};
+
+		// Returns if a value is in relation with another
+		virtual bool is_in_relation(std::vector<std::shared_ptr<Formula_Base>> objects){if(objects.size() != 2){return false;}return is_in_relation(*objects.at(0).get()->value<Fraction>(), *objects.at(1).get()->value<Fraction>());};
+		bool is_in_relation(scls::Fraction f_1, scls::Fraction f_2) {return congruence_class(f_1) == congruence_class(f_2);};
+		bool is_in_relation_interval(scls::Fraction f_1, scls::Fraction f_2) {
+			scls::Fraction a = congruence_class(f_1);
+			scls::Fraction b = congruence_class(f_2);
+			return (a - b) != (f_1 - f_2);
+		};
+
+		// Evaluate the proposition
+		virtual bool is_true(){return false;}
+
+	private:
+		// Type of relation
+		int a_type = 0;
+
+		// Class of the relation
+		scls::Fraction a_modulo = 1;
+	};
+
+	class Relation_Order : public Relation {
+		// Class representing a relation module
+	public:
+		// Type of relation
+		static const int greater_equal = 0;
+		static const int greater_strict = 1;
+		static const int lesser_equal = 2;
+		static const int lesser_strict = 3;
+
+		// Relation_Order constructor
+		Relation_Order(int relation):a_type(relation){};
+		Relation_Order(){};
+
+		// Returns if a value is in relation with another
+		virtual bool is_in_relation(std::vector<std::shared_ptr<Formula_Base>> objects){if(objects.size() != 2){return false;}return is_in_relation(*objects.at(0).get()->value<Fraction>(), *objects.at(1).get()->value<Fraction>());};
+		bool is_in_relation(scls::Fraction f_1, scls::Fraction f_2) {
+			if(a_type == greater_equal){return f_1 >= f_2;}
+			else if(a_type == greater_strict){return f_1 > f_2;}
+			else if(a_type == lesser_equal){return f_1 <= f_2;}
+			else if(a_type == lesser_strict){return f_1 < f_2;}
+			return false;
+		};
+
+		// Evaluate the proposition
+		virtual bool is_true(){return false;}
+
+	private:
+		// Type of relation
+		int a_type = 0;
+	};
+
     class Boolean: public Algebra_Element {
     public:
     	// Container of unknowns
     	struct __Boolean_Unknown : public Algebra_Element::__Algebra_Unknown {bool value = false;};
+    	class Unknowns_Container : public Algebra_Element::Unknowns_Container {
+		public:
+			// Unknowns_Container constructor
+			Unknowns_Container(){};
+
+			// Clears the container
+			virtual void clear(){a_unknowns.clear();};
+
+			// Handle unknown
+			// Creates a unknown
+			__Boolean_Unknown* create_unknown(std::string name){return create_unknown_shared_ptr(name).get();};
+            std::shared_ptr<__Boolean_Unknown> create_unknown_shared_ptr(std::string name){std::shared_ptr<__Boolean_Unknown> temp=unknown_shared_ptr_by_name(name);if(temp.get()!=0){return temp;}std::shared_ptr<__Boolean_Unknown> unknown=std::make_shared<__Boolean_Unknown>();a_unknowns.push_back(unknown);unknown.get()->name=name;return unknown;};
+			virtual std::shared_ptr<__Algebra_Unknown> create_algebra_unknown_shared_ptr(std::string name){return create_unknown_shared_ptr(name);};
+			// Returns an unknown by its name
+			virtual std::shared_ptr<Algebra_Element::__Algebra_Unknown> algebra_unknown_shared_ptr_by_name(std::string name)const{return unknown_shared_ptr_by_name(name);};
+            std::shared_ptr<__Boolean_Unknown> unknown_shared_ptr_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns.at(i).get()->name == name){return a_unknowns.at(i);}} return std::shared_ptr<__Boolean_Unknown>();};
+
+		private:
+			// Unknowns
+			std::vector<std::shared_ptr<__Boolean_Unknown>> a_unknowns;
+		};
 
     	// Boolean constructor
     	Boolean(){};
@@ -95,7 +211,7 @@ namespace scls {
         virtual const Algebra_Operators& operators() const;
 
     	// Replaces the unknowns
-        virtual void replace_unknowns_algebra(Algebra_Element* element, Unknowns_Container* values) const;
+        virtual void replace_unknowns_algebra(Algebra_Element* element, Algebra_Element::Unknowns_Container* values) const;
         std::shared_ptr<Boolean> replace_unknowns(Unknowns_Container* values) const;
 
     	// Get each unknowns
@@ -128,7 +244,7 @@ namespace scls {
         // Getters and setters
         inline bool value() const {return a_value;}
     private:
-    	// Value of the element
+        // Value of the element
     	bool a_value = false;
     };
     typedef Boolean::__Boolean_Unknown Boolean_Unknown;

@@ -378,7 +378,7 @@ namespace scls {
         };
         inline void set_parent(std::shared_ptr<Transform_Object_2D>* new_parent) {if(new_parent==0) {if(parent() != 0){parent()->remove_child(this);}a_parent.reset();}else{set_parent(*new_parent);}};
         inline void set_this_object(std::weak_ptr<Transform_Object_2D> this_object){a_this_object=this_object;};
-        inline void set_unknowns(std::shared_ptr<__Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;};
+        inline void set_unknowns(std::shared_ptr<Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;};
 
         //*********
         //
@@ -554,7 +554,7 @@ namespace scls {
         // Shared ptr to this object
         std::weak_ptr<Transform_Object_2D> a_this_object;
         // Unknowns for this transform object
-        std::shared_ptr<__Formula_Base::Unknowns_Container> a_unknowns;
+        std::shared_ptr<Formula_Base::Unknowns_Container> a_unknowns;
 
         //*********
         //
