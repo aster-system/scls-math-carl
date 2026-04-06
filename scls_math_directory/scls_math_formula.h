@@ -610,15 +610,23 @@ namespace scls {
         // Type of the object
         virtual std::string algebra_type() const;
 
+        // Returns if the formula is empty
+        bool empty() const;
+        void fix_emptiness();
+
         // Returns a part of the formula
         Formula_Base* formula_element(int index);
 
         // Adds an element to this one
         void add(Formula_Base* formula);
+        void add(Fraction other);
         void divide(Formula_Base* formula);
+        void divide(Fraction other);
         void multiply(Formula_Base* formula);
+        void multiply(Fraction other);
         virtual void operate(Algebra_Element* other, std::string operation);
         virtual void operate(Fraction other, std::string operation);
+        void substract(Fraction other);
 
         // Creates the unknown
         virtual Algebra_Element::__Algebra_Unknown* create_unknown();
@@ -649,6 +657,10 @@ namespace scls {
         // Returns the element to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;
         virtual std::string to_std_string(Textual_Math_Settings* settings) const;
+
+        // DIfferent kinds of values
+        virtual double value_to_double(Unknowns_Container* values) const;
+        virtual double value_to_double() const;
 
         // Getters and setters
         inline Algebra_Element* algebra_value() const {return a_value.get();};

@@ -255,7 +255,7 @@ namespace scls {
     // Rotates the formula
     __Point_2D_Formula __Point_2D_Formula::rotated(double rotation) const {
         double* rotated_point = __rotate_vector_3d(a_x.get()->value_to_double(), 0, a_y.get()->value_to_double(), 0, rotation, 0);
-        __Point_2D_Formula to_return;(*to_return.a_x.get()) = scls::Complex::from_double(rotated_point[0]);(*to_return.a_y.get()) = scls::Complex::from_double(rotated_point[2]);
+        __Point_2D_Formula to_return;(*to_return.a_x.get()) = Formula_Base(scls::Fraction::from_double(rotated_point[0]));(*to_return.a_y.get()) = Formula_Base(scls::Fraction::from_double(rotated_point[2]));
         delete rotated_point; return to_return;
     }
     void __Point_2D_Formula::rotate(double rotation) {if(rotation != 0){__Point_2D_Formula new_point = rotated(rotation);a_x = new_point.a_x; a_y = new_point.a_y;}};

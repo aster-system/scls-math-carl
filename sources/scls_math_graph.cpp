@@ -38,7 +38,7 @@ namespace scls {
         }
     }
     void djikstra_2d_check_point(std::vector<std::vector<int>>& needed_map, int& current_n, Point_2D current_position, bool& good) {
-        if(needed_map.at(current_position.x()).at(current_position.y()) < 0 && needed_map.at(current_position.x()).at(current_position.y()) > current_n) {
+        if(needed_map.at(current_position.x()).at(current_position.y()) == 2 || (needed_map.at(current_position.x()).at(current_position.y()) < 0 && needed_map.at(current_position.x()).at(current_position.y()) > current_n)) {
             good = true;
         }
     }
@@ -66,6 +66,14 @@ namespace scls {
             if(stop){break;}
         }
 
+        /*needed_map[position_end.x()][position_end.y()] = -10;
+        needed_map[position_start.x()][position_start.y()] = 2;
+        for(int i = 0;i<needed_map.size();i++){
+            for(int j = 0;j<needed_map.at(i).size();j++){
+                std::cout << needed_map.at(j).at(i) << " ";
+            }std::cout << std::endl;
+        }//*/
+
         // Browser the map to return
         int current_n = number * -1 - 2;
         scls::Point_2D current_position = position_end;
@@ -73,22 +81,24 @@ namespace scls {
         for(std::size_t i = 0;i<to_return.size();i++) {
             bool good = false;
             if(current_position.x() > 0){djikstra_2d_check_point(needed_map, current_n, scls::Point_2D(current_position.x() - 1, current_position.y()), good);}
-            if(good){to_return[to_return.size() - (i + 1)] = djikstra_2d_right;current_position = scls::Point_2D(current_position.x() - 1, current_position.y());}
+            if(good){to_return[to_return.size() - (i + 1)] = djikstra_2d_x_plus;current_position = scls::Point_2D(current_position.x() - 1, current_position.y());}
             if(!good && current_position.x() < needed_map.size() - 1){
                 djikstra_2d_check_point(needed_map, current_n, scls::Point_2D(current_position.x() + 1, current_position.y()), good);
-                if(good){to_return[to_return.size() - (i + 1)] = djikstra_2d_left;current_position = scls::Point_2D(current_position.x() + 1, current_position.y());}
+                if(good){to_return[to_return.size() - (i + 1)] = djikstra_2d_x_minus;current_position = scls::Point_2D(current_position.x() + 1, current_position.y());}
             }
             if(!good && current_position.y() > 0){
                 djikstra_2d_check_point(needed_map, current_n, scls::Point_2D(current_position.x(), current_position.y() - 1), good);
-                if(good){to_return[to_return.size() - (i + 1)] = djikstra_2d_bottom;current_position = scls::Point_2D(current_position.x(), current_position.y() - 1);}
+                if(good){to_return[to_return.size() - (i + 1)] = djikstra_2d_y_plus;current_position = scls::Point_2D(current_position.x(), current_position.y() - 1);}
             }
             if(!good && current_position.y() < needed_map.at(0).size() - 1){
                 djikstra_2d_check_point(needed_map, current_n, scls::Point_2D(current_position.x(), current_position.y() + 1), good);
-                if(good){to_return[to_return.size() - (i + 1)] = djikstra_2d_top;current_position = scls::Point_2D(current_position.x(), current_position.y() + 1);}
+                if(good){to_return[to_return.size() - (i + 1)] = djikstra_2d_y_minus;current_position = scls::Point_2D(current_position.x(), current_position.y() + 1);}
             }
             current_n++;
         }
 
         return to_return;
     }
+    std::string moves_en[] = {"bottom", "left", "right", "top"};
+    std::string djikstra_2d_move(char m){return moves_en[m];}
 }

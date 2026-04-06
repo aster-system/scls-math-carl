@@ -126,14 +126,14 @@ namespace scls {
     public:
 
         // Set_Number constructor
-        Set_Number(){};
-        Set_Number(Interval interval){a_intervals.push_back(interval);};
-        Set_Number(const Set_Number& other):a_intervals(other.a_intervals),a_numbers(other.a_numbers){}
+        Set_Number();
+        Set_Number(Interval interval);
+        Set_Number(const Set_Number& other);
 
         // Add an interval to the set
-        inline void add_interval(Interval to_add) {if(!to_add.is_empty()){a_intervals.push_back(to_add);__sort_interval();check_intervals();};};
+        void add_interval(Interval to_add);
         // Add a number to the set
-        inline void add_number(Fraction to_add) {if(!is_in(to_add)){add_interval(Interval(to_add));}};
+        void add_number(Fraction to_add);
 
         // Clears the interval
         inline void clear(){a_intervals.clear();a_numbers.clear();};
@@ -199,6 +199,7 @@ namespace scls {
         static Interval between_strictly(scls::Fraction after, scls::Fraction before){if(after==before){return Interval();} Interval it;it.set_end(before);it.set_end_included(false);it.set_start(after);it.set_start_included(false);it.set_end_infinite(true);return it;};
         // Real set
         static Set_Number real(){return set_real();};
+        static Set_Number real_positive(){Set_Number to_return;Interval i;i.set_end_infinite(true);i.set_start(0);i.set_start_included(true);to_return.add_interval(i);return to_return;};
         static Set_Number set_real() {Set_Number to_return;Interval i;i.set_end_infinite(true);i.set_start_infinite(true);to_return.add_interval(i);return to_return;};
 
         // Operators

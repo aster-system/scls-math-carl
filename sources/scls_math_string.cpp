@@ -30,61 +30,15 @@
 namespace scls {
     //*********
 	//
-	// The parsers class
+	// The environment class
 	//
 	//*********
-
-	// String_To_Formula_Parse constructor
-	String_To_Formula_Parse::String_To_Formula_Parse(unsigned int level):a_level(level){
-		add_function(std::string("arccos"));
-		add_function(std::string("cos"));
-        add_function(std::string("exp"));
-        add_function(std::string("ln"));
-        add_function(std::string("normal"));
-        add_function(std::string("random"));
-        add_function(std::string("sin"));
-        add_function(std::string("sqrt"));
-        add_function(std::string("tan"));
-    };
-
-    // Returns if a function is defined or not
-    bool String_To_Formula_Parse::contains_function(std::string function_name) const {for(int i = 0;i<static_cast<int>(a_functions.size());i++) {if(a_functions.at(i) == function_name) return true; } return false;};
-    bool String_To_Formula_Parse::contains_function(char function_name) const {std::string str;str+=function_name;return contains_function(str);};
-
-	// Returns a given first base string to a formula
-	void __string_to_formula_function(__Formula* formula, std::string used_function, const Math_Environment* environment){
-        if(used_function == "cos"){formula->add_applied_function<__Cos_Function>();}
-        else if(used_function == "exp"){formula->add_applied_function<__Exp_Function>();}
-        else if(used_function == "ln"){formula->add_applied_function<__Log_Function>();}
-        else if(used_function == "normal"){
-            /*formula = 1;
-            formula /= __Sqrt_Function::create_formula(2);
-            formula *= __Exp_Function::create_formula(__Monomonial(-1, "x", 2));//*/
-        }
-        else if(used_function == "sin"){formula->add_applied_function<__Sin_Function>();}
-        else if(used_function == "sqrt"){formula->add_applied_function<__Sqrt_Function>();}
-
-        // Environment functions
-        else if(used_function == "random"){formula->set_polynomial(random_fraction(0, 1));}
-        else if(used_function == "repetition"){formula->set_polynomial(environment->repetition(formula->value_to_double()));}
-	}
-
-    // Returns if a std::string is an operator or not
-    bool String_To_Formula_Parse::__string_is_operator(char text) const {return (text == '+' || text == '-' || text == '*' || text == '/' || text == '>' || text == '^');};
 
     // Math_Environment constructor
     Math_Environment::Math_Environment(){clear();};
 
     // Clears the environment
-    void Math_Environment::clear(){
-        // Handle unknowns
-        if(a_unknowns.get() != 0){a_unknowns.get()->clear();}
-
-        if(parser() != 0){
-            // Handle functions
-            parser()->add_function("random");
-            parser()->add_function("repetition");}
-    };
+    void Math_Environment::clear(){if(a_unknowns.get() != 0){a_unknowns.get()->clear();}};
 
     // Handle repetitions
     // Adds a repetition
@@ -106,7 +60,7 @@ namespace scls {
     void Math_Environment::set_repetition(int value){if(static_cast<int>(a_repetitions.size()) > 0){a_repetitions[a_repetitions.size() - 1] = value;}};
 
     // Returns a formula value
-    std::shared_ptr<Formula_Base> Math_Environment::value_formula(std::string base)const{std::shared_ptr<Formula_Base> new_object = std::make_shared<Formula_Base>();string_to_algebra_element(0, new_object.get(), base, new_object.get()->operators().operators());return new_object.get()->replace_unknowns(a_unknowns.get());}
+    std::shared_ptr<Formula_Base> Math_Environment::value_formula(std::string base)const{std::shared_ptr<Formula_Base> new_object = std::make_shared<Formula_Base>();string_to_algebra_element(this, new_object.get(), base, new_object.get()->operators().operators());return new_object.get()->replace_unknowns(a_unknowns.get());}
     // Returns a number value
     double Math_Environment::value_double(std::string base)const{return value_number(base).to_double();}
     Fraction Math_Environment::value_number(std::string base)const{return *value_formula(base).get()->replace_unknowns(a_unknowns.get()).get()->value<Fraction>();}
@@ -157,7 +111,7 @@ namespace scls {
     	std::string t = std::string();t += to_test;
     	return string_is_special(operator_order, t);
     }
-    void __string_to_algebra_element_operator(Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order, int position) {
+    void __string_to_algebra_element_operator(Algebra_Element* element, const Math_Environment* env, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order, int position) {
         // Cut the text operator by * operator
     	std::vector<std::string> cutted = cut_string_out_of_2(source, operator_order.at(position).name(), "(", ")");
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
@@ -165,24 +119,26 @@ namespace scls {
             if(position <= 0) {
                 std::vector<std::string> parts = cut_string_out_of_2(cutted.at(i), std::string(">"), "(", ")");
                 if(parts.at(parts.size() - 1).size() < 2 || (parts.at(parts.size() - 1).at(0) != '(')) {current_element = element->new_algebra_element(parts.at(parts.size() - 1));}
-                else {current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), parts.at(parts.size() - 1).substr(1, parts.at(parts.size() - 1).size() - 2), operator_order, operator_order.size() - 1);}
+                else {current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), env, parts.at(parts.size() - 1).substr(1, parts.at(parts.size() - 1).size() - 2), operator_order, operator_order.size() - 1);}
 
                 if(parts.size() == 2) {
                     std::string needed_function = parts.at(0);
                     if(needed_function == std::string_view("random")) {current_element = element->new_algebra_element(random_fraction(0, 1).to_std_string(0));}
                     else if(needed_function == std::string_view("repetition")) {
-
+                        if(env != 0) {
+                            current_element = element->new_algebra_element(std::to_string(env->repetition(current_element.get()->value_to_double())));
+                        }
                     }
                     else {current_element.get()->operate(0, parts.at(0));}
                 }
             }
-            else{current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), cutted.at(i), operator_order, position - 1);}
+            else{current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), env, cutted.at(i), operator_order, position - 1);}
             element->operate(current_element.get(), operator_order.at(position).name());
         }
     }
-    void Math_Environment::string_to_algebra_element(Math_Environment* env, Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order) {
+    void Math_Environment::string_to_algebra_element(const Math_Environment* env, Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order) {
         // Operator order
-    	std::vector<std::string> functions = {"ln", "exp", "sqrt", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "random", "repetition"};
+    	std::vector<std::string> functions = {"ln", "exp", "sqrt", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "abs", "random", "repetition"};
         source = remove_space(source);
 
         // First / last elements
@@ -240,6 +196,6 @@ namespace scls {
 		}
 
         // Cut the text operator by * operator
-        __string_to_algebra_element_operator(element, source, operator_order, operator_order.size() - 1);
+        __string_to_algebra_element_operator(element, env, source, operator_order, operator_order.size() - 1);
     }
 }

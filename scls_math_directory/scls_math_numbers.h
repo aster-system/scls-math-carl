@@ -248,6 +248,9 @@ namespace scls {
         virtual std::string to_mathml(Textual_Math_Settings* settings) const = 0;
         virtual std::string to_std_string(Textual_Math_Settings* settings) const = 0;
 
+        // DIfferent kinds of values
+        virtual double value_to_double() const {return 0;};
+
     protected:
         // Parent object
         std::weak_ptr<Algebra_Element> a_parent;

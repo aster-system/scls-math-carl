@@ -34,117 +34,81 @@
 namespace scls {
     //*********
 	//
-	// The parsers class
+	// The environment class
 	//
 	//*********
 
-	class String_To_Formula_Parse {
-        // Class allowing to properly parse a std::string to a polymonial
+	class Math_Environment {
+        // Class representating an environment for maths. in SCLS
     public:
 
-        class Math_Environment {
-            // Class representating an environment for maths. in SCLS
-        public:
+        // Math_Environment constructor
+        Math_Environment();
+        // Math_Environment destructor
+        virtual ~Math_Environment(){};
 
-            // Math_Environment constructor
-            Math_Environment();
-            // Math_Environment destructor
-            virtual ~Math_Environment(){};
+        // Converts a string to an algebra element
+        static void string_to_algebra_element(const Math_Environment* env, Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& o);
 
-            // Converts a string to an algebra element
-            static void string_to_algebra_element(Math_Environment* env, Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& o);
+        // Clears the environment
+        void clear();
 
-            // Clears the environment
-            void clear();
+        // Handle repetitions
+        // Adds a repetition
+        void add_repetition();
+        // Returns the last repetition
+        int last_repetition();
+        // Removes the last repetition
+        void remove_repetition();
+        // Repetes the last repetition
+        void repeat();
+        // Returns a repetition
+        int repetition(int index) const;
+        // Sets the last repetition
+        void set_repetition(int value);
 
-            // Handle repetitions
-            // Adds a repetition
-            void add_repetition();
-            // Returns the last repetition
-            int last_repetition();
-            // Removes the last repetition
-            void remove_repetition();
-            // Repetes the last repetition
-            void repeat();
-            // Returns a repetition
-            int repetition(int index) const;
-            // Sets the last repetition
-            void set_repetition(int value);
+        // Conditions
+        // Evaluate relation
+        bool evaluate_relation();
 
-            // Conditions
-            // Evaluate relation
-            bool evaluate_relation();
+        // Handle unknowns
+        // Creates a unknown
+        Formula_Base::Formula_Unknown* create_unknown(std::string name);
+        std::shared_ptr<Formula_Base::Formula_Unknown> create_unknown_shared_ptr(std::string name);
+        // Sets the value of an unknown by its name
+        void set_unknown_value_by_name(std::string name, Fraction new_value);
+        void set_unknown_value_by_name(std::string name, std::shared_ptr<Formula_Base> new_value);
+        // Returns a value by its name
+        scls::Fraction value_by_name(std::string name)const;
+        // Returns a unknown by its name
+        Formula_Base::Formula_Unknown* unknown_by_name(std::string name)const;
+        std::shared_ptr<Formula_Base::Formula_Unknown> unknown_shared_ptr_by_name(std::string name)const;
 
-            // Handle unknowns
-            // Creates a unknown
-            Formula_Base::Formula_Unknown* create_unknown(std::string name);
-            std::shared_ptr<Formula_Base::Formula_Unknown> create_unknown_shared_ptr(std::string name);
-            // Sets the value of an unknown by its name
-            void set_unknown_value_by_name(std::string name, Fraction new_value);
-            void set_unknown_value_by_name(std::string name, std::shared_ptr<Formula_Base> new_value);
-            // Returns a value by its name
-            scls::Fraction value_by_name(std::string name)const;
-            // Returns a unknown by its name
-            Formula_Base::Formula_Unknown* unknown_by_name(std::string name)const;
-            std::shared_ptr<Formula_Base::Formula_Unknown> unknown_shared_ptr_by_name(std::string name)const;
+        // Returns a formula value
+        virtual std::shared_ptr<Formula_Base> value_formula(std::string base)const;
 
-            // Returns a formula value
-            virtual std::shared_ptr<Formula_Base> value_formula(std::string base)const;
-
-            // Returns a number value
-            double value_double(std::string base)const;
-            scls::Fraction value_number(std::string base)const;
-            // Returns a point 2D value
-            scls::Point_2D_Formula value_point_2d(std::string base) const;
-
-            // Getters and setters
-            inline String_To_Formula_Parse* parser()const{return a_parser.get();};
-            inline std::vector<int>& repetitions() {return a_repetitions;};
-            inline Formula_Base::Unknowns_Container* unknowns(){return a_unknowns.get();};
-            inline std::shared_ptr<Formula_Base::Unknowns_Container> unknowns_shared_ptr(){return a_unknowns;};
-
-        private:
-
-            // Parser
-            std::shared_ptr<String_To_Formula_Parse> a_parser = std::make_shared<String_To_Formula_Parse>();
-            // Repetitions
-            std::vector<int> a_repetitions;
-            // Variables
-            std::shared_ptr<Formula_Base::Unknowns_Container> a_unknowns = std::make_shared<Formula_Base::Unknowns_Container>();
-        };
-
-        // String_To_Formula_Parse constructor
-        String_To_Formula_Parse(unsigned int level);
-        String_To_Formula_Parse():String_To_Formula_Parse(0){};
-
-        // Returns if a std::string is a number or not
-        inline bool __string_is_number(char text) const {return (string_is_number(text) || text == '/' || text == 'i' || text == '-');};
-        inline bool __string_is_number(std::string text) const {for(int i = 0;i<static_cast<int>(text.size());i++) {if(!__string_is_number(text[i])) return false;} return true;};
-        // Returns if a std::string is an operator or not
-        bool __string_is_operator(char text) const;
-
-        // Add a function to the defined functions
-        inline void add_function(std::string function_name) {if(!contains_function(function_name)) a_functions.push_back(function_name); };
-        // Returns if a function is defined or not
-        bool contains_function(std::string function_name) const;
-        bool contains_function(char function_name) const;
-        // Returns the indentation for this level
-        inline std::string level_indentation() const {std::string to_return = "";for(int i = 0;i<static_cast<int>(level()*4);i++)to_return+=" ";return to_return;};
+        // Returns a number value
+        double value_double(std::string base)const;
+        scls::Fraction value_number(std::string base)const;
+        // Returns a point 2D value
+        scls::Point_2D_Formula value_point_2d(std::string base) const;
 
         // Getters and setters
-        inline std::vector<std::string>& functions() {return a_functions;};
-        inline unsigned int level() const {return a_level;};
+        inline std::vector<int>& repetitions() {return a_repetitions;};
+        inline Formula_Base::Unknowns_Container* unknowns(){return a_unknowns.get();};
+        inline std::shared_ptr<Formula_Base::Unknowns_Container> unknowns_shared_ptr(){return a_unknowns;};
+
     private:
 
-        // Every defined functions in the parser
-        std::vector<std::string> a_functions;
-        // Level of the parser
-        unsigned int a_level = 0;
+        // Repetitions
+        std::vector<int> a_repetitions;
+        // Variables
+        std::shared_ptr<Formula_Base::Unknowns_Container> a_unknowns = std::make_shared<Formula_Base::Unknowns_Container>();
     };
-    typedef String_To_Formula_Parse::Math_Environment Math_Environment;
 
     // Use parsers methods outside the class
-    template <typename T> std::shared_ptr<T> string_to_algebra_element(std::string source){std::shared_ptr<T> new_object = std::make_shared<T>();Math_Environment::string_to_algebra_element(0, new_object.get(), source, new_object.get()->operators().operators());return new_object;};
+    template <typename T> std::shared_ptr<T> string_to_algebra_element(std::string source, const Math_Environment* env){std::shared_ptr<T> new_object = std::make_shared<T>();Math_Environment::string_to_algebra_element(env, new_object.get(), source, new_object.get()->operators().operators());return new_object;};
+    template <typename T> std::shared_ptr<T> string_to_algebra_element(std::string source){return string_to_algebra_element<T>(source, 0);};
 }
 
 #endif // SCLS_MATH_STRING

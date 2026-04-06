@@ -32,12 +32,13 @@
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
-    // Use the djikstra algorithm in a 2D plane
-    constexpr char djikstra_2d_bottom = 0;
-    constexpr char djikstra_2d_left = 1;
-    constexpr char djikstra_2d_right = 2;
-    constexpr char djikstra_2d_top = 3;
+    // Use the djikstra algorithm in a 2D plane (where x and y are placed like in the list)
+    constexpr char djikstra_2d_y_plus = 0;
+    constexpr char djikstra_2d_x_minus = 1;
+    constexpr char djikstra_2d_x_plus = 2;
+    constexpr char djikstra_2d_y_minus = 3;
     std::vector<char> djikstra_2d(std::vector<std::vector<int>> needed_map, Point_2D position_start, Point_2D position_end);
+    std::string djikstra_2d_move(char m);
 }
 
 #endif // SCLS_MATH_GRAPH

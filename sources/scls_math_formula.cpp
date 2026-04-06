@@ -439,29 +439,10 @@ namespace scls {
     // Substract a value to this one
     void __Formula_Base::__substract(__Formula_Base* value){std::shared_ptr<__Formula_Base> temp = value->opposite();__add(temp.get());}
 
-    // Multiply a value with the function
-    std::shared_ptr<__Formula_Base> __Sqrt_Function::multiply(__Formula_Base* value_1, __Formula_Base* value_2){
-        if(value_1->applied_function() != 0 && value_2->applied_function() != 0 && value_1->applied_function()->name() == value_2->applied_function()->name()) {
-            std::shared_ptr<__Formula_Base> copied_1 = value_1->clone();
-            std::shared_ptr<__Formula_Base> copied_2 = value_2->clone();
-            copied_1.get()->clear_applied_function();copied_2.get()->clear_applied_function();
-
-            // Same value
-            if(copied_1.get()->__is_equal(copied_2.get())){return copied_1;}
-
-            // Normal multiplication
-            copied_1.get()->__multiply(copied_2.get());
-            copied_1.get()->set_applied_function<__Sqrt_Function>();
-            return copied_1;
-        }
-
-        return std::shared_ptr<__Formula_Base>();
-    };
-
 
 
     // Formula operator
-    Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("sqrt", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("sin", 1), Algebra_Element::Algebra_Operator("tan", 1)});
+    Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("abs", 1), Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("sqrt", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("sin", 1), Algebra_Element::Algebra_Operator("tan", 1)});
 
     // Type of the object
     std::string Formula_Base::algebra_type() const{return std::string("formula_base");};
@@ -470,10 +451,10 @@ namespace scls {
     Formula_Base* Formula_Base::formula_element(int index){return reinterpret_cast<Formula_Base*>(algebra_elements_const().at(index).get());}
 
     // Adds an element to this one
+    void Formula_Base::add(Fraction other){std::shared_ptr<Formula_Base>f=std::make_shared<Formula_Base>(other);add(f.get());}
     void Formula_Base::add(Formula_Base* formula){
-        if(formula->is_final_element() && formula->is_known() && (formula->a_value.get() == 0 || formula->a_value.get()->is_addition_neutral())){return;}
-
-        if(is_final_element() && !is_unknown() && (a_value.get() == 0 || a_value.get()->is_addition_neutral())){formula->clone(this);}
+        if(formula->is_final_element() && formula->is_known() && (formula->a_value.get() == 0 || formula->a_value.get()->is_addition_neutral())){fix_emptiness();return;}
+        else if(is_final_element() && !is_unknown() && (a_value.get() == 0 || a_value.get()->is_addition_neutral())){formula->clone(this);}
         else if(is_final_element() && formula->is_final_element() && !is_unknown() && !formula->is_unknown()){
             a_value->operate(formula->a_value.get(), "+");
         }
@@ -490,6 +471,10 @@ namespace scls {
     Set_Number Formula_Base::definition_domain() {
         Set_Number to_return = Set_Number::real();
 
+        // Check operators
+        if(algebra_operator_name() == std::string("ln")){to_return = Set_Number::real_positive();to_return.exclude(Fraction(0));}
+        else if(algebra_operator_name() == std::string("sqrt")){to_return = Set_Number::real_positive();}
+
         // Do the needed_intersection
         for(std::size_t i = 0;i<algebra_elements().size();i++){to_return = to_return.intersection(formula_element(i)->definition_domain());}
 
@@ -497,6 +482,7 @@ namespace scls {
     }
 
     // Divides  an element to this one
+    void Formula_Base::divide(Fraction other){std::shared_ptr<Formula_Base>f=std::make_shared<Formula_Base>(other);divide(f.get());}
     void Formula_Base::divide(Formula_Base* formula) {
     	if(is_final_element() && formula->is_final_element() && !is_unknown() && !formula->is_unknown()){
 			a_value->operate(reinterpret_cast<Formula_Base*>(formula)->a_value.get(), "/");
@@ -507,6 +493,10 @@ namespace scls {
 			algebra_elements().push_back(formula->algebra_clone());
 		}
     }
+
+    // Returns if the formula is empty
+    bool Formula_Base::empty() const{return a_value.get() == 0 && algebra_elements_const().size() == 0;}
+    void Formula_Base::fix_emptiness(){if(empty()){a_value = std::make_shared<Fraction>(0);}}
 
     // Returns if a precise number is defined or not
     bool Formula_Base::is_defined(Fraction f) {
@@ -593,6 +583,7 @@ namespace scls {
     }
 
     // Multiplies an element to this one
+    void Formula_Base::multiply(Fraction other){std::shared_ptr<Formula_Base>f=std::make_shared<Formula_Base>(other);multiply(f.get());}
     void Formula_Base::multiply(Formula_Base* formula){
         if(is_final_element() && is_known() && (a_value.get() == 0 || a_value.get()->is_multiplication_absorbing())){return;}
     	else if(formula->is_final_element() && formula->is_known() && (formula->a_value.get() == 0 || formula->a_value.get()->is_multiplication_absorbing())){std::shared_ptr<Algebra_Element>v=std::make_shared<Fraction>(0);clear();a_value=v;return;}
@@ -628,7 +619,7 @@ namespace scls {
     // Simplify the expression
     char Formula_Base::simplify_step() {
         // Basic
-    	if(algebra_operator_arity() != 1 && algebra_elements().size() == 1){std::shared_ptr<Algebra_Element>temp=algebra_elements().at(0);reinterpret_cast<Formula_Base*>(temp.get())->clone(this);return SIMPLIFICATION_UNTERMINATED;}
+        if(algebra_operator_arity() != 1 && algebra_elements().size() == 1){std::shared_ptr<Algebra_Element>temp=algebra_elements().at(0);reinterpret_cast<Formula_Base*>(temp.get())->clone(this);return SIMPLIFICATION_UNTERMINATED;}
         if(is_final_element() && is_known() && a_value.get() != 0){value<Fraction>()->normalize_force();value<Fraction>()->crop(9);}
 
         // Datas
@@ -740,6 +731,9 @@ namespace scls {
         return NO_SIMPLIFICATION;
     }
 
+    // Substracts an element to this one
+    void Formula_Base::substract(Fraction other){std::shared_ptr<Formula_Base>f=std::make_shared<Formula_Base>(other);f.get()->multiply(-1);add(f.get());}
+
     // Returns the element to a simple std::string
     std::string Formula_Base::to_mathml(scls::Textual_Math_Settings* settings) const{return std::string();};
     std::string Formula_Base::to_std_string(scls::Textual_Math_Settings* settings) const{
@@ -763,6 +757,10 @@ namespace scls {
         }
         return to_return;
     };
+
+    // Different kinds of values
+    double Formula_Base::value_to_double(Unknowns_Container* values) const {std::shared_ptr<Formula_Base> u = replace_unknowns(values);return u.get()->value_to_double();};
+    double Formula_Base::value_to_double() const {if(a_value.get() == 0){return 0;}return value<Fraction>()->to_double();};
 
     // Derivate a formula
     long long factorial(long long f){if(f == 0){return 1;}return f * factorial(f - 1);}

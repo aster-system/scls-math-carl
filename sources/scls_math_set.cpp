@@ -105,6 +105,16 @@ namespace scls {
 		return to_return;
 	};
 
+	// Set_Number constructor
+    Set_Number::Set_Number(){}
+    Set_Number::Set_Number(Interval interval){a_intervals.push_back(interval);}
+    Set_Number::Set_Number(const Set_Number& other):a_intervals(other.a_intervals),a_numbers(other.a_numbers){}
+
+    // Add an interval to the set
+    void Set_Number::add_interval(Interval to_add) {if(!to_add.is_empty()){a_intervals.push_back(to_add);__sort_interval();check_intervals();};}
+    // Add a number to the set
+    void Set_Number::add_number(Fraction to_add) {if(!is_in(to_add)){add_interval(Interval(to_add));}}
+
 	// Compares this definition set with another
 	bool Set_Number::compare(Set_Number value) {
 		// Compare size
@@ -165,35 +175,8 @@ namespace scls {
 		}
 	}
 	// Excludes a value
-	void Set_Number::exclude(scls::Fraction number) {
-		for(int i = 0;i<static_cast<int>(a_intervals.size());i++) {
-			if(a_intervals.at(i).end() >= number || a_intervals.at(i).end_infinite()) {
-				if(a_intervals.at(i).start() <= number || a_intervals.at(i).start_infinite()) {
-					if(a_intervals.at(i).start() != a_intervals.at(i).end() || a_intervals.at(i).end_infinite() || a_intervals.at(i).start_infinite()) {
-						// Create a new interval
-						a_intervals.insert(a_intervals.begin() + i + 1, a_intervals.at(i));
-
-						// Edit the first interval
-						a_intervals.at(i).set_end(number);
-						a_intervals.at(i).set_end_included(false);
-						a_intervals.at(i).set_end_infinite(false);
-
-						// Edit the second interval
-						a_intervals.at(i + 1).set_start(number);
-						a_intervals.at(i + 1).set_start_included(false);
-						a_intervals.at(i + 1).set_start_infinite(false);
-					}
-					else {a_intervals.erase(a_intervals.begin() + i);}
-
-					// Checks the interval
-					check_intervals();
-					return;
-				}
-				else{return;}
-			}
-		}
-	}
 	void Set_Number::exclude(Interval interval) {
+	    // Exclude from the intervals
 		if(interval.start_infinite() && interval.end_infinite()){clear();}
 		else if(interval.start_infinite()) {
 			// Start infinite
@@ -226,17 +209,30 @@ namespace scls {
 		}
 		else {
 			// Go to the next interval
-			int i = 0;
-			while(i < static_cast<int>(a_intervals.size()) && a_intervals.at(i).end() < interval.start()){i++;}
-			while(i < static_cast<int>(a_intervals.size()) && a_intervals.at(i).start() < interval.end()){
-				if(a_intervals.at(i).start() < interval.start()){
-					a_intervals[i].set_end(interval.start());a_intervals[i].set_end_included(interval.start_included());
+			int i = 0;while(i < static_cast<int>(a_intervals.size()) && (a_intervals.at(i).end() < interval.start() && !a_intervals.at(i).end_infinite())){i++;}
+
+			// Handle the needed intervals
+			while(i < static_cast<int>(a_intervals.size()) && a_intervals.at(i).start() <= interval.end()){
+				if(a_intervals.at(i).start() <= interval.start()){
+				    // Handle start
+				    Fraction temp = a_intervals[i].end();bool temp_b = a_intervals[i].end_included();
+                    if(a_intervals.at(i).start() == interval.start()){
+                        if(a_intervals.at(i).start_included() && !interval.start_included()){a_intervals.insert(a_intervals.begin() + i, Interval(interval.end(), interval.end_included(), temp, temp_b));}
+                        a_intervals[i].set_start(interval.end());a_intervals[i].set_start_included(!interval.end_included());
+                    }
+                    else{
+                        a_intervals[i].set_end(interval.start());a_intervals[i].set_end_included(interval.start_included());
+                        if(temp > interval.end()){a_intervals.insert(a_intervals.begin() + i + 1, Interval(interval.end(), interval.end_included(), temp, temp_b));}
+                        else if(temp == interval.end() && temp_b && !interval.end_included()){a_intervals.insert(a_intervals.begin() + i + 1, Interval(temp, true, temp, true));}
+                    }
+
 					i++;
 				}
 				else{a_intervals.erase(a_intervals.begin() + i);}
 			}
 		}
 	}
+	void Set_Number::exclude(scls::Fraction number) {exclude(Interval(number, true, number, true));}
 	void Set_Number::exclude(scls::Set_Number* set_number) {for(int i = 0;i<static_cast<int>(set_number->a_intervals.size());i++){exclude(set_number->a_intervals.at(i));}}
 	// Returns the intersection between this set and an interval
 	Set_Number Set_Number::intersection(Interval other) {

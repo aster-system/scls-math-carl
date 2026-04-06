@@ -66,14 +66,26 @@ namespace scls {
 		Plane_Base(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):a_height_unit_in_canonical_base(needed_height_unit_in_canonical_base),a_width_unit_in_canonical_base(needed_width_unit_in_canonical_base),a_x_middle_in_canonical_base(needed_x_unit_in_canonical_base),a_y_middle_in_canonical_base(needed_y_unit_in_canonical_base){};
 
 		// Conversion BASE -> CANONICAL
-		double base_scale_x_to_canonical_scale_x(double x){return x * a_width_unit_in_canonical_base;};
-		double base_x_to_canonical_x(double x){return a_x_middle_in_canonical_base + x * a_width_unit_in_canonical_base;};
-		double base_scale_y_to_canonical_scale_y(double y){return y * a_height_unit_in_canonical_base;};
-		double base_y_to_canonical_y(double y){return a_y_middle_in_canonical_base + y * a_height_unit_in_canonical_base;};
+		double base_scale_x_to_canonical_scale_x(double x_from_base){return x_from_base * a_width_unit_in_canonical_base;};
+		double base_x_to_canonical_x(double x_from_base){return a_x_middle_in_canonical_base + x_from_base * a_width_unit_in_canonical_base;};
+		double base_scale_y_to_canonical_scale_y(double y_from_base){return y_from_base * a_height_unit_in_canonical_base;};
+		double base_y_to_canonical_y(double y_from_base){return a_y_middle_in_canonical_base + y_from_base * a_height_unit_in_canonical_base;};
 
 		// Conversion CANONICAL -> BASE
-		double canonical_x_to_base_x(double x){return (x - a_x_middle_in_canonical_base) / a_width_unit_in_canonical_base;};
-		double canonical_y_to_base_y(double y){return (y - a_y_middle_in_canonical_base) / a_height_unit_in_canonical_base;};
+		double canonical_x_to_base_x(double x_from_canonical){return (x_from_canonical - a_x_middle_in_canonical_base) / a_width_unit_in_canonical_base;};
+		double canonical_y_to_base_y(double y_from_canonical){return (y_from_canonical - a_y_middle_in_canonical_base) / a_height_unit_in_canonical_base;};
+
+		// Getters and setters
+		inline double height_unit_in_canonical_base() const {return a_height_unit_in_canonical_base;};
+		inline void set_height_unit_in_canonical_base(double new_height_unit_in_canonical_base){a_height_unit_in_canonical_base = new_height_unit_in_canonical_base;};
+		inline void set_width_unit_in_canonical_base(double new_width_unit_in_canonical_base){a_width_unit_in_canonical_base = new_width_unit_in_canonical_base;};
+		inline void set_x_middle_in_base(double new_x_middle_in_canonical_base){a_x_middle_in_canonical_base = new_x_middle_in_canonical_base * a_width_unit_in_canonical_base;};
+		inline void set_x_middle_in_canonical_base(double new_x_middle_in_canonical_base){a_x_middle_in_canonical_base = new_x_middle_in_canonical_base;};
+		inline void set_y_middle_in_base(double new_y_middle_in_canonical_base){a_y_middle_in_canonical_base = new_y_middle_in_canonical_base * a_height_unit_in_canonical_base;};
+		inline void set_y_middle_in_canonical_base(double new_y_middle_in_canonical_base){a_y_middle_in_canonical_base = new_y_middle_in_canonical_base;};
+		inline double width_unit_in_canonical_base() const {return a_width_unit_in_canonical_base;};
+		inline double x_middle_in_canonical_base() const {return a_x_middle_in_canonical_base;};
+		inline double y_middle_in_canonical_base() const {return a_y_middle_in_canonical_base;};
 
 	private:
 		// Size of the base
@@ -198,11 +210,11 @@ namespace scls {
         //*********
 
         // Simplest __Point_2D_Formula constructor
-        __Point_2D_Formula(std::shared_ptr<__Formula> x, std::shared_ptr<__Formula> y):a_x(x),a_y(y){};
-        __Point_2D_Formula(__Formula x, __Formula y):__Point_2D_Formula(x.clone(), y.clone()){};
-        __Point_2D_Formula(__Fraction_Base x, __Fraction_Base y):__Point_2D_Formula(std::make_shared<__Formula>(x), std::make_shared<__Formula>(y)){};
-        __Point_2D_Formula(Fraction x, Fraction y):__Point_2D_Formula(std::make_shared<__Formula>(x), std::make_shared<__Formula>(y)){};
-        __Point_2D_Formula(double x, double y):__Point_2D_Formula(std::make_shared<__Formula>(x), std::make_shared<__Formula>(y)){};
+        __Point_2D_Formula(std::shared_ptr<Formula_Base> x, std::shared_ptr<Formula_Base> y):a_x(x),a_y(y){};
+        __Point_2D_Formula(Formula_Base x, Formula_Base y):__Point_2D_Formula(x.clone(), y.clone()){};
+        __Point_2D_Formula(__Fraction_Base x, __Fraction_Base y):__Point_2D_Formula(std::make_shared<Formula_Base>(x), std::make_shared<Formula_Base>(y)){};
+        __Point_2D_Formula(Fraction x, Fraction y):__Point_2D_Formula(std::make_shared<Formula_Base>(x), std::make_shared<Formula_Base>(y)){};
+        __Point_2D_Formula(double x, double y):__Point_2D_Formula(std::make_shared<Formula_Base>(x), std::make_shared<Formula_Base>(y)){};
         __Point_2D_Formula(Point_2D point_2d):__Point_2D_Formula(Fraction::from_double(point_2d.x()),Fraction::from_double(point_2d.y())){};
         __Point_2D_Formula():__Point_2D_Formula(0,0){};
         __Point_2D_Formula(const __Point_2D_Formula& point_copy):__Point_2D_Formula(point_copy.a_x.get()->clone(),point_copy.a_y.get()->clone()){};
@@ -210,7 +222,7 @@ namespace scls {
         // Returns a copy of the __Point_2D_Formula point
         inline __Point_2D_Formula point_copy() const {return __Point_2D_Formula(a_x.get()->clone(), a_y.get()->clone());};
         // Returns the __Point_2D_Formula to a Point_2D
-        inline Point_2D to_point_2d(__Formula::Unknowns_Container* values) const {return Point_2D(a_x.get()->value_to_double(values), a_y.get()->value_to_double(values));};
+        inline Point_2D to_point_2d(Formula_Base::Unknowns_Container* values) const {return Point_2D(a_x.get()->value_to_double(values), a_y.get()->value_to_double(values));};
         // Returns the point to XML text
         std::string to_xml_text();
 
@@ -222,16 +234,16 @@ namespace scls {
 
         // Move easily the object
         inline void move_xy(Fraction movement_x, Fraction movement_y) {move_x(movement_x);move_y(movement_y);};
-        inline void move_x(Fraction movement) {(*a_x.get()) += movement;};
-        inline void move_y(Fraction movement) {(*a_y.get()) += movement;};
+        inline void move_x(Fraction movement) {a_x.get()->add(movement);};
+        inline void move_y(Fraction movement) {a_y.get()->add(movement);};
 
         // Getters
-        inline void set_x(__Formula* new_x) {a_x = new_x->clone();};
-        inline void set_x(std::shared_ptr<__Formula> new_x) {a_x = new_x;};
-        inline void set_y(__Formula* new_y) {a_y = new_y->clone();};
-        inline void set_y(std::shared_ptr<__Formula> new_y) {a_y = new_y;};
-        inline __Formula* x() const {return a_x.get();};
-        inline __Formula* y() const {return a_y.get();};
+        inline void set_x(Formula_Base* new_x) {a_x = new_x->clone();};
+        inline void set_x(std::shared_ptr<Formula_Base> new_x) {a_x = new_x;};
+        inline void set_y(Formula_Base* new_y) {a_y = new_y->clone();};
+        inline void set_y(std::shared_ptr<Formula_Base> new_y) {a_y = new_y;};
+        inline Formula_Base* x() const {return a_x.get();};
+        inline Formula_Base* y() const {return a_y.get();};
 
         // Rotates the formula
         __Point_2D_Formula rotated(double rotation) const;
@@ -244,17 +256,17 @@ namespace scls {
         //*********
 
         // Adds a vector to this vector with another
-        inline void __add(Point_2D value) {(*a_x.get())+=Fraction::from_double(value.x());(*a_y.get())+=Fraction::from_double(value.y());};
-        inline void __add(__Point_2D_Formula value) {x()->__add(value.x());y()->__add(value.y());};
+        inline void __add(Point_2D value) {a_x.get()->add(Fraction::from_double(value.x()));a_y.get()->add(Fraction::from_double(value.y()));};
+        inline void __add(__Point_2D_Formula value) {x()->add(value.x());y()->add(value.y());};
         inline __Point_2D_Formula __add_without_modification(Point_2D object) const {__Point_2D_Formula to_return = *this;to_return.__add(object);return to_return;};
         // Divides a vector to this vector with another
-        inline void __divide(Fraction value) {(*a_x.get())/=value;(*a_y.get())/=value;};
+        inline void __divide(Fraction value) {a_x.get()->divide(value);a_y.get()->divide(value);};
         // Multiplies a vector to this vector with another
-        inline void __multiply(Fraction value) {(*a_x.get())*=value;(*a_y.get())*=value;};
-        inline void __multiply(Point_2D value) {(*a_x.get())*=Fraction::from_double(value.x());(*a_y.get())*=Fraction::from_double(value.y());};
-        inline void __multiply(__Point_2D_Formula value) {a_x.get()->__multiply(value.x());a_y.get()->__multiply(value.y());};
+        inline void __multiply(Fraction value) {a_x.get()->multiply(value);a_y.get()->multiply(value);};
+        inline void __multiply(Point_2D value) {a_x.get()->multiply(Fraction::from_double(value.x()));a_y.get()->multiply(Fraction::from_double(value.y()));};
+        inline void __multiply(__Point_2D_Formula value) {a_x.get()->multiply(value.x());a_y.get()->multiply(value.y());};
         // Returns a substraction of this vector with another
-        inline void __substract(Point_2D value) {a_x.get()->substract(value.x());a_y.get()->substract(value.y());};
+        inline void __substract(Point_2D value) {a_x.get()->substract(Fraction::from_double(value.x()));a_y.get()->substract(Fraction::from_double(value.y()));};
         inline __Point_2D_Formula __substract_without_modification(Point_2D object) const {__Point_2D_Formula to_return = *this;to_return.__substract(object);return to_return;};
 
         // Built-in operators
@@ -281,10 +293,10 @@ namespace scls {
         //*********
 
         // X position of the point
-        std::shared_ptr<__Formula> a_x = std::make_shared<__Formula>();
+        std::shared_ptr<Formula_Base> a_x = std::make_shared<Formula_Base>();
         // Y position of the point
-        std::shared_ptr<__Formula> a_y = std::make_shared<__Formula>();
-    }; typedef __Point_2D_Formula Point_2D_Formula;
+        std::shared_ptr<Formula_Base> a_y = std::make_shared<Formula_Base>();
+    }; typedef __Point_2D_Formula Point_2D_Formula;//*/
 
     // Returns the datas point of two crossing lines
     struct Crossing_Datas {bool crossed = false;double crossing_x = 0;double crossing_y = 0;bool same_lines = false;};

@@ -42,20 +42,23 @@ namespace scls {
     class Matrix {
     public:
         // Matrix constructor
-        Matrix(int width, int height);
+    	Matrix(int width);
+    	Matrix(int width, int height);
 
         // Do a matricial addition
         void add(Matrix* m);
 
         // Do a matrix multiplication
-        void multiply(scls::__Formula f);
-        void multiply(scls::__Formula* f);
+        void multiply(Formula_Base* f);
 
         // Do a matrix product (this * m)
         Matrix product(Matrix* m);
 
         // Access to an element
-        scls::__Formula* element_at(int x, int y);
+        Formula_Base* element_at(int x);
+        Formula_Base* element_at(int x, int y);
+        void set_element_at(int x, std::shared_ptr<Formula_Base> value);
+        void set_element_at(int x, int y, std::shared_ptr<Formula_Base> value);
 
         // Returns the matrix to an MathML
         std::string to_mathml(scls::Textual_Math_Settings* settings);
@@ -70,7 +73,7 @@ namespace scls {
         int a_height = 1;int a_width = 1;
 
         // Elements
-        std::vector<std::shared_ptr<scls::__Formula>> a_elements;
+        std::vector<std::shared_ptr<Formula_Base>> a_elements;
     };
 }
 

@@ -305,9 +305,10 @@ namespace scls {
         if(operation == "+"){_add(*reinterpret_cast<__Fraction_Base*>(other));}
         else if(operation == "*"){_multiply(*reinterpret_cast<__Fraction_Base*>(other));}
         else if(operation == "/"){_divide(*reinterpret_cast<__Fraction_Base*>(other));}
-        else if(operation == "ln"){double d = to_double();d = std::log(d);set_from_double(d);}
-        else if(operation == "exp"){double d = to_double();d = std::exp(d);set_from_double(d);}
+        else if(operation == "abs"){if(a_numerator < 0){a_numerator = -a_numerator;}}
         else if(operation == "cos"){double d = to_double();d = std::cos(d);set_from_double(d);}
+        else if(operation == "exp"){double d = to_double();d = std::exp(d);set_from_double(d);}
+        else if(operation == "ln"){double d = to_double();d = std::log(d);set_from_double(d);}
         else if(operation == "sin"){double d = to_double();d = std::sin(d);set_from_double(d);}
         else if(operation == "sqrt"){double d = to_double();d = std::sqrt(d);set_from_double(d);}
         else if(operation == "tan"){double d = to_double();d = std::tan(d);set_from_double(d);}

@@ -37,6 +37,7 @@ namespace scls {
     //*********
 
     // Matrix constructor
+	Matrix::Matrix(int width):Matrix(1, width){}
     Matrix::Matrix(int width, int height):a_height(height),a_width(width){create_elements();};
 
     // Do a matricial addition
@@ -47,18 +48,17 @@ namespace scls {
         // Do the addition
         for(int i = 0;i<a_width;i++) {
             for(int j = 0;j<a_height;j++) {
-                (a_elements[i * a_height + j].get())->__add(m->a_elements[i * a_height + j].get());
+                (a_elements[i * a_height + j].get())->add(m->a_elements[i * a_height + j].get());
             }
         }
     }
 
     // Do a matrix multiplication
-    void Matrix::multiply(__Formula f){multiply(&f);}
-    void Matrix::multiply(__Formula* f) {
+    void Matrix::multiply(Formula_Base* f) {
         // Do the addition
         for(int i = 0;i<a_width;i++) {
             for(int j = 0;j<a_height;j++) {
-                (a_elements[i * a_height + j].get())->__multiply(f);
+                (a_elements[i * a_height + j].get())->multiply(f);
             }
         }
     }
@@ -73,11 +73,11 @@ namespace scls {
         // Do the product
         for(int i = 0;i<m->a_width;i++) {
             for(int j = 0;j<a_height;j++) {
-                scls::__Formula* current = to_return.element_at(i, j);
+                scls::Formula_Base* current = to_return.element_at(i, j);
                 for(int k = 0;k<a_width;k++) {
-                    std::shared_ptr<scls::__Formula_Base> f = element_at(k, j)->clone();
-                    f.get()->__multiply(m->element_at(i, k));
-                    current->__add(f.get());
+                    std::shared_ptr<Formula_Base> f = element_at(k, j)->clone();
+                    f.get()->multiply(m->element_at(i, k));
+                    current->add(f.get());std::cout << "A " << k << " " << j << " " << element_at(k, j)->to_std_string(0) << " " << f.get()->to_std_string(0) << std::endl;
                 }
             }
         }
@@ -86,7 +86,10 @@ namespace scls {
     };
 
     // Access to an element
-    scls::__Formula* Matrix::element_at(int x, int y){return a_elements.at(x * a_height + y).get();};
+    Formula_Base* Matrix::element_at(int x){return element_at(0, x);};
+    Formula_Base* Matrix::element_at(int x, int y){return a_elements.at(x * a_height + y).get();};
+    void Matrix::set_element_at(int x, std::shared_ptr<Formula_Base> value){return set_element_at(0, x, value);};
+    void Matrix::set_element_at(int x, int y, std::shared_ptr<Formula_Base> value){a_elements[x * a_height + y] = value;};
 
     // Returns the matrix to an MathML
     std::string Matrix::to_mathml(scls::Textual_Math_Settings* settings) {
@@ -137,10 +140,10 @@ namespace scls {
 
     // Create the elements
     void Matrix::create_elements(){
-        a_elements = std::vector<std::shared_ptr<scls::__Formula>>(a_width * a_height);
+        a_elements = std::vector<std::shared_ptr<scls::Formula_Base>>(a_width * a_height);
         for(int i = 0;i<a_width;i++) {
             for(int j = 0;j<a_height;j++) {
-                a_elements[i * a_height + j] = std::make_shared<scls::__Formula>(0);
+                a_elements[i * a_height + j] = std::make_shared<scls::Formula_Base>(0);
             }
         }
     }
