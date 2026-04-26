@@ -28,7 +28,8 @@
 #define SCLS_MATH_EXTANDABLE_INT
 
 // Include SCLS Math bigger header
-#include "../scls_math.h"
+#include "../scls_math_root.h"
+#include "scls_math_numbers.h"
 
 namespace scls {
     // Returns the number of bit in a number (position of the last bit)
@@ -42,7 +43,7 @@ namespace scls {
     public:
         // Extendable_Int constructor
         Extendable_Int();
-        Extendable_Int(unsigned long long i);
+        Extendable_Int(int64_t i);
         Extendable_Int(const Extendable_Int& m);
         // Extendable_Int destructor
         ~Extendable_Int();
@@ -51,21 +52,22 @@ namespace scls {
         void add(Extendable_Int* c);
 
         // Returns if the current Int is bigger than an other or not
-        bool is_bigger_than(Extendable_Int *c);
-        bool is_equal(Extendable_Int *c);
+        bool is_bigger_than_without_sign(Extendable_Int *c) const;
+        bool is_bigger_than(Extendable_Int *c) const;
+        bool is_equal(const Extendable_Int *c) const;
 
         // Returns if the Int has a value
-        bool is_null(){return a_parts.size() == 1 && a_parts.at(0) == 0;}
+        bool is_null() const {return (a_parts.size() == 1 && a_parts.at(0) == 0) || a_parts.size() == 0;}
 
         // Divide an integer to this one
-        void divide(unsigned long long c);
-        void divide(Extendable_Int* c);
-        void divide_better(unsigned long long c);
+        void divide(int64_t c);
+        void divide(const Extendable_Int* c);
+        void divide_better(int64_t c);
         void divide_better(Extendable_Int* c);
         void modulo(Extendable_Int* c);
 
         // Multiply an integer to this one
-        void multiply(unsigned long long c);
+        void multiply(int64_t c);
         void multiply(Extendable_Int* c);
 
         // Shifts the number
@@ -78,8 +80,12 @@ namespace scls {
         // Sub an integer to this one
         void sub(Extendable_Int* c);
 
+        // Returns the number to an int64
+        int32_t to_int32() const;
+        int64_t to_int64() const;
+        uint64_t to_uint64_end() const;
         // Convert directly to std string
-        std::string to_std_string();
+        std::string to_std_string() const;
 
         // Returns the size in bit
         unsigned long long size_in_base(unsigned long long base) const;
@@ -87,7 +93,19 @@ namespace scls {
 
         // Getters and setters
         inline std::vector<unsigned int>& parts() {return a_parts;};
+        inline size_t parts_size() const {return a_parts.size();};
+        inline void set_negative(bool new_negative){a_negative = new_negative;}
+
+        // Operator
+        bool operator==(int64_t i) const;
+        bool operator!=(int64_t i) const;
+        bool operator<(int64_t i) const;
+        bool operator>(int64_t i) const;
+
     private:
+        // Sign
+        bool a_negative = false;
+
         // Different pars of the integer
         std::vector<unsigned int> a_parts = std::vector<unsigned int>(1, 0);
     };

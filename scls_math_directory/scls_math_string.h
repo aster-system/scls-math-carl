@@ -27,6 +27,7 @@
 #ifndef SCLS_MATH_STRING
 #define SCLS_MATH_STRING
 
+#include "../scls_math_root.h"
 #include "scls_math_formula.h"
 #include "scls_math_geometry_core.h"
 
@@ -41,6 +42,33 @@ namespace scls {
 	class Math_Environment {
         // Class representating an environment for maths. in SCLS
     public:
+
+        class Namespace {
+            // Class representing a variable container for maths. in SCLS
+        public:
+            // Namespace constructor
+            Namespace(std::string name);
+
+            // Handle unknowns
+            // Creates a unknown
+            Formula_Base::Formula_Unknown* create_unknown(std::string name);
+            std::shared_ptr<Formula_Base::Formula_Unknown> create_unknown_shared_ptr(std::string name);
+            // Sets the value of an unknown by its name
+            void set_unknown_value_by_name(std::string name, Fraction new_value);
+            void set_unknown_value_by_name(std::string name, std::shared_ptr<Formula_Base> new_value);
+            // Returns a value by its name
+            scls::Fraction value_by_name(std::string name)const;
+            // Returns a unknown by its name
+            Formula_Base::Formula_Unknown* unknown_by_name(std::string name)const;
+            std::shared_ptr<Formula_Base::Formula_Unknown> unknown_shared_ptr_by_name(std::string name)const;
+
+        private:
+            // Name of the namespace
+            std::string a_name = std::string();
+
+            // Variables
+            std::shared_ptr<Formula_Base::Unknowns_Container> a_unknowns = std::make_shared<Formula_Base::Unknowns_Container>();
+        };
 
         // Math_Environment constructor
         Math_Environment();
@@ -93,13 +121,26 @@ namespace scls {
         // Returns a point 2D value
         scls::Point_2D_Formula value_point_2d(std::string base) const;
 
+        // Namespaces
+        // Add a namespace in the stack
+        void add_namespace_stack(std::shared_ptr<Namespace>needed_namespace);
+        void pop_namespace_stack();
+        // Create a namespace
+        std::shared_ptr<Namespace> create_namespace(std::string name);
+        // Returns the back namespace
+        Namespace* back_namespace();
+
         // Getters and setters
+        inline int namespaces_size() const {return a_namespaces_size;};
         inline std::vector<int>& repetitions() {return a_repetitions;};
         inline Formula_Base::Unknowns_Container* unknowns(){return a_unknowns.get();};
         inline std::shared_ptr<Formula_Base::Unknowns_Container> unknowns_shared_ptr(){return a_unknowns;};
 
     private:
 
+        // Namespaces
+        std::list<std::shared_ptr<Namespace>> a_namespaces;
+        int a_namespaces_size = 0;
         // Repetitions
         std::vector<int> a_repetitions;
         // Variables

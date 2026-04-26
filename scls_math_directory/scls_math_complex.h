@@ -210,9 +210,8 @@ namespace scls {
         };
 
     // Complex formula
-    typedef __Formula_Base_Template<Complex> __Formula;
 
-    // Trigonometric complex
+    /*// Trigonometric complex
     struct Complex_Polar {
     	// Complex_Polar constructor
     	Complex_Polar(std::shared_ptr<__Formula_Base_Template<Complex>> needed_argument, std::shared_ptr<__Formula_Base_Template<Complex>> needed_modulus):a_argument(needed_argument),a_modulus(needed_modulus){};
@@ -227,8 +226,7 @@ namespace scls {
     	// Module and argument
     	std::shared_ptr<__Formula_Base_Template<Complex>> a_argument;
     	std::shared_ptr<__Formula_Base_Template<Complex>> a_modulus;
-    };
-
+    };//*/
 }
 
 

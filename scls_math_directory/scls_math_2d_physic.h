@@ -250,7 +250,7 @@ namespace scls {
         inline scls::Fraction raw_velocity_y() {return raw_velocity().y();};
         inline double restitution() const {return a_restitution;};
         inline bool save_to_xml_text() const {return a_save_to_xml_text;};
-        inline void set_delta_time(scls::Fraction new_delta_time){a_delta_time = new_delta_time;attached_transform()->set_delta_time(new_delta_time);for(int i = 0;i<static_cast<int>(a_collisions.size());i++){a_collisions.at(i).get()->attached_transform()->set_delta_time(new_delta_time);}};
+        inline void set_delta_time(double new_delta_time){a_delta_time = new_delta_time;attached_transform()->set_delta_time(new_delta_time);for(int i = 0;i<static_cast<int>(a_collisions.size());i++){a_collisions.at(i).get()->attached_transform()->set_delta_time(new_delta_time);}};
         inline void set_ignore_dynamic_collisions(bool new_ignore_dynamic_collisions){a_ignore_dynamic_collisions = new_ignore_dynamic_collisions;};
         inline void set_loaded_in_map(bool new_loaded_map){a_loaded_in_map = new_loaded_map;};
         inline void set_restitution(double new_restitution){a_restitution = new_restitution;};
@@ -260,9 +260,9 @@ namespace scls {
         inline void set_use_gravity(bool new_use_gravity){a_use_gravity = new_use_gravity;};
         inline void set_velocity(scls::Point_2D new_velocity){attached_transform()->set_velocity(new_velocity);};
         inline void set_velocity_start(scls::Point_2D_Formula new_velocity){a_velocity_start = new_velocity;};
-        inline void set_velocity_x(double new_velocity_x, bool with_delta_time){if(with_delta_time){a_attached_transform.lock().get()->set_velocity_x(new_velocity_x / a_delta_time.to_double());}else{a_attached_transform.lock().get()->set_velocity_x(new_velocity_x);}};
+        inline void set_velocity_x(double new_velocity_x, bool with_delta_time){if(with_delta_time){a_attached_transform.lock().get()->set_velocity_x(new_velocity_x / a_delta_time);}else{a_attached_transform.lock().get()->set_velocity_x(new_velocity_x);}};
         inline void set_velocity_x(double new_velocity_x){set_velocity_x(new_velocity_x, false);};
-        inline void set_velocity_y(double new_velocity_y, bool with_delta_time){if(with_delta_time){a_attached_transform.lock().get()->set_velocity_y(new_velocity_y / a_delta_time.to_double());}else{a_attached_transform.lock().get()->set_velocity_y(new_velocity_y);}};
+        inline void set_velocity_y(double new_velocity_y, bool with_delta_time){if(with_delta_time){a_attached_transform.lock().get()->set_velocity_y(new_velocity_y / a_delta_time);}else{a_attached_transform.lock().get()->set_velocity_y(new_velocity_y);}};
         inline void set_velocity_y(double new_velocity_y){set_velocity_y(new_velocity_y, false);};
         inline bool use_gravity() const {return a_use_gravity;};
         inline std::vector<Physic_Case*>& used_physic_case(){return a_used_physic_case;};
@@ -282,7 +282,7 @@ namespace scls {
         std::weak_ptr<Physic_Object> a_this_object;
 
         // Delta time of the object
-        scls::Fraction a_delta_time = scls::Fraction(1, 100);
+        double a_delta_time = 0.01;
         // If the dynamic collision should be ignored or not
         bool a_ignore_dynamic_collisions = false;
         // If the object is loaded in the map

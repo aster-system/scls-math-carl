@@ -27,8 +27,8 @@
 #ifndef SCLS_MATH_GRAPH
 #define SCLS_MATH_GRAPH
 
-#include "../scls_math.h"
-#include <list>
+#include "../scls_math_root.h"
+#include "scls_math_geometry_core.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {

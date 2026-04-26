@@ -34,6 +34,28 @@ namespace scls {
 	//
 	//*********
 
+	// Namespace constructor
+    Math_Environment::Namespace::Namespace(std::string name):a_name(name){}
+
+    // Handle unknowns
+    // Creates a unknown
+    Formula_Base::Formula_Unknown* Math_Environment::Namespace::create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
+    std::shared_ptr<Formula_Base::Formula_Unknown> Math_Environment::Namespace::create_unknown_shared_ptr(std::string name){return a_unknowns.get()->create_unknown_shared_ptr(name);};
+    // Sets the value of an unknown by its name
+    void Math_Environment::Namespace::set_unknown_value_by_name(std::string name, Fraction new_value){set_unknown_value_by_name(name, Formula_Base::new_formula(new_value));}
+    void Math_Environment::Namespace::set_unknown_value_by_name(std::string name, std::shared_ptr<Formula_Base> new_value){reinterpret_cast<Formula_Base::Formula_Unknown*>(create_unknown(name))->value = new_value;}
+    // Returns a value by its name
+    Fraction Math_Environment::Namespace::value_by_name(std::string name)const{Formula_Base::Formula_Unknown*unknown=unknown_by_name(name);if(unknown==0||unknown->value.get()==0){return 0;}return (*unknown->value.get()->value<scls::Fraction>());};
+    // Returns a unknown by its name
+    Formula_Base::Formula_Unknown* Math_Environment::Namespace::unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
+    std::shared_ptr<Formula_Base::Formula_Unknown> Math_Environment::Namespace::unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
+
+    //*********
+	//
+	// The environment class
+	//
+	//*********
+
     // Math_Environment constructor
     Math_Environment::Math_Environment(){clear();};
 
@@ -89,6 +111,14 @@ namespace scls {
     // Returns a unknown by its name
     Formula_Base::Formula_Unknown* Math_Environment::unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
     std::shared_ptr<Formula_Base::Formula_Unknown> Math_Environment::unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
+
+    // Add a namespace in the stack
+    void Math_Environment::add_namespace_stack(std::shared_ptr<Namespace> needed_namespace){a_namespaces.push_back(needed_namespace);a_namespaces_size++;}
+    void Math_Environment::pop_namespace_stack(){a_namespaces.pop_back();a_namespaces_size--;}
+    // Create a namespace
+    std::shared_ptr<Math_Environment::Namespace> Math_Environment::create_namespace(std::string name){return std::make_shared<Math_Environment::Namespace>(name);}
+    // Returns the back namespace
+    Math_Environment::Namespace* Math_Environment::back_namespace(){return a_namespaces.back().get();}
 
     // Use parsers methods outside the class
     bool string_is_operator(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, std::string to_test) {

@@ -27,7 +27,7 @@
 #ifndef SCLS_MATH_SET
 #define SCLS_MATH_SET
 
-#include "../scls_math.h"
+#include "../scls_math_root.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {

@@ -92,9 +92,60 @@ namespace scls {
         return to_return;
     }
 
+    // Vector_Base constructor
+    Vector_Base::Vector_Base(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):Plane_Base(needed_width_unit_in_canonical_base, needed_height_unit_in_canonical_base, needed_x_unit_in_canonical_base, needed_y_unit_in_canonical_base){};
+    Vector_Base::Vector_Base(double needed_width_unit_in_canonical_base_x, double needed_width_unit_in_canonical_base_y, double needed_height_unit_in_canonical_base_x, double needed_height_unit_in_canonical_base_y, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):Plane_Base(1, 1, needed_x_unit_in_canonical_base, needed_y_unit_in_canonical_base){
+		double norm_u = std::sqrt(needed_width_unit_in_canonical_base_x * needed_width_unit_in_canonical_base_x + needed_width_unit_in_canonical_base_y * needed_width_unit_in_canonical_base_y);
+		double norm_v = std::sqrt(needed_height_unit_in_canonical_base_x * needed_height_unit_in_canonical_base_x + needed_height_unit_in_canonical_base_y * needed_height_unit_in_canonical_base_y);
+		needed_width_unit_in_canonical_base_x /= norm_u;
+		needed_width_unit_in_canonical_base_y /= norm_u;
+		needed_height_unit_in_canonical_base_x /= norm_v;
+		needed_height_unit_in_canonical_base_y /= norm_v;
+
+		set_height_unit_in_canonical_base(norm_v);
+		set_width_unit_in_canonical_base(norm_u);
+
+		a_x_in_canonical_base_x = needed_width_unit_in_canonical_base_x;
+		a_x_in_canonical_base_y = needed_width_unit_in_canonical_base_y;
+		a_y_in_canonical_base_x = needed_height_unit_in_canonical_base_x;
+		a_y_in_canonical_base_y = needed_height_unit_in_canonical_base_y;
+    };
+
+    // Conversion CANONICAL -> BASE
+    double Vector_Base::canonical_to_base_x(double x_from_canonical, double y_from_canonical){
+    	/*double det = u.x() * v.y() - u.y() * v.x();
+    	if (std::abs(det) < 1e-15) return; // Sécurité : base colinéaire
+
+    	// Pré-calcul de l'Inverse (Matrice de passage Canonique -> Base)
+    	double inv_00 =  v.y() / det;
+    	double inv_01 = -v.x() / det;
+    	double inv_10 = -u.y() / det;
+    	double inv_11 =  u.x() / det;//*/
+
+    	double to_return = 0;
+    	if(a_x_in_canonical_base_x != 0) {
+    		to_return += (x_from_canonical - x_middle_in_canonical_base()) / (a_x_in_canonical_base_x * width_unit_in_canonical_base());
+    	}
+    	if(a_y_in_canonical_base_x != 0) {
+            to_return += ((y_from_canonical - y_middle_in_canonical_base()) / (height_unit_in_canonical_base() * a_y_in_canonical_base_y)) * (a_y_in_canonical_base_x / a_y_in_canonical_base_y);
+    	}
+    	return to_return;
+    }
+    double Vector_Base::canonical_to_base_y(double x_from_canonical, double y_from_canonical){
+    	double to_return = 0;
+    	if(a_x_in_canonical_base_y != 0){
+    		to_return += ((x_from_canonical - x_middle_in_canonical_base()) / (width_unit_in_canonical_base() * a_x_in_canonical_base_x)) * (a_x_in_canonical_base_y / a_x_in_canonical_base_x);
+    	}
+    	if(a_y_in_canonical_base_y != 0) {
+    		to_return += (y_from_canonical - y_middle_in_canonical_base()) / (a_y_in_canonical_base_y * height_unit_in_canonical_base());
+    	}
+    	return to_return;
+    }
+
     // Converts a lot of points with a base
 	std::vector<Point_2D> canonical_points_to_base_points(Plane_Base* base, std::vector<Point_2D> points_to_convert){
 		std::vector<Point_2D> to_return = std::vector<Point_2D>(points_to_convert.size());
+		// PENSER A CHANGER POUR RESERVE + EMPLACE
 		for(std::size_t i = 0;i<points_to_convert.size();i++) {
 			to_return[i] = Point_2D(base->base_x_to_canonical_x(points_to_convert.at(i).x()), base->base_y_to_canonical_y(-points_to_convert.at(i).y()));
 		}
@@ -287,7 +338,7 @@ namespace scls {
     Transform_Object_2D::~Transform_Object_2D(){if(parent() != 0){parent()->remove_child(this);}};
 
     // Soft-resets the transform
-    void Transform_Object_2D::soft_reset(){if(a_delta_time != 0){a_real_velocity = (absolute_position() - a_last_position) / a_delta_time.to_double();}a_delta_time=0;a_last_position = absolute_position();a_moved_during_this_frame = false;};
+    void Transform_Object_2D::soft_reset(){if(a_delta_time != 0){a_real_velocity = (absolute_position() - a_last_position) / a_delta_time;}a_delta_time=0;a_last_position = absolute_position();a_moved_during_this_frame = false;};
 
     // Absolute position handling
     // Returns the absolute X position
@@ -322,8 +373,8 @@ namespace scls {
     bool Transform_Object_2D::touch(Transform_Object_2D* object){return !((min_x() > object->max_x() || object->min_x() > max_x()) || (min_y() > object->max_y() || object->min_y() > max_y()));}
 
     // Move easily the object
-    void Transform_Object_2D::move_x(Fraction movement) {set_x(x() + movement.to_double());};
-    void Transform_Object_2D::move_y(Fraction movement) {set_y(y() + movement.to_double());};
+    void Transform_Object_2D::move_x(double movement) {set_x(x() + movement);};
+    void Transform_Object_2D::move_y(double movement) {set_y(y() + movement);};
     void Transform_Object_2D::move_xy(double movement_x, double movement_y){set_x(x() + movement_x);set_y(y() + movement_y);}
     // TEST {a_velocity.set_x(a_velocity.x() + movement_x / delta_time().to_double());a_velocity.set_y(a_velocity.y() + movement_y / delta_time().to_double());};
 
@@ -349,8 +400,8 @@ namespace scls {
     double Transform_Object_2D::min_absolute_y_next() const {return min_absolute_y() + next_movement_y();};
     Point_2D Transform_Object_2D::position_next() const {return Point_2D(x() + next_movement_x(), y() + next_movement_y());};
     // Next movement generated by the velocity
-    double Transform_Object_2D::next_movement_x()const{return velocity().x() * a_delta_time.to_double();};
-    double Transform_Object_2D::next_movement_y()const{return velocity().y() * a_delta_time.to_double();};
+    double Transform_Object_2D::next_movement_x()const{return velocity().x() * a_delta_time;};
+    double Transform_Object_2D::next_movement_y()const{return velocity().y() * a_delta_time;};
     // Next position
     double Transform_Object_2D::x_next() const {return x() + next_movement_x();};
     double Transform_Object_2D::y_next() const {return y() + next_movement_y();};

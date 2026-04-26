@@ -817,24 +817,20 @@ namespace scls {
 
     // Soft reset the engine
     void Physic_Engine::soft_reset(double used_delta_time){
-        scls::Fraction delta_time_fraction = scls::Fraction::from_double(used_delta_time);
-
         // Soft-reset the physic
         for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {
             if(physic_objects().at(i).get()->should_delete()){
                 delete_physic_object_case(physic_objects().at(i).get());
                 physic_objects().erase(physic_objects().begin() + i);i--;
             }
-            else{physic_objects().at(i).get()->soft_reset();physic_objects().at(i).get()->set_delta_time(delta_time_fraction);}
+            else{physic_objects().at(i).get()->soft_reset();physic_objects().at(i).get()->set_delta_time(used_delta_time);}
         }
     }
 
     // Updates the physic
-    scls::Point_2D gravity = scls::Point_2D(0, -20.8);
+    scls::Point_2D gravity = scls::Point_2D(0, -40.8);
     int Physic_Engine::update_physic(double used_delta_time) {int needed_upate = update_physic_early(used_delta_time);needed_upate += update_physic_late(used_delta_time);return needed_upate;};
     int Physic_Engine::update_physic_early(double used_delta_time) {
-        scls::Fraction delta_time_fraction = scls::Fraction::from_double(used_delta_time);
-
         // Realised updates
         int needed_update = 0;
 
@@ -844,7 +840,7 @@ namespace scls {
                 delete_physic_object_case(physic_objects().at(i).get());
                 physic_objects().erase(physic_objects().begin() + i);i--;
             }
-            else{physic_objects().at(i).get()->soft_reset();physic_objects().at(i).get()->set_delta_time(delta_time_fraction);}
+            else{physic_objects().at(i).get()->soft_reset();physic_objects().at(i).get()->set_delta_time(used_delta_time);}
         }
 
         // Apply gravity

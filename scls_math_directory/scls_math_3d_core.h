@@ -148,6 +148,7 @@ namespace scls {
         double a_y = 0;
         // Z position of the point
         double a_z = 0;
+
     }; typedef Point_3D Vector_3D;
 
     // Returns a point 3D with an angle (on y axis)
@@ -175,7 +176,7 @@ namespace scls {
         // Copy constructor
         Transform_Object_3D(Point_3D point_3d):a_position(point_3d){};
         // Transform_Object_3D destructor
-        ~Transform_Object_3D(){if(a_parent.get() != 0) a_parent.get()->remove_child(this);};
+        virtual ~Transform_Object_3D(){if(a_parent.get() != 0) a_parent.get()->remove_child(this);};
 
         // Soft-resets the transform
         inline void soft_reset(){a_moved_during_this_frame = false;};

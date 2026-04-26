@@ -96,6 +96,28 @@ namespace scls {
 		double a_x_middle_in_canonical_base = 0;
 		double a_y_middle_in_canonical_base = 0;
 	};
+	class Vector_Base : public Plane_Base {
+	public:
+		// Plane_Base constructor
+		Vector_Base(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base);
+		Vector_Base(double needed_width_unit_in_canonical_base_x, double needed_width_unit_in_canonical_base_y, double needed_height_unit_in_canonical_base_x, double needed_height_unit_in_canonical_base_y, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base);
+
+		// Conversion CANONICAL -> BASE
+		double canonical_to_base_x(double x_from_canonical, double y_from_canonical);
+		double canonical_to_base_y(double x_from_canonical, double y_from_canonical);
+
+		// Getters and setters
+		inline double x_in_canonical_base_x() const {return a_x_in_canonical_base_x;};
+		inline double x_in_canonical_base_y() const {return a_x_in_canonical_base_y;};
+		inline double y_in_canonical_base_x() const {return a_y_in_canonical_base_x;};
+		inline double y_in_canonical_base_y() const {return a_y_in_canonical_base_y;};
+	private:
+		// Vector for the "x" and "y" in the canonical base
+		double a_x_in_canonical_base_x = 1;
+		double a_x_in_canonical_base_y = 0;
+		double a_y_in_canonical_base_x = 0;
+		double a_y_in_canonical_base_y = 1;
+	};
 
     class Point_2D {
         // Class representing a 2D point
@@ -337,6 +359,8 @@ namespace scls {
 
         // Transform_Object_2D constructor
         __Transform_Object_2D_Base();
+        // Transform_Object_2D destructor
+        virtual ~__Transform_Object_2D_Base(){};
 
         //*********
         //
@@ -376,12 +400,12 @@ namespace scls {
 
         // Getters and setters
         inline std::vector<std::shared_ptr<Transform_Object_2D>>& children() {return a_children;};
-        inline Fraction delta_time() const {return a_delta_time;};
+        inline double delta_time() const {return a_delta_time;};
         inline unsigned int id() const {return a_id;};
         inline bool moved_during_this_frame() const {return a_moved_during_this_frame || (parent() != 0 && parent()->moved_during_this_frame());};
         inline Transform_Object_2D* parent() const {return a_parent.lock().get();};
         inline void remove_child(Transform_Object_2D* child){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children.at(i).get()==child){a_children.erase(a_children.begin()+i);return;}};};
-        inline void set_delta_time(Fraction new_delta_time){a_delta_time = new_delta_time;};
+        inline void set_delta_time(double new_delta_time){a_delta_time = new_delta_time;};
         inline void set_parent(Transform_Object_2D* new_parent){set_parent(new_parent->a_this_object.lock());};
         inline void set_parent(std::shared_ptr<Transform_Object_2D> new_parent) {
             if(parent() != 0){parent()->remove_child(this);}
@@ -433,8 +457,8 @@ namespace scls {
         bool touch(Transform_Object_2D* object);
 
         // Move easily the object
-        void move_x(Fraction movement);
-        void move_y(Fraction movement);
+        void move_x(double movement);
+        void move_y(double movement);
         void move_xy(double x, double y);
 
         // Extremums
@@ -555,7 +579,7 @@ namespace scls {
         //*********
 
         // Delta time
-        Fraction a_delta_time = Fraction(1, 100);
+        double a_delta_time = 0.01;
         // If the transform has been moved during this frame
         bool a_moved_during_this_frame = false;
 
