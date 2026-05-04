@@ -193,6 +193,7 @@ namespace scls {
         void add_collision(double x_1, double y_1, double x_2, double y_2);
         void add_collision(double x_1, double y_1, double x_2, double y_2, double restitution);
         void add_collisions(std::vector<Point_2D> points);
+        void add_collisions_direct(std::vector<Point_2D> points);
         // Checks if a collision occurs with an another collision
         void check_collision(std::shared_ptr<Collision> collision, Physic_Object* other_object);
         // Returns a new a collision to the graphic object

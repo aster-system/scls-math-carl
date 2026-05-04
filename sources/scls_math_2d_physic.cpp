@@ -199,6 +199,16 @@ namespace scls {
     	scls::Point_2D end = points.at(0) * attached_transform()->absolute_scale() + attached_transform()->absolute_position();
     	add_collision(start.x(), start.y(), end.x(), end.y());
     }
+    void Physic_Object::add_collisions_direct(std::vector<Point_2D> points) {
+    	for(std::size_t i = 0;i<points.size() - 1;i++) {
+			scls::Point_2D start = points.at(i);
+			scls::Point_2D end = points.at(i + 1);
+			add_collision(start.x(), start.y(), end.x(), end.y());
+		}
+    	scls::Point_2D start = points.at(points.size() - 1);
+    	scls::Point_2D end = points.at(0);
+    	add_collision(start.x(), start.y(), end.x(), end.y());
+    }
 
     // Checks if a collision occurs with an another object
     struct Collision_Result{

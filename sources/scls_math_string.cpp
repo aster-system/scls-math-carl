@@ -35,9 +35,13 @@ namespace scls {
 	//*********
 
 	// Namespace constructor
+	Math_Environment::Namespace::Namespace(std::string name, std::weak_ptr<Namespace> parent):a_name(name),a_parent(parent){}
     Math_Environment::Namespace::Namespace(std::string name):a_name(name){}
 
     // Handle unknowns
+    // Returns if the namespace contains an unknown
+    bool Math_Environment::Namespace::contains_unknown_here(std::string name){return a_unknowns.get()->contains_unknown_by_name(name);};
+    bool Math_Environment::Namespace::contains_unknown(std::string name){if(parent() != 0 && parent()->contains_unknown(name)){return true;}return contains_unknown_here(name);};
     // Creates a unknown
     Formula_Base::Formula_Unknown* Math_Environment::Namespace::create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
     std::shared_ptr<Formula_Base::Formula_Unknown> Math_Environment::Namespace::create_unknown_shared_ptr(std::string name){return a_unknowns.get()->create_unknown_shared_ptr(name);};
@@ -116,7 +120,8 @@ namespace scls {
     void Math_Environment::add_namespace_stack(std::shared_ptr<Namespace> needed_namespace){a_namespaces.push_back(needed_namespace);a_namespaces_size++;}
     void Math_Environment::pop_namespace_stack(){a_namespaces.pop_back();a_namespaces_size--;}
     // Create a namespace
-    std::shared_ptr<Math_Environment::Namespace> Math_Environment::create_namespace(std::string name){return std::make_shared<Math_Environment::Namespace>(name);}
+    std::shared_ptr<Math_Environment::Namespace> Math_Environment::create_namespace(std::string name, std::weak_ptr<Namespace> parent){return std::make_shared<Math_Environment::Namespace>(name, parent);}
+    std::shared_ptr<Math_Environment::Namespace> Math_Environment::create_namespace(std::string name){return create_namespace(name, std::weak_ptr<Namespace>());}
     // Returns the back namespace
     Math_Environment::Namespace* Math_Environment::back_namespace(){return a_namespaces.back().get();}
 

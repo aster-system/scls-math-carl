@@ -47,9 +47,13 @@ namespace scls {
             // Class representing a variable container for maths. in SCLS
         public:
             // Namespace constructor
+            Namespace(std::string name, std::weak_ptr<Namespace> parent);
             Namespace(std::string name);
 
             // Handle unknowns
+            // Returns if the namespace contains an unknown
+            bool contains_unknown_here(std::string name);
+            bool contains_unknown(std::string name);
             // Creates a unknown
             Formula_Base::Formula_Unknown* create_unknown(std::string name);
             std::shared_ptr<Formula_Base::Formula_Unknown> create_unknown_shared_ptr(std::string name);
@@ -62,9 +66,14 @@ namespace scls {
             Formula_Base::Formula_Unknown* unknown_by_name(std::string name)const;
             std::shared_ptr<Formula_Base::Formula_Unknown> unknown_shared_ptr_by_name(std::string name)const;
 
+            // Getters and setters
+            inline Namespace* parent() const {return a_parent.lock().get();};
+
         private:
             // Name of the namespace
             std::string a_name = std::string();
+            // Parent of this namespace
+            std::weak_ptr<Namespace> a_parent;
 
             // Variables
             std::shared_ptr<Formula_Base::Unknowns_Container> a_unknowns = std::make_shared<Formula_Base::Unknowns_Container>();
@@ -126,6 +135,7 @@ namespace scls {
         void add_namespace_stack(std::shared_ptr<Namespace>needed_namespace);
         void pop_namespace_stack();
         // Create a namespace
+        std::shared_ptr<Namespace> create_namespace(std::string name, std::weak_ptr<Namespace> parent);
         std::shared_ptr<Namespace> create_namespace(std::string name);
         // Returns the back namespace
         Namespace* back_namespace();

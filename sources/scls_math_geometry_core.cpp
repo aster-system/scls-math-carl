@@ -92,9 +92,9 @@ namespace scls {
         return to_return;
     }
 
-    // Vector_Base constructor
-    Vector_Base::Vector_Base(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):Plane_Base(needed_width_unit_in_canonical_base, needed_height_unit_in_canonical_base, needed_x_unit_in_canonical_base, needed_y_unit_in_canonical_base){};
-    Vector_Base::Vector_Base(double needed_width_unit_in_canonical_base_x, double needed_width_unit_in_canonical_base_y, double needed_height_unit_in_canonical_base_x, double needed_height_unit_in_canonical_base_y, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):Plane_Base(1, 1, needed_x_unit_in_canonical_base, needed_y_unit_in_canonical_base){
+    // Vector_Base_2D constructor
+    Vector_Base_2D::Vector_Base_2D(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):Plane_Base(needed_width_unit_in_canonical_base, needed_height_unit_in_canonical_base, needed_x_unit_in_canonical_base, needed_y_unit_in_canonical_base){};
+    Vector_Base_2D::Vector_Base_2D(double needed_width_unit_in_canonical_base_x, double needed_width_unit_in_canonical_base_y, double needed_height_unit_in_canonical_base_x, double needed_height_unit_in_canonical_base_y, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):Plane_Base(1, 1, needed_x_unit_in_canonical_base, needed_y_unit_in_canonical_base){
 		double norm_u = std::sqrt(needed_width_unit_in_canonical_base_x * needed_width_unit_in_canonical_base_x + needed_width_unit_in_canonical_base_y * needed_width_unit_in_canonical_base_y);
 		double norm_v = std::sqrt(needed_height_unit_in_canonical_base_x * needed_height_unit_in_canonical_base_x + needed_height_unit_in_canonical_base_y * needed_height_unit_in_canonical_base_y);
 		needed_width_unit_in_canonical_base_x /= norm_u;
@@ -111,17 +111,11 @@ namespace scls {
 		a_y_in_canonical_base_y = needed_height_unit_in_canonical_base_y;
     };
 
+    // Conversion BASE -> CANONICAL
+    double Vector_Base_2D::base_to_canonical_x(double x_from_canonical, double y_from_canonical) {return ((x_from_canonical * x_in_canonical_base_x()) + (y_from_canonical * y_in_canonical_base_x())) + x_middle_in_canonical_base();}
+    double Vector_Base_2D::base_to_canonical_y(double x_from_canonical, double y_from_canonical) {return ((x_from_canonical * x_in_canonical_base_y()) + (y_from_canonical  * y_in_canonical_base_y())) + y_middle_in_canonical_base();}
     // Conversion CANONICAL -> BASE
-    double Vector_Base::canonical_to_base_x(double x_from_canonical, double y_from_canonical){
-    	/*double det = u.x() * v.y() - u.y() * v.x();
-    	if (std::abs(det) < 1e-15) return; // Sécurité : base colinéaire
-
-    	// Pré-calcul de l'Inverse (Matrice de passage Canonique -> Base)
-    	double inv_00 =  v.y() / det;
-    	double inv_01 = -v.x() / det;
-    	double inv_10 = -u.y() / det;
-    	double inv_11 =  u.x() / det;//*/
-
+    double Vector_Base_2D::canonical_to_base_x(double x_from_canonical, double y_from_canonical){
     	double to_return = 0;
     	if(a_x_in_canonical_base_x != 0) {
     		to_return += (x_from_canonical - x_middle_in_canonical_base()) / (a_x_in_canonical_base_x * width_unit_in_canonical_base());
@@ -131,7 +125,7 @@ namespace scls {
     	}
     	return to_return;
     }
-    double Vector_Base::canonical_to_base_y(double x_from_canonical, double y_from_canonical){
+    double Vector_Base_2D::canonical_to_base_y(double x_from_canonical, double y_from_canonical){
     	double to_return = 0;
     	if(a_x_in_canonical_base_y != 0){
     		to_return += ((x_from_canonical - x_middle_in_canonical_base()) / (width_unit_in_canonical_base() * a_x_in_canonical_base_x)) * (a_x_in_canonical_base_y / a_x_in_canonical_base_x);
@@ -141,6 +135,12 @@ namespace scls {
     	}
     	return to_return;
     }
+
+    // Get the good values
+    double Vector_Base_2D::x_in_canonical_base_x() const{return a_x_in_canonical_base_x * width_unit_in_canonical_base();}
+    double Vector_Base_2D::x_in_canonical_base_y() const{return a_x_in_canonical_base_y * width_unit_in_canonical_base();}
+    double Vector_Base_2D::y_in_canonical_base_x() const{return a_y_in_canonical_base_x * height_unit_in_canonical_base();}
+    double Vector_Base_2D::y_in_canonical_base_y() const{return a_y_in_canonical_base_y * height_unit_in_canonical_base();}
 
     // Converts a lot of points with a base
 	std::vector<Point_2D> canonical_points_to_base_points(Plane_Base* base, std::vector<Point_2D> points_to_convert){

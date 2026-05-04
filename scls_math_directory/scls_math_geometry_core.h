@@ -96,21 +96,24 @@ namespace scls {
 		double a_x_middle_in_canonical_base = 0;
 		double a_y_middle_in_canonical_base = 0;
 	};
-	class Vector_Base : public Plane_Base {
+	class Vector_Base_2D : public Plane_Base {
 	public:
 		// Plane_Base constructor
-		Vector_Base(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base);
-		Vector_Base(double needed_width_unit_in_canonical_base_x, double needed_width_unit_in_canonical_base_y, double needed_height_unit_in_canonical_base_x, double needed_height_unit_in_canonical_base_y, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base);
+		Vector_Base_2D(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base);
+		Vector_Base_2D(double needed_width_unit_in_canonical_base_x, double needed_width_unit_in_canonical_base_y, double needed_height_unit_in_canonical_base_x, double needed_height_unit_in_canonical_base_y, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base);
 
+		// Conversion BASE -> CANONICAL
+		double base_to_canonical_x(double x_from_canonical, double y_from_canonical);
+		double base_to_canonical_y(double x_from_canonical, double y_from_canonical);
 		// Conversion CANONICAL -> BASE
 		double canonical_to_base_x(double x_from_canonical, double y_from_canonical);
 		double canonical_to_base_y(double x_from_canonical, double y_from_canonical);
 
-		// Getters and setters
-		inline double x_in_canonical_base_x() const {return a_x_in_canonical_base_x;};
-		inline double x_in_canonical_base_y() const {return a_x_in_canonical_base_y;};
-		inline double y_in_canonical_base_x() const {return a_y_in_canonical_base_x;};
-		inline double y_in_canonical_base_y() const {return a_y_in_canonical_base_y;};
+		// Get the good values
+        double x_in_canonical_base_x() const;
+        double x_in_canonical_base_y() const;
+        double y_in_canonical_base_x() const;
+        double y_in_canonical_base_y() const;
 	private:
 		// Vector for the "x" and "y" in the canonical base
 		double a_x_in_canonical_base_x = 1;
@@ -191,6 +194,8 @@ namespace scls {
 
         // Built-in operators
         // With Point_2D
+        inline bool operator!=(Point_2D object)const{return a_x != object.a_x || a_y != object.a_y;};
+        inline bool operator==(Point_2D object)const{return a_x == object.a_x && a_y == object.a_y;};
         inline Point_2D operator-(Point_2D object)const{return __substract_without_modification(object);};
         inline Point_2D operator+(Point_2D object)const{return __add_without_modification(object);};
         inline Point_2D& operator+=(Point_2D object){__add(object);return *this;};

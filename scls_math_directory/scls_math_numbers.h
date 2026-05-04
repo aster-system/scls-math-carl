@@ -160,6 +160,8 @@ namespace scls {
 			virtual void clear(){a_unknowns.clear();};
 
 			// Handle unknown
+			// Returns if the container contains an unknown
+			bool contains_unknown_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_unknowns.size());i++){if(a_unknowns.at(i).get()->name == name){return true;}} return false;};
 			// Creates a unknown
 			__Algebra_Unknown* create_unknown(std::string name){return create_algebra_unknown_shared_ptr(name).get();};
             virtual std::shared_ptr<__Algebra_Unknown> create_algebra_unknown_shared_ptr(std::string name){std::shared_ptr<__Algebra_Unknown> temp=algebra_unknown_shared_ptr_by_name(name);if(temp.get()!=0){return temp;}std::shared_ptr<__Algebra_Unknown> unknown=std::make_shared<Algebra_Element::__Algebra_Unknown>();a_unknowns.push_back(unknown);unknown.get()->name=name;return unknown;};
