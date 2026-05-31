@@ -140,7 +140,13 @@ namespace scls {
     class Formula_Base : public Formula_Base_Field {
     public:
         // Container of unknowns
-        struct Formula_Unknown : public Algebra_Element::__Algebra_Unknown {std::shared_ptr<Formula_Base> value;void set_value(std::shared_ptr<Formula_Base> e){value=e;}void set_value(std::shared_ptr<Fraction> e){value=std::make_shared<Formula_Base>(e);}};;
+        struct Formula_Unknown : public Algebra_Element::__Algebra_Unknown {
+            std::shared_ptr<Formula_Base> value = std::make_shared<Formula_Base>(std::make_shared<Fraction>(0));
+
+            void set_value(std::shared_ptr<Formula_Base> e);
+            void set_value(std::shared_ptr<Fraction> e);
+            void set_value(Fraction e);
+        };
         class Unknowns_Container : public Algebra_Element::Unknowns_Container {
 		public:
 			// Unknowns_Container constructor

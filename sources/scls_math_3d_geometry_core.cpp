@@ -30,6 +30,15 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
 
+    // Absolute position handling
+    // Returns the absolute X position
+    double Transform_Object_3D::absolute_x() const {if(parent() == 0){return a_real_local_parent_x;}return parent()->absolute_x() + a_real_local_parent_x;};
+    double Transform_Object_3D::absolute_y() const {if(parent() == 0){return a_real_local_parent_y;}return parent()->absolute_y() + a_real_local_parent_y;};
+    double Transform_Object_3D::absolute_z() const {if(parent() == 0){return a_real_local_parent_z;}return parent()->absolute_z() + a_real_local_parent_z;};
+    //double Transform_Object_3D::absolute_x() const {if(parent() == 0){return x();}return parent()->absolute_x() + x() * parent()->absolute_scale_x();};
+    //double Transform_Object_3D::absolute_y() const {if(parent() == 0){return y();}return parent()->absolute_y() + y() * parent()->absolute_scale_y();};
+    //double Transform_Object_3D::absolute_z() const {if(parent() == 0){return z();}return parent()->absolute_z() + z() * parent()->absolute_scale_z();};
+
     // Extremums
     // TO OPTIMISE
     double Transform_Object_3D::max_absolute_x() const {Point_3D absolute_max = absolute_scale()/2.0;absolute_max.rotate(absolute_rotation());return absolute_x() + absolute_max.x();};
@@ -56,4 +65,61 @@ namespace scls {
     // Next position
     double Transform_Object_3D::x_next() const {return x() + next_movement_x();};
     double Transform_Object_3D::y_next() const {return y() + next_movement_y();};
+
+    // Update the real local position of the children
+    void Transform_Object_3D::update_children_real_local_position() {
+        for(int i = 0;i<static_cast<int>(children().size());i++){
+            Transform_Object_3D* current_child = children()[i].lock().get();
+            if(current_child != 0) {current_child->update_real_local_position();}
+        }
+    };
+    // Update the real local position of the object
+    void Transform_Object_3D::update_real_local_position() {
+        // Calculate the real local parent position
+        if(parent() != 0) {
+            // Rotate the vector
+            double* rotated = __rotate_vector_3d(x() * parent()->absolute_scale_x(), y() * parent()->absolute_scale_y(), z() * parent()->absolute_scale_z(), parent()->absolute_rotation_x(), parent()->absolute_rotation_y(), parent()->absolute_rotation_z());
+
+            // Calculate the final positions
+            a_real_local_parent_x = rotated[0];
+            a_real_local_parent_y = rotated[1];
+            a_real_local_parent_z = rotated[2];
+            delete[] rotated; rotated = 0;
+        }
+        else {
+            a_real_local_parent_x = x();
+            a_real_local_parent_y = y();
+            a_real_local_parent_z = z();
+        }
+
+        update_children_real_local_position();
+    }
+
+    // Update each vectors
+	void Transform_Object_3D::update_vectors() {
+		// Update the directions vector
+		// Calculate the forward vector
+		double* new_forward_vector = __rotate_vector_3d(0, 0, 1, absolute_rotation_x(), absolute_rotation_y(), absolute_rotation_z());
+		a_forward_vector_x = new_forward_vector[0]; a_forward_vector_y = new_forward_vector[1]; a_forward_vector_z = new_forward_vector[2];
+		// Calculate the right vector
+		double* new_right_vector = __rotate_vector_3d(a_forward_vector_x, 0, a_forward_vector_z, 0, -90, 0);
+		a_right_vector_x = new_right_vector[0]; a_right_vector_y = new_right_vector[1]; a_right_vector_z = new_right_vector[2];
+		// Create the top vector
+		double* new_top_vector = __rotate_vector_3d(0, 1, 0, absolute_rotation_x(), absolute_rotation_y(), absolute_rotation_z());
+		a_top_vector_x = new_top_vector[0]; a_top_vector_y = new_top_vector[1]; a_top_vector_z = new_top_vector[2];
+		// Free the memory
+		delete new_forward_vector; new_forward_vector = 0;
+		delete new_right_vector; new_right_vector = 0;
+		delete new_top_vector; new_top_vector = 0;
+
+		// Update the real position
+		update_real_local_position();
+		update_rotation();
+
+		// Update children
+		for(int i = 0;i<static_cast<int>(children().size());i++) {
+			Transform_Object_3D* current_child = children()[i].lock().get();
+			if(current_child != 0){current_child->update_vectors();}
+		}
+	}
 }

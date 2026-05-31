@@ -194,9 +194,9 @@ namespace scls {
         inline Transform_Object_3D* parent() const {return a_parent.get();};
         inline void set_delta_time(Fraction new_delta_time){a_delta_time = new_delta_time;};
         inline void set_parent(const std::shared_ptr<Transform_Object_3D>& new_parent) {
-            if(a_parent.get() != 0) a_parent.get()->remove_child(this);
+            if(a_parent.get() != 0){a_parent.get()->remove_child(this);}
             a_parent = new_parent;
-            a_parent.get()->add_child(a_this_object.lock());
+            if(a_parent.get() != 0){a_parent.get()->add_child(a_this_object.lock());}
             update_vectors();
         };
         inline void set_parent(std::shared_ptr<Transform_Object_3D>* new_parent) {
@@ -205,7 +205,7 @@ namespace scls {
                 a_parent.reset();
                 update_vectors();
             }
-            else set_parent(*new_parent);
+            else{set_parent(*new_parent);}
         };
         inline void set_this_object(std::weak_ptr<Transform_Object_3D> this_object){a_this_object=this_object;};
 
@@ -220,12 +220,9 @@ namespace scls {
         inline double distance(const Transform_Object_3D& object) { return std::sqrt((pow(object.absolute_inner_x() - absolute_inner_x(), 2) + pow(object.absolute_inner_y() - absolute_inner_y(), 2)) + pow(object.absolute_inner_z() - absolute_inner_z(), 2)); };
 
         // Absolute position handling
-        // Returns the absolute X position
-        //inline double absolute_x() const {if(parent() == 0){return a_real_local_parent_x;}return parent()->absolute_x() + a_real_local_parent_x;};
-        inline double absolute_x() const {if(parent() == 0){return x();}return parent()->absolute_x() + x() * parent()->absolute_scale_x();};
-        inline double absolute_y() const {if(parent() == 0){return y();}return parent()->absolute_y() + a_real_local_parent_y;};
-        //inline double absolute_z() const {if(parent() == 0){return a_real_local_parent_z;}return parent()->absolute_z() + a_real_local_parent_z;};
-        inline double absolute_z() const {if(parent() == 0){return z();}return parent()->absolute_z() + z() * parent()->absolute_scale_z();};
+        double absolute_x() const;
+        double absolute_y() const;
+        double absolute_z() const;
         // Returns the real local parent position
         inline double __real_local_parent_x() const {return a_real_local_parent_x;};
         inline double __real_local_parent_y() const {return a_real_local_parent_y;};
@@ -269,32 +266,9 @@ namespace scls {
         inline double top_vector_z() const {return a_top_vector_z;};
 
         // Update the real local position of the children
-        void update_children_real_local_position() {
-            for(int i = 0;i<static_cast<int>(children().size());i++){
-                Transform_Object_3D* current_child = children()[i].lock().get();
-                if(current_child != 0) {current_child->update_real_local_position();}
-            }
-        };
+        void update_children_real_local_position();
         // Update the real local position of the object
-        void update_real_local_position() {
-            // Calculate the real local parent position
-            if(parent() != 0) {
-                // Rotate the vector
-                double* rotated = __rotate_vector_3d(x() * parent()->absolute_scale_x(), y() * parent()->absolute_scale_y(), z() * parent()->absolute_scale_z(), parent()->absolute_rotation_x(), parent()->absolute_rotation_y(), parent()->absolute_rotation_z());
-
-                // Calculate the final positions
-
-                a_real_local_parent_x = rotated[0];
-                a_real_local_parent_y = rotated[1];
-                a_real_local_parent_z = rotated[2];
-                delete rotated; rotated = 0;
-            }
-            else {
-                a_real_local_parent_x = x();
-                a_real_local_parent_y = y();
-                a_real_local_parent_z = z();
-            } update_children_real_local_position();
-        }
+        void update_real_local_position();
 
         // Update the rotation of the object
         void update_rotation() {
@@ -309,32 +283,7 @@ namespace scls {
         }
 
         // Update each vectors
-        void update_vectors() {
-            // Update the directions vector
-            // Calculate the forward vector
-            double* new_forward_vector = __rotate_vector_3d(0, 0, 1, absolute_rotation_x(), absolute_rotation_y(), absolute_rotation_z());
-            a_forward_vector_x = new_forward_vector[0]; a_forward_vector_y = new_forward_vector[1]; a_forward_vector_z = new_forward_vector[2];
-            // Calculate the right vector
-            double* new_right_vector = __rotate_vector_3d(a_forward_vector_x, 0, a_forward_vector_z, 0, -90, 0);
-            a_right_vector_x = new_right_vector[0]; a_right_vector_y = new_right_vector[1]; a_right_vector_z = new_right_vector[2];
-            // Create the top vector
-            double* new_top_vector = __rotate_vector_3d(0, 1, 0, absolute_rotation_x(), absolute_rotation_y(), absolute_rotation_z());
-            a_top_vector_x = new_top_vector[0]; a_top_vector_y = new_top_vector[1]; a_top_vector_z = new_top_vector[2];
-            // Free the memory
-            delete new_forward_vector; new_forward_vector = 0;
-            delete new_right_vector; new_right_vector = 0;
-            delete new_top_vector; new_top_vector = 0;
-
-            // Update the real position
-            update_real_local_position();
-            update_rotation();
-
-            // Update children
-            for(int i = 0;i<static_cast<int>(children().size());i++) {
-                Transform_Object_3D* current_child = children()[i].lock().get();
-                if(current_child != 0){current_child->update_vectors();}
-            }
-        }
+        void update_vectors();
 
         // Move on the forward axis
         inline void move_forward(double force) {move_xyz(forward_vector_x() * force, forward_vector_y() * force, forward_vector_z() * force);};
@@ -479,6 +428,9 @@ namespace scls {
         // ID of the transform object
         unsigned int a_id = 0;
 
+        // Shared ptr to this object
+        std::weak_ptr<Transform_Object_3D> a_this_object;
+
     private:
 
         //*********
@@ -491,8 +443,6 @@ namespace scls {
         std::vector<std::weak_ptr<Transform_Object_3D>> a_children = std::vector<std::weak_ptr<Transform_Object_3D>>();
         // Parent of the object
         std::shared_ptr<Transform_Object_3D> a_parent;
-        // Shared ptr to this object
-        std::weak_ptr<Transform_Object_3D> a_this_object;
 
         // Delta time
         Fraction a_delta_time = Fraction(1, 100);

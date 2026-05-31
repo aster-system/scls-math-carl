@@ -30,6 +30,11 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
     namespace model_maker {
+
+        // Needed variables to handle the grids
+        int __current_point_in_grid_x = 0;
+        int __current_point_in_grid_z = 0;
+
         //*********
         //
         // The Point class
@@ -205,6 +210,9 @@ namespace scls {
             return false;
         }
 
+        // Creates and return a new face object
+        std::shared_ptr<Face> Face::new_face_object(){std::shared_ptr<Face> f = std::shared_ptr<Face>(new Face());f.get()->set_this_object(f);return f;}
+
         // Returns if a side of points cross the boundary or not
         bool model_maker::Face::cross_boundary(std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point) {return __cross_boundary(points(), first_point, second_point);}
         // Returns if a side of points cross the boundary of the exclusion part or not
@@ -231,10 +239,11 @@ namespace scls {
                 bool position_found = false;
                 bool reverse_current_exclusion = false;
                 unsigned int start_position = 0;
+                unsigned int current_p = 0;
                 while(!position_found) {
-                    // Check the current point
+                	// Check the current point
                     for(int j = 0;j<static_cast<int>(points_copy.size() - 1);j++) {
-                        if(!__triangulation_check_line_wrong(points_copy, points_copy[j], exclusion_points_copy[i][0])) {
+                    	if(!__triangulation_check_line_wrong(points_copy, points_copy[j], exclusion_points_copy[i][0])) {
                             set_can_print(true);
                             if(!__triangulation_check_line_wrong(points_copy, points_copy[j], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1]) &&
                                !__triangulation_check_line_wrong(points_copy, points_copy[j + 1], exclusion_points_copy[i][exclusion_points_copy[i].size() - 1]) &&
@@ -257,8 +266,12 @@ namespace scls {
 
                     // Change the point if necessary
                     if(!position_found) {
-                        exclusion_points_copy[i].push_back(exclusion_points_copy[i][0]);
+                    	exclusion_points_copy[i].push_back(exclusion_points_copy[i][0]);
                         exclusion_points_copy[i].erase(exclusion_points_copy[i].begin());
+                        current_p++;
+                        if(current_p >= exclusion_points_copy[i].size()){
+                        	break;
+                        }
                     }
                 }
 
@@ -318,7 +331,7 @@ namespace scls {
                 if(to_return.get()->points_copy[i].get() == 0) {to_return.get()->points_copy.erase(to_return.get()->points_copy.begin() + i);i--;}
             }
             for(int i = 0;i<static_cast<int>(to_return.get()->exclusion_points_copy.size());i++) {
-                for(int j = 0;j<static_cast<int>(to_return.get()->exclusion_points_copy[i].size());j++) {
+            	for(int j = 0;j<static_cast<int>(to_return.get()->exclusion_points_copy[i].size());j++) {
                     if(to_return.get()->exclusion_points_copy[i][j].get() == 0) {to_return.get()->exclusion_points_copy[i].erase(to_return.get()->exclusion_points_copy[i].begin() + j);j--;}
                 }
                 if(to_return.get()->exclusion_points_copy[i].size() <= 0) {to_return.get()->exclusion_points_copy.erase(to_return.get()->exclusion_points_copy.begin() + i);i--;}
@@ -347,6 +360,7 @@ namespace scls {
 
             // Check if the out points are in the triangle
             if(__triangulation_check_line_wrong(points_copy, current_point, current_point_2)) {return TRIANGULATION_STEP_TEST_WRONG;}
+
             // Check if the line is not already existing
             bool must_continue = false;
             for(int i = 0;i<static_cast<int>(created_sides.size() - 1);i+=2){
@@ -465,6 +479,704 @@ namespace scls {
             points_for_rendering().push_back(points_copy[2]);
         }
         void model_maker::Face::triangulate_full() {__triangulate_full(points());}
+
+        // Returns the face as a binary
+        std::shared_ptr<Bytes_Set> model_maker::Face::binary() {
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
+
+            // Add the ID of the face
+            to_return.get()->add_uint(id(), true);
+            // Add the position of the face
+            to_return.get()->add_double(x(), true);
+            to_return.get()->add_double(y(), true);
+            to_return.get()->add_double(z(), true);
+            to_return.get()->add_double(scale_x(), true);
+            to_return.get()->add_double(scale_y(), true);
+            to_return.get()->add_double(scale_z(), true);
+            to_return.get()->add_double(normal_x(), true);
+            to_return.get()->add_double(normal_y(), true);
+            to_return.get()->add_double(normal_z(), true);
+            // Add the parent of the face
+            if(parent() == 0) to_return.get()->add_uint(0, true);
+            else to_return.get()->add_uint(parent()->id() + 1, true);
+            // Add the number of points
+            to_return.get()->add_uint(static_cast<unsigned int>(a_points.size()), true);
+            // Add each points
+            for(int i = 0;i<static_cast<int>(a_points.size());i++) {
+                to_return.get()->add_datas(*a_points.at(i)->binary_for_face(id()).get());
+            }
+
+            return to_return;
+        };
+        // Returns the face as a binary for a solid
+        std::shared_ptr<Bytes_Set> model_maker::Face::binary_for_solid(unsigned int asker_id) {
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
+
+            // Add the positions
+            to_return.get()->add_uint(id(), true);
+            // Add the rect of the texture
+            to_return.get()->add_double(texture_rect_x(asker_id), true);
+            to_return.get()->add_double(texture_rect_y(asker_id), true);
+            to_return.get()->add_double(texture_rect_width(asker_id), true);
+            to_return.get()->add_double(texture_rect_height(asker_id), true);
+
+            return to_return;
+        };
+        // Returns the face as a binary STL format
+        std::shared_ptr<Bytes_Set> model_maker::Face::binary_stl(double multiplication, unsigned int& triangle_count) {
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
+
+            // Add each points
+            for(int i = 0;i<static_cast<int>(a_points_for_rendering.size());i++) {
+                if(i % 3 == 0) {
+                    if(i > 0) {
+                        to_return.get()->add_ushort(triangle_count);
+                        triangle_count++;
+                    }
+
+                    // Add the normal
+                    to_return.get()->add_float(normal_x());
+                    to_return.get()->add_float(normal_y());
+                    to_return.get()->add_float(normal_z());
+                }
+
+                to_return.get()->add_datas(*a_points_for_rendering.at(i).get()->binary_stl(multiplication).get());
+            }
+
+            if(static_cast<int>(a_points_for_rendering.size()) > 0) {
+                to_return.get()->add_ushort(triangle_count);
+                triangle_count++;
+            }
+
+            return to_return;
+        };
+        // Returns the face as binary for VBO
+        std::shared_ptr<Bytes_Set> model_maker::Face::binary_vbo(unsigned int asker_id, unsigned int& total_points, Point::_VBO_Types vbo_type) {
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
+
+            // Add each points
+            __Face_Datas_By_Solid& datas = solid_datas(asker_id);
+            for(int i = 0;i<static_cast<int>(a_points_for_rendering.size());i++) {
+                Point* current_point = a_points_for_rendering.at(i).get();
+                to_return.get()->add_datas(*current_point->binary_vbo(id(), normal_x(), normal_y(), normal_z(), datas.texture_rect_x, datas.texture_rect_y, datas.texture_rect_width, datas.texture_rect_height, vbo_type).get());
+                total_points++;
+            }
+
+            return to_return;
+        };
+
+        // Create a copy of the face with new points
+        std::shared_ptr<Face> model_maker::Face::copy_with_new_points() {
+            std::shared_ptr<Face> new_face = Face::new_face_object();
+            new_face.get()->set_scale_x(scale_x());
+            new_face.get()->set_scale_y(scale_y());
+            new_face.get()->set_scale_z(scale_z());
+            new_face.get()->set_x(x());
+            new_face.get()->set_y(y());
+            new_face.get()->set_z(z());
+
+            // Create each exclusion points
+            for(int i = 0;i<static_cast<int>(a_exclusion_points.size());i++) {
+                std::vector<std::shared_ptr<Point>> current_exclusion_part = std::vector<std::shared_ptr<Point>>();
+                for(int j = 0;j<static_cast<int>(a_exclusion_points[i].size());j++) {
+                    std::shared_ptr<Point> new_point = std::make_shared<Point>();
+                    new_point.get()->set_x(a_exclusion_points[i][j].get()->x());
+                    new_point.get()->set_y(a_exclusion_points[i][j].get()->y());
+                    new_point.get()->set_z(a_exclusion_points[i][j].get()->z());
+                    new_point.get()->set_parent(new_face);
+                    current_exclusion_part.push_back(new_point);
+                }
+                new_face.get()->a_exclusion_points.push_back(current_exclusion_part);
+            }
+
+            // Create each points
+            for(int i = 0;i<static_cast<int>(points().size());i++) {
+                std::shared_ptr<Point> new_point = std::make_shared<Point>();
+                new_point.get()->set_x(points()[i].get()->x());
+                new_point.get()->set_y(points()[i].get()->y());
+                new_point.get()->set_z(points()[i].get()->z());
+                new_point.get()->set_parent(new_face);
+                new_face.get()->points().push_back(new_point);
+            }
+            new_face.get()->triangulate();
+
+            return new_face;
+        };
+
+        // Set the exclusion points
+        void model_maker::Face::set_exclusion_points(std::vector<std::shared_ptr<Point>> needed_points) {
+            if(a_exclusion_points.size() <= 0){a_exclusion_points.push_back(std::vector<std::shared_ptr<Point>>());}
+            a_exclusion_points[0] = needed_points;
+            triangulate();
+        }
+
+        //*********
+        //
+        // The Solid class
+        //
+        //*********
+
+        // Creates and return a new solid object
+        std::shared_ptr<Solid> Solid::new_solid_object(){std::shared_ptr<Solid> to_return = std::shared_ptr<Solid>(new Solid());to_return.get()->set_this_object(to_return);return to_return;}
+
+        // Solid constructor
+        Solid::Solid() : Transform_Object_3D() { a_id = a_solids_number; a_solids_number++; };
+
+        // Adds a face to the solid
+        void Solid::add_face(std::string face_name, std::shared_ptr<Face> face_to_add){add_face(face_name, face_to_add, a_this_object.lock());}
+        void Solid::add_face(std::string face_name, std::shared_ptr<Face> face_to_add, std::shared_ptr<Transform_Object_3D> face_parent){
+            faces().push_back(face_to_add);
+            face_to_add.get()->set_parent(face_parent);
+            faces_by_name()[face_name] = face_to_add;
+        };
+
+        // Returns all the points in the solid
+        std::vector<std::shared_ptr<Point>> Solid::all_points() {
+            std::vector<std::shared_ptr<Point>> to_return = std::vector<std::shared_ptr<Point>>();
+
+            // Check each faces
+            for(int i = 0;i<static_cast<int>(a_faces.size());i++) {
+                Face& current_face = *a_faces.at(i).get();
+                std::vector<std::shared_ptr<Point>> face_points = current_face.points();
+                // Add each points
+                for(int i = 0;i<static_cast<int>(face_points.size());i++) {
+                    if(face_points[i].get()->parent()->id() == current_face.id()) to_return.push_back(face_points[i]);
+                }
+            }
+
+            return to_return;
+        };
+        // Returns a point in a grid
+        std::shared_ptr<Point> Solid::point_in_grid(int x, int z) {
+            // Create the search function
+            std::vector<std::shared_ptr<Point>> points = all_points();
+            return point_in_grid(points, x, z);
+        };
+        // Returns a point in a grid with a given set of point
+        std::shared_ptr<Point> Solid::point_in_grid(std::vector<std::shared_ptr<Point>>& points, int x, int z) {
+            // Create the search function
+            __current_point_in_grid_x = x;
+            __current_point_in_grid_z = z;
+            std::vector<std::shared_ptr<Point>>::iterator it = std::find_if(points.begin(), points.end(), [](std::shared_ptr<Point>& it) {
+                return it.get()->attributes()[SCLS_3D_POINT_ATTRIBUTES_GRID_X] == __current_point_in_grid_x &&
+                       it.get()->attributes()[SCLS_3D_POINT_ATTRIBUTES_GRID_Z] == __current_point_in_grid_z;
+            });
+
+            // Create the point to return
+            std::shared_ptr<Point> final_point;
+            if(it == points.end()) return final_point;
+            final_point = *it;
+            return final_point;
+        };
+
+        // Fills between a face and a point
+        void Solid::fill_faces_between_face_point_one_texture(std::shared_ptr<Face> face_1, double point_x, double point_y, double point_z, std::shared_ptr<Transform_Object_3D> face_parent) {
+            // Needed datas
+            std::shared_ptr<Point> needed_point = std::make_shared<Point>();
+            needed_point.get()->move_xyz(point_x, point_y, point_z);
+
+            // Create the side faces
+            unsigned int face_number = 0;
+            for(int i = 0;i<static_cast<int>(face_1.get()->points().size()) - 1;i++) {
+                // Get the needed points
+                std::shared_ptr<Face> face_center = Face::new_face_object();
+                std::shared_ptr<Point>& first_point = face_1.get()->points()[i];
+                first_point.get()->set_texture_x(face_center.get()->id(), 1); first_point.get()->set_texture_y(face_center.get()->id(), 1);
+                first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& second_point = face_1.get()->points()[i + 1];
+                second_point.get()->set_texture_x(face_center.get()->id(), 0); second_point.get()->set_texture_y(face_center.get()->id(), 1);
+                second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& third_point = needed_point;
+                third_point.get()->set_texture_x(face_center.get()->id(), 1); third_point.get()->set_texture_y(face_center.get()->id(), 0);
+                third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+
+                // Create the face
+                face_center.get()->points().push_back(first_point);
+                face_center.get()->points().push_back(second_point);
+                face_center.get()->points().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(first_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_normal_x(1); face_center.get()->set_normal_z(1);
+                face_center.get()->set_parent(face_parent);
+                faces().push_back(face_center);
+                faces_by_name()["face-" + std::to_string(face_number)] = face_center;
+                face_number++;
+                // Get the normal of the face
+                double x_value = face_1.get()->points()[i + 1].get()->x() - face_1.get()->points()[i].get()->x();
+                double z_value = face_1.get()->points()[i + 1].get()->z() - face_1.get()->points()[i].get()->z();
+                face_center.get()->set_normal_x(z_value); face_center.get()->set_normal_z(-x_value);
+            }
+        }
+
+        // Fills between two faces
+        void Solid::fill_faces_point_by_point(std::shared_ptr<Face> face_1, std::shared_ptr<Face> face_2, std::shared_ptr<Transform_Object_3D> face_parent) {
+            // Create the side faces
+            unsigned int face_number = 0;
+            for(int i = 0;i<static_cast<int>(face_1.get()->points().size()) - 1;i++) {
+                // Get the needed points
+                std::shared_ptr<Face> face_center = Face::new_face_object();
+                std::shared_ptr<Point>& first_point = face_1.get()->points()[i];
+                first_point.get()->set_texture_x(face_center.get()->id(), 1); first_point.get()->set_texture_y(face_center.get()->id(), 1);
+                first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& second_point = face_1.get()->points()[i + 1];
+                second_point.get()->set_texture_x(face_center.get()->id(), 0); second_point.get()->set_texture_y(face_center.get()->id(), 1);
+                second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& third_point = face_2.get()->points()[i];
+                third_point.get()->set_texture_x(face_center.get()->id(), 1); third_point.get()->set_texture_y(face_center.get()->id(), 0);
+                third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& fourth_point = face_2.get()->points()[i + 1];
+                fourth_point.get()->set_texture_x(face_center.get()->id(), 0); fourth_point.get()->set_texture_y(face_center.get()->id(), 0);
+                fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+
+                // Create the face
+                face_center.get()->points().push_back(first_point);
+                face_center.get()->points().push_back(second_point);
+                face_center.get()->points().push_back(fourth_point);
+                face_center.get()->points().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(first_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(fourth_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_normal_x(1); face_center.get()->set_normal_z(1);
+                face_center.get()->set_parent(face_parent);
+                faces().push_back(face_center);
+                faces_by_name()["face-" + std::to_string(face_number)] = face_center;
+                face_number++;
+                // Get the normal of the face
+                double x_value = face_1.get()->points()[i + 1].get()->x() - face_1.get()->points()[i].get()->x();
+                double z_value = face_1.get()->points()[i + 1].get()->z() - face_1.get()->points()[i].get()->z();
+                face_center.get()->set_normal_x(z_value); face_center.get()->set_normal_z(-x_value);
+            }
+
+            // Create the last face
+            // Get the needed points
+            std::shared_ptr<Face> face_center = Face::new_face_object();
+            std::shared_ptr<Point>& first_point = face_1.get()->points()[face_1.get()->points().size() - 1];
+            first_point.get()->set_texture_x(face_center.get()->id(), 1); first_point.get()->set_texture_y(face_center.get()->id(), 1);
+            first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+            std::shared_ptr<Point>& second_point = face_1.get()->points()[0];
+            second_point.get()->set_texture_x(face_center.get()->id(), 0); second_point.get()->set_texture_y(face_center.get()->id(), 1);
+            second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+            std::shared_ptr<Point>& third_point = face_2.get()->points()[face_2.get()->points().size() - 1];
+            third_point.get()->set_texture_x(face_center.get()->id(), 1); third_point.get()->set_texture_y(face_center.get()->id(), 0);
+            third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+            std::shared_ptr<Point>& fourth_point = face_2.get()->points()[0];
+            fourth_point.get()->set_texture_x(face_center.get()->id(), 0); fourth_point.get()->set_texture_y(face_center.get()->id(), 0);
+            fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+
+            // Create the face
+            face_center.get()->points().push_back(first_point);
+            face_center.get()->points().push_back(second_point);
+            face_center.get()->points().push_back(fourth_point);
+            face_center.get()->points().push_back(third_point);
+            face_center.get()->points_for_rendering().push_back(first_point);
+            face_center.get()->points_for_rendering().push_back(second_point);
+            face_center.get()->points_for_rendering().push_back(third_point);
+            face_center.get()->points_for_rendering().push_back(second_point);
+            face_center.get()->points_for_rendering().push_back(fourth_point);
+            face_center.get()->points_for_rendering().push_back(third_point);
+            face_center.get()->set_parent(face_parent);
+            faces().push_back(face_center);
+            faces_by_name()["face-" + std::to_string(face_number)] = face_center;
+            face_number++;
+            // Get the normal of the face
+            double x_value = face_1.get()->points()[face_1.get()->points().size() - 1].get()->x() - face_1.get()->points()[0].get()->x();
+            double z_value = face_1.get()->points()[face_1.get()->points().size() - 1].get()->z() - face_1.get()->points()[0].get()->z();
+            face_center.get()->set_normal_x(-z_value); face_center.get()->set_normal_z(x_value);
+
+            // Create the faces of each holes
+            for(int i = 0;i<static_cast<int>(face_1.get()->exclusion_points().size()) - 1;i++) {
+                // Get the needed points
+                std::shared_ptr<Face> face_center = Face::new_face_object();
+                std::shared_ptr<Point>& first_point = face_1.get()->exclusion_points()[i];
+                first_point.get()->set_texture_x(face_center.get()->id(), 1); first_point.get()->set_texture_y(face_center.get()->id(), 1);
+                first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& second_point = face_1.get()->exclusion_points()[i + 1];
+                second_point.get()->set_texture_x(face_center.get()->id(), 0); second_point.get()->set_texture_y(face_center.get()->id(), 1);
+                second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& third_point = face_2.get()->exclusion_points()[i];
+                third_point.get()->set_texture_x(face_center.get()->id(), 1); third_point.get()->set_texture_y(face_center.get()->id(), 0);
+                third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& fourth_point = face_2.get()->exclusion_points()[i + 1];
+                fourth_point.get()->set_texture_x(face_center.get()->id(), 0); fourth_point.get()->set_texture_y(face_center.get()->id(), 0);
+                fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+
+                // Create the face
+                face_center.get()->points().push_back(first_point);
+                face_center.get()->points().push_back(second_point);
+                face_center.get()->points().push_back(fourth_point);
+                face_center.get()->points().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(first_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(fourth_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_parent(face_parent);
+                faces().push_back(face_center);
+                faces_by_name()["face-" + std::to_string(face_number)] = face_center;
+                face_number++;
+            }
+
+            if(static_cast<int>(face_1.get()->exclusion_points().size()) > 1) {
+                // Create the last face
+                // Get the needed points
+                std::shared_ptr<Face> face_center = Face::new_face_object();
+                std::shared_ptr<Point>& first_point = face_1.get()->exclusion_points()[face_1.get()->exclusion_points().size() - 1];
+                first_point.get()->set_texture_x(face_center.get()->id(), 1); first_point.get()->set_texture_y(face_center.get()->id(), 1);
+                first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& second_point = face_1.get()->exclusion_points()[0];
+                second_point.get()->set_texture_x(face_center.get()->id(), 0); second_point.get()->set_texture_y(face_center.get()->id(), 1);
+                second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& third_point = face_2.get()->exclusion_points()[face_2.get()->exclusion_points().size() - 1];
+                third_point.get()->set_texture_x(face_center.get()->id(), 1); third_point.get()->set_texture_y(face_center.get()->id(), 0);
+                third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& fourth_point = face_2.get()->exclusion_points()[0];
+                fourth_point.get()->set_texture_x(face_center.get()->id(), 0); fourth_point.get()->set_texture_y(face_center.get()->id(), 0);
+                fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+
+                // Create the face
+                face_center.get()->points().push_back(first_point);
+                face_center.get()->points().push_back(second_point);
+                face_center.get()->points().push_back(fourth_point);
+                face_center.get()->points().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(first_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(fourth_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_parent(face_parent);
+                faces().push_back(face_center);
+                faces_by_name()["face-" + std::to_string(face_number)] = face_center;
+                face_number++;
+            }
+        }
+        // Fills between two faces
+        void Solid::fill_faces_point_by_point_one_texture(std::shared_ptr<Face> face_1, std::shared_ptr<Face> face_2){fill_faces_point_by_point_one_texture(face_1, face_2,std::shared_ptr<Transform_Object_3D>());}
+        void Solid::fill_faces_point_by_point_one_texture(std::shared_ptr<Face> face_1, std::shared_ptr<Face> face_2, std::shared_ptr<Transform_Object_3D> face_parent){fill_faces_point_by_point_one_texture(face_1, face_2, 0, 0, 1, 1, face_parent);}
+        void Solid::fill_faces_point_by_point_one_texture(std::shared_ptr<Face> face_1, std::shared_ptr<Face> face_2, double texture_x, double texture_y, double texture_width, double texture_height, std::shared_ptr<Transform_Object_3D> face_parent) {
+            fill_faces_point_by_point_one_texture(face_1, face_2, texture_x, texture_y, texture_width, texture_height, false, face_parent);
+        }
+        void Solid::fill_faces_point_by_point_one_texture(std::shared_ptr<Face> face_1, std::shared_ptr<Face> face_2, double texture_x, double texture_y, double texture_width, double texture_height, bool reverse_texture_y, std::shared_ptr<Transform_Object_3D> face_parent) {
+            // Needed datas
+            double current_face_part = 0;
+            double face_number = static_cast<int>(face_1.get()->points().size());
+            double face_width = 1.0 / face_number;
+            double inner_texture_position = 0;
+            double inner_texture_width = 1;
+            double inner_face_width = 1.0 / (face_1.get()->exclusion_points().size());
+
+            // Create the side faces
+            double current_texture_position = 0;face_number = 0;
+            for(int i = 0;i<static_cast<int>(face_1.get()->points().size()) - 1;i++) {
+                // Get the needed points
+                std::shared_ptr<Face> face_center = Face::new_face_object();
+                std::shared_ptr<Point>& first_point = face_1.get()->points()[i];
+                std::shared_ptr<Point>& second_point = face_1.get()->points()[i + 1];
+                std::shared_ptr<Point>& third_point = face_2.get()->points()[i];
+                std::shared_ptr<Point>& fourth_point = face_2.get()->points()[i + 1];
+
+                // Texturing
+                if(reverse_texture_y) {
+                    first_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                    first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                    second_point.get()->set_texture_x(face_center.get()->id(), texture_width - (current_texture_position + face_width)); second_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                    second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                    third_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                    third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                    fourth_point.get()->set_texture_x(face_center.get()->id(), texture_width - (current_texture_position + face_width)); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                    fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                }
+                else {
+                    first_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                    first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                    second_point.get()->set_texture_x(face_center.get()->id(), texture_width - (current_texture_position + face_width)); second_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                    second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                    third_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                    third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                    fourth_point.get()->set_texture_x(face_center.get()->id(), texture_width - (current_texture_position + face_width)); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                    fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                }
+
+                // Create the face
+                face_center.get()->points().push_back(first_point);
+                face_center.get()->points().push_back(second_point);
+                face_center.get()->points().push_back(fourth_point);
+                face_center.get()->points().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(first_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(fourth_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_normal_x(1); face_center.get()->set_normal_z(1);
+                face_center.get()->set_parent(face_parent);
+                faces().push_back(face_center);
+                faces_by_name()["face-" + std::to_string(face_number)] = face_center;
+                face_number++;current_texture_position += face_width;
+                // Get the normal of the face
+                double x_value = face_1.get()->points()[i + 1].get()->x() - face_1.get()->points()[i].get()->x();
+                double z_value = face_1.get()->points()[i + 1].get()->z() - face_1.get()->points()[i].get()->z();
+                face_center.get()->set_normal_x(z_value); face_center.get()->set_normal_z(-x_value);
+            }
+
+            // Create the last face
+            // Get the needed points
+            std::shared_ptr<Face> face_center = Face::new_face_object();
+            std::shared_ptr<Point>& first_point = face_1.get()->points()[face_1.get()->points().size() - 1];
+            std::shared_ptr<Point>& second_point = face_1.get()->points()[0];
+            std::shared_ptr<Point>& third_point = face_2.get()->points()[face_2.get()->points().size() - 1];
+            std::shared_ptr<Point>& fourth_point = face_2.get()->points()[0];
+
+            // Texturing
+            if(reverse_texture_y) {
+                first_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                second_point.get()->set_texture_x(face_center.get()->id(), texture_width - 1); second_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                third_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                fourth_point.get()->set_texture_x(face_center.get()->id(), texture_width - 1); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+            }
+            else {
+                first_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                second_point.get()->set_texture_x(face_center.get()->id(), texture_width - 1); second_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                third_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                fourth_point.get()->set_texture_x(face_center.get()->id(), texture_width - 1); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+            }
+
+            // Create the face
+            face_center.get()->points().push_back(first_point);
+            face_center.get()->points().push_back(second_point);
+            face_center.get()->points().push_back(fourth_point);
+            face_center.get()->points().push_back(third_point);
+            face_center.get()->points_for_rendering().push_back(first_point);
+            face_center.get()->points_for_rendering().push_back(second_point);
+            face_center.get()->points_for_rendering().push_back(third_point);
+            face_center.get()->points_for_rendering().push_back(second_point);
+            face_center.get()->points_for_rendering().push_back(fourth_point);
+            face_center.get()->points_for_rendering().push_back(third_point);
+            face_center.get()->set_parent(face_parent);
+            faces().push_back(face_center);
+            faces_by_name()["face-" + std::to_string(face_number)] = face_center;
+            face_number++;
+            // Get the normal of the face
+            double x_value = face_1.get()->points()[face_1.get()->points().size() - 1].get()->x() - face_1.get()->points()[0].get()->x();
+            double z_value = face_1.get()->points()[face_1.get()->points().size() - 1].get()->z() - face_1.get()->points()[0].get()->z();
+            face_center.get()->set_normal_x(-z_value); face_center.get()->set_normal_z(x_value);
+
+            // Create the faces of each holes
+            double current_inner_texture_position = inner_texture_position;
+            for(int i = 0;i<static_cast<int>(face_1.get()->exclusion_points().size()) - 1;i++) {
+                // Get the needed points
+                std::shared_ptr<Face> face_center = Face::new_face_object();
+                std::shared_ptr<Point>& first_point = face_1.get()->exclusion_points()[i];
+                first_point.get()->set_texture_x(face_center.get()->id(), current_inner_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), 1);
+                first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& second_point = face_1.get()->exclusion_points()[i + 1];
+                second_point.get()->set_texture_x(face_center.get()->id(), current_inner_texture_position + inner_face_width); second_point.get()->set_texture_y(face_center.get()->id(), 1);
+                second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& third_point = face_2.get()->exclusion_points()[i];
+                third_point.get()->set_texture_x(face_center.get()->id(), current_inner_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), 0);
+                third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& fourth_point = face_2.get()->exclusion_points()[i + 1];
+                fourth_point.get()->set_texture_x(face_center.get()->id(), current_inner_texture_position + inner_face_width); fourth_point.get()->set_texture_y(face_center.get()->id(), 0);
+                fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+
+                // Create the face
+                face_center.get()->points().push_back(first_point);
+                face_center.get()->points().push_back(second_point);
+                face_center.get()->points().push_back(fourth_point);
+                face_center.get()->points().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(first_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(fourth_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_parent(face_parent);
+                faces().push_back(face_center);
+                faces_by_name()["face-" + std::to_string(face_number)] = face_center;
+                face_number++;current_inner_texture_position += inner_face_width;
+            }
+
+            if(static_cast<int>(face_1.get()->exclusion_points().size()) > 1) {
+                // Create the last face
+                // Get the needed points
+                std::shared_ptr<Face> face_center = Face::new_face_object();
+                std::shared_ptr<Point>& first_point = face_1.get()->exclusion_points()[face_1.get()->exclusion_points().size() - 1];
+                first_point.get()->set_texture_x(face_center.get()->id(), current_inner_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), 1);
+                first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& second_point = face_1.get()->exclusion_points()[0];
+                second_point.get()->set_texture_x(face_center.get()->id(), current_inner_texture_position + inner_face_width); second_point.get()->set_texture_y(face_center.get()->id(), 1);
+                second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& third_point = face_2.get()->exclusion_points()[face_2.get()->exclusion_points().size() - 1];
+                third_point.get()->set_texture_x(face_center.get()->id(), current_inner_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), 0);
+                third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+                std::shared_ptr<Point>& fourth_point = face_2.get()->exclusion_points()[0];
+                fourth_point.get()->set_texture_x(face_center.get()->id(), current_inner_texture_position + inner_face_width); fourth_point.get()->set_texture_y(face_center.get()->id(), 0);
+                fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
+
+                // Create the face
+                face_center.get()->points().push_back(first_point);
+                face_center.get()->points().push_back(second_point);
+                face_center.get()->points().push_back(fourth_point);
+                face_center.get()->points().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(first_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->points_for_rendering().push_back(second_point);
+                face_center.get()->points_for_rendering().push_back(fourth_point);
+                face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_parent(face_parent);
+                faces().push_back(face_center);
+                faces_by_name()["face-" + std::to_string(face_number)] = face_center;
+                face_number++;
+            }//*/
+        }
+
+        // Returns the solid as binary
+        std::shared_ptr<Bytes_Set> Solid::binary() {
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
+
+            // Add the id of the solid
+            to_return.get()->add_uint(id(), true);
+            // Add the needed transformation
+            to_return.get()->add_double(x(), true);
+            to_return.get()->add_double(y(), true);
+            to_return.get()->add_double(z(), true);
+            to_return.get()->add_double(scale_x(), true);
+            to_return.get()->add_double(scale_y(), true);
+            to_return.get()->add_double(scale_z(), true);
+            // Add the number of faces
+            to_return.get()->add_uint(static_cast<unsigned int>(a_faces.size()), true);
+            // Add each faces
+            for(int i = 0;i<static_cast<int>(a_faces.size());i++) {
+                Face& current_face = *a_faces.at(i).get();
+                std::shared_ptr<Bytes_Set> datas = current_face.binary_for_solid(id());
+                to_return.get()->add_datas(*datas.get());
+            }
+            // Add each attributes
+            to_return.get()->add_uint(attributes().size(), true);
+            for(std::map<unsigned int, double>::iterator it = attributes().begin();it!=attributes().end();it++) {
+                to_return.get()->add_uint(it->first, true);
+                to_return.get()->add_double(it->second, true);
+            }
+
+            return to_return;
+        };
+        // Returns the solid as complete binary
+        std::shared_ptr<Bytes_Set> Solid::binary_complete() {
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
+
+            // Store the number of points
+            std::vector<std::shared_ptr<Point>> each_points = all_points();
+            to_return.get()->add_uint(each_points.size(), true);
+            // Store each points
+            for(int i = 0;i<static_cast<int>(each_points.size());i++) {
+                std::shared_ptr<Point>& current_point = each_points[i];
+                to_return.get()->add_datas(*current_point.get()->binary().get());
+            }
+
+            // Store the number of faces
+            std::vector<std::shared_ptr<Face>> each_faces = faces();
+            to_return.get()->add_uint(each_faces.size(), true);
+            // Store each faces
+            for(int i = 0;i<static_cast<int>(each_faces.size());i++) {
+                std::shared_ptr<Face>& current_point = each_faces[i];
+                to_return.get()->add_datas(*current_point.get()->binary().get());
+            }
+
+            // Store the solid
+            to_return.get()->add_uint(1, true);
+            to_return.get()->add_datas(*binary().get());
+
+            return to_return;
+        };
+        // Returns the solid as binary STL format
+        std::shared_ptr<Bytes_Set> Solid::binary_stl(double multiplication, unsigned int& total_triangle) {
+            // Get the size of the binary
+            std::vector<std::shared_ptr<Bytes_Set>> binaries = std::vector<std::shared_ptr<Bytes_Set>>();
+            unsigned int current_position = 0;
+            unsigned int total_size = 8;
+            for(int i = 0;i<static_cast<int>(a_faces.size());i++) {
+                std::shared_ptr<Bytes_Set> current_binary = a_faces[i].get()->binary_stl(multiplication, total_triangle);
+                binaries.push_back(current_binary);
+                total_size += current_binary.get()->datas_size();
+            }
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>(total_size);
+
+            // Add each points
+            for(int i = 0;i<static_cast<int>(binaries.size());i++) {
+                to_return.get()->put_datas(binaries[i].get(), current_position);
+                current_position += binaries[i].get()->datas_size();
+            }
+
+            return to_return;
+        };
+        // Returns the solid as complete binary STL format
+        std::shared_ptr<Bytes_Set> Solid::binary_stl_complete(double multiplication) {
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
+
+            // Add the header of the file
+            std::string header = "";
+            for(int i = 0;i<80;i++) header += " ";
+            to_return.get()->add_string(header);
+            to_return.get()->add_uint(0);
+
+            // Add each points
+            unsigned int total_triangle = 0;
+            to_return.get()->add_datas(*binary_stl(multiplication, total_triangle).get());
+            to_return.get()->put_uint(total_triangle, 80);
+
+            return to_return;
+        };
+        std::shared_ptr<Bytes_Set> Solid::binary_stl_complete() {return binary_stl_complete(1);};
+        // Returns the solid as binary VBO
+        std::shared_ptr<Bytes_Set> Solid::__binary_vbo(unsigned int& total_points, Point::_VBO_Types vbo_type) {
+            // Get the size of the binary
+            std::vector<std::shared_ptr<Bytes_Set>> binaries = std::vector<std::shared_ptr<Bytes_Set>>();
+            unsigned int current_position = 0;
+            unsigned int total_size = 0;
+            for(int i = 0;i<static_cast<int>(a_faces.size());i++) {
+                std::shared_ptr<Bytes_Set> current_binary = a_faces[i].get()->binary_vbo(id(), total_points, vbo_type);
+                binaries.push_back(current_binary);
+                total_size += current_binary.get()->datas_size();
+            }
+            std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>(total_size);
+
+            // Add each points
+            for(int i = 0;i<static_cast<int>(binaries.size());i++) {
+                to_return.get()->put_datas(binaries[i].get(), current_position);
+                current_position += binaries[i].get()->datas_size();
+            }
+
+            return to_return;
+        }
+        // Returns the solid as binary a complete VBO
+        std::shared_ptr<Bytes_Set> Solid::binary_vbo_complete(Point::_VBO_Types vbo_type) {
+            std::shared_ptr<Bytes_Set> to_return = __shader_arguments(vbo_type);
+
+            // Add each points
+            unsigned int total_points = 0;
+            unsigned int total_points_position = to_return.get()->datas_size();
+            to_return.get()->add_uint(0, true);
+            // Add the data for this solid
+            std::shared_ptr<Bytes_Set> solid_datas = __binary_vbo(total_points, vbo_type);
+            to_return.get()->add_datas(*solid_datas.get());
+            to_return.get()->put_uint(total_points, total_points_position, true);
+
+            return to_return;
+        };
 
         //*********
         //
@@ -609,13 +1321,13 @@ namespace scls {
             std::shared_ptr<Bytes_Set> to_return = Solid::__shader_arguments(vbo_type);
 
             // Add each points
-            unsigned int cursor_position = 0;
             unsigned int total_points = 0;
-            to_return.get()->add_uint(0, true); cursor_position += 4;
+            unsigned int total_points_position = to_return.get()->datas_size();
+            to_return.get()->add_uint(0, true);
             for(int i = 0;i<static_cast<int>(a_solid.size());i++) {
                 to_return.get()->add_datas(*a_solid[i].get()->__binary_vbo(total_points, vbo_type).get());
             }
-            to_return.get()->put_uint(total_points, 17, true);
+            to_return.get()->put_uint(total_points, total_points_position, true);
 
             return to_return;
         }
@@ -649,14 +1361,14 @@ namespace scls {
 
         // Returns a face which make a simple polygon
         std::shared_ptr<Face> polygon(std::shared_ptr<Polygon> polygon, bool reverse_texture_x, bool reverse_texture_z, double y) {
-            std::shared_ptr<Face> to_return = std::make_shared<Face>();
+            std::shared_ptr<Face> to_return = Face::new_face_object();
             to_return.get()->set_y(y);
             to_return.get()->set_normal_y(1);
 
             // Add each points
-            std::vector<Point>& points = polygon.get()->points;
+            std::vector<std::shared_ptr<Point>>& points = polygon.get()->points;
             for(int i = 0;i<static_cast<int>(points.size());i++) {
-                std::shared_ptr<Point> to_add = std::make_shared<Point>(points.at(i));
+                std::shared_ptr<Point> to_add = std::make_shared<Point>(*points.at(i).get());
                 to_add.get()->set_this_object(to_add);
                 to_add.get()->reset();
                 to_add.get()->set_parent(to_return); to_return.get()->add_child(to_add);
@@ -685,7 +1397,7 @@ namespace scls {
             std::shared_ptr<Polygon> created_polygon = std::make_shared<Polygon>();
             for(int i = 0;i<static_cast<int>(points.size());i++) {
                 Point& current_point = points[i];
-                created_polygon.get()->points.push_back(current_point);
+                created_polygon.get()->points.push_back(std::make_shared<Point>(current_point));
                 if(current_point.x() > created_polygon.get()->max_x) created_polygon.get()->max_x = current_point.x();
                 if(current_point.x() < created_polygon.get()->min_x) created_polygon.get()->min_x = current_point.x();
                 if(current_point.z() > created_polygon.get()->max_z) created_polygon.get()->max_z = current_point.z();
@@ -704,7 +1416,7 @@ namespace scls {
             std::shared_ptr<Face> face_2 = polygon(points, false, true, -0.5); face_2.get()->set_normal_y(-1);
 
             // Create the solid
-            std::shared_ptr<Solid> to_return = std::make_shared<Solid>();
+            std::shared_ptr<Solid> to_return = Solid::new_solid_object();
             to_return.get()->add_face("top", face_1, to_return);
             to_return.get()->add_face("bottom", face_2, to_return);
             to_return.get()->fill_faces_point_by_point(face_1, face_2, to_return);
@@ -762,8 +1474,8 @@ namespace scls {
 
                 if((i >= side_start && i < needed_side_number + side_start) || (i >= side_number + side_start)) {
                     // Create the point
-                    Point point = Point();
-                    point.move_xyz(x, y, z);
+                    std::shared_ptr<Point> point = std::make_shared<Point>();
+                    point.get()->move_xyz(x, y, z);
                     to_return.get()->points.push_back(point);
                 }
 
@@ -785,9 +1497,9 @@ namespace scls {
             // Normalize each positions
             for(int i = 0;i<static_cast<int>(to_return.get()->points.size());i++) {
                 // Normalize the point
-                Point& point = to_return.get()->points[i];
-                point.set_x(point.x() * multiplier);
-                point.set_z(point.z() * multiplier);
+                Point* point = to_return.get()->points[i].get();
+                point->set_x(point->x() * multiplier);
+                point->set_z(point->z() * multiplier);
             }
             to_return.get()->max_x *= multiplier;
             to_return.get()->max_z *= multiplier;
@@ -800,14 +1512,14 @@ namespace scls {
         std::shared_ptr<Polygon> regular_polygon_points(unsigned short side_number){return regular_polygon_points(side_number, side_number, 0, 0, 1);};
         // Returns a face which make a simple regular polygon
         std::shared_ptr<Face> regular_polygon(unsigned short side_number, unsigned short needed_side_number, int side_start, bool reverse_texture_x, bool reverse_texture_z, double y) {
-            std::shared_ptr<Face> to_return = std::make_shared<Face>();
+            std::shared_ptr<Face> to_return = Face::new_face_object();
             to_return.get()->set_y(y);
             to_return.get()->set_normal_y(1);
 
             // Add each points
             std::shared_ptr<Polygon> points = regular_polygon_points(side_number, needed_side_number, side_start, 0, 1);
             for(int i = 0;i<static_cast<int>(points.get()->points.size());i++) {
-                std::shared_ptr<Point> to_add = std::make_shared<Point>(points.get()->points.at(i));
+                std::shared_ptr<Point> to_add = std::make_shared<Point>(*points.get()->points.at(i).get());
                 to_add.get()->set_this_object(to_add);
                 to_add.get()->reset();
                 to_add.get()->set_parent(to_return);
@@ -840,10 +1552,10 @@ namespace scls {
             std::shared_ptr<Face> face_2 = regular_polygon(side_number, needed_side_number, side_start, true, true, -0.5); face_2.get()->set_normal_y(-1);
 
             // Create the solid
-            std::shared_ptr<Solid> to_return = std::make_shared<Solid>();
+            std::shared_ptr<Solid> to_return = Solid::new_solid_object();
             to_return.get()->add_face("top", face_1, to_return);
             to_return.get()->add_face("bottom", face_2, to_return);
-            to_return.get()->fill_faces_point_by_point(face_1, face_2, to_return);
+            to_return.get()->fill_faces_point_by_point_one_texture(face_1, face_2, to_return);
 
             return to_return;
         }
@@ -852,7 +1564,7 @@ namespace scls {
         // Returns a squared-solid with a frame of faces in its top
         std::shared_ptr<Solid> frame_polyhedron_in_top(unsigned int frame_width, unsigned int frame_height) {
             // Create the solid
-            std::shared_ptr<Solid> to_return = std::make_shared<Solid>();
+            std::shared_ptr<Solid> to_return = Solid::new_solid_object();
 
             // Create the top face
             double current_x = -0.5;

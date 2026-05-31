@@ -251,6 +251,10 @@ namespace scls {
 	//
 	//*********
 
+	void Formula_Base::Formula_Unknown::set_value(std::shared_ptr<Formula_Base> e){value=e;}
+	void Formula_Base::Formula_Unknown::set_value(std::shared_ptr<Fraction> e){value=std::make_shared<Formula_Base>(e);}
+	void Formula_Base::Formula_Unknown::set_value(Fraction e){set_value(std::make_shared<Fraction>(e));}
+
 	// Formula operator
     Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("abs", 1), Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("sqrt", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("sin", 1), Algebra_Element::Algebra_Operator("tan", 1)});
 

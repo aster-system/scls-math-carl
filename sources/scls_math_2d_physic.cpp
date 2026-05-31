@@ -175,6 +175,9 @@ namespace scls {
     double Collision::y_1() const {return attached_transform()->y() + a_y_1.to_double();};
     double Collision::y_2() const {return attached_transform()->y() + a_y_2.to_double();};
 
+    // Physic_Object destructor
+    Physic_Object::~Physic_Object(){}
+
     // Add a line / rect collision to the graphic object
     void Physic_Object::add_collision(std::shared_ptr<Collision> collision){a_collisions.push_back(collision);};
     void Physic_Object::add_collision(double x_1, double y_1, double x_2, double y_2){
@@ -208,6 +211,18 @@ namespace scls {
     	scls::Point_2D start = points.at(points.size() - 1);
     	scls::Point_2D end = points.at(0);
     	add_collision(start.x(), start.y(), end.x(), end.y());
+    }
+
+    // Apply a force
+    void Physic_Object::apply_force(Point_2D force){accelerate(force / a_mass);}
+    void Physic_Object::apply_force(Point_2D force, Point_2D base) {
+        Point_2D force_normalized = force.normalized();
+        double force_value = force.norm();
+        Point_2D middle_position_from_base_normalized = (base * -1).normalized();
+        double angle = (vector_2d_angle(middle_position_from_base_normalized) - vector_2d_angle(force_normalized));
+
+        accelerate(force / a_mass);
+        attached_transform()->set_angular_momentum(attached_transform()->angular_momentum() - force_value * std::sin(angle) * SCLS_RADIANS_TO_ANGLE);
     }
 
     // Checks if a collision occurs with an another object
@@ -399,12 +414,12 @@ namespace scls {
         scls::Point_2D final_acceleration = scls::Point_2D(0, 0);
         if(to_return_1.get()->side_bottom || to_return_1.get()->side_top){
             // Handle the velocity
-            double final_y = (-transform_1->velocity().y()) * (1.0 + object_2->restitution());
+            double final_y = (-transform_1->velocity().y()) * (1.0 + object_2->restitution() * dynamic_object_1->restitution());
             final_acceleration.set_y(final_y);
-            final_acceleration.set_x(-transform_1->velocity().x() * (1.0 - object_2->restitution()));
+            final_acceleration.set_x(-transform_1->velocity().x() * (1.0 - object_2->restitution()) * dynamic_object_1->restitution());
         }
         else{
-            double final_x = -transform_1->velocity().x() * (1.0 + object_2->restitution());
+            double final_x = -transform_1->velocity().x() * (1.0 + object_2->restitution() * dynamic_object_1->restitution());
             final_acceleration.set_x(final_x);
         }
         to_return_1.get()->acceleration = final_acceleration;
@@ -655,6 +670,16 @@ namespace scls {
     // Physic engine
     //******************
 
+    // Check the physic object to delete
+    void Physic_Engine::check_delete_physic_object() {
+        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {
+            if(physic_objects().at(i).get()->should_delete()){
+                delete_physic_object_case(physic_objects().at(i).get());
+                physic_objects().erase(physic_objects().begin() + i);i--;
+            }
+        }
+    }
+
     // Deletes the physic in a case
     void Physic_Engine::delete_physic_object_case(Physic_Object* to_delete) {
         for(int j = 0;j<static_cast<int>(to_delete->used_physic_case().size());j++) {
@@ -838,7 +863,6 @@ namespace scls {
     }
 
     // Updates the physic
-    scls::Point_2D gravity = scls::Point_2D(0, -40.8);
     int Physic_Engine::update_physic(double used_delta_time) {int needed_upate = update_physic_early(used_delta_time);needed_upate += update_physic_late(used_delta_time);return needed_upate;};
     int Physic_Engine::update_physic_early(double used_delta_time) {
         // Realised updates
@@ -854,7 +878,7 @@ namespace scls {
         }
 
         // Apply gravity
-        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {if(physic_objects().at(i).get()->use_gravity()){physic_objects().at(i).get()->accelerate(gravity * used_delta_time);needed_update++;}}
+        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {if(physic_objects().at(i).get()->use_gravity()){physic_objects().at(i).get()->accelerate(a_gravity * used_delta_time);needed_update++;}}
 
         // Update raw velocity
         for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {physic_objects().at(i).get()->update_raw_velocity();}
@@ -921,13 +945,28 @@ namespace scls {
                 }
             }
 
-            // Check the dynamics collisions
-            if(!dynamic_objects_physic.at(i).get()->ignore_dynamic_collisions()){
-                for(int j = i + 1;j<static_cast<int>(dynamic_objects_physic.size());j++){
-                    for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
-                        //dynamic_objects_physic.at(i).get()->attached_transform()->position().distance(dynamic_objects_physic.at(j).get()->attached_transform()->position()) < 0.1 &&
-                    	if(dynamic_objects_physic.at(i).get() != dynamic_objects_physic.at(j).get()) {
-                            dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
+            bool use_distance = false;
+
+            if(use_distance) {
+                // Check the dynamics collisions
+                if(!dynamic_objects_physic.at(i).get()->ignore_dynamic_collisions()){
+                    for(int j = i + 1;j<static_cast<int>(dynamic_objects_physic.size());j++){
+                        for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
+                            if(dynamic_objects_physic.at(i).get()->attached_transform()->position().distance(dynamic_objects_physic.at(j).get()->attached_transform()->position()) < 0.05 && dynamic_objects_physic.at(i).get() != dynamic_objects_physic.at(j).get()) {
+                                dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                // Check the dynamics collisions
+                if(!dynamic_objects_physic.at(i).get()->ignore_dynamic_collisions()){
+                    for(int j = i + 1;j<static_cast<int>(dynamic_objects_physic.size());j++){
+                        for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
+                            if(dynamic_objects_physic.at(i).get() != dynamic_objects_physic.at(j).get()) {
+                                dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
+                            }
                         }
                     }
                 }
@@ -948,7 +987,7 @@ namespace scls {
         }
 
         // Apply next movement
-        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {physic_objects().at(i).get()->__move();needed_update++;}
+        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {physic_objects().at(i).get()->__move();physic_objects().at(i).get()->__rotate();needed_update++;}
 
         return needed_update;
     }
