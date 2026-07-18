@@ -56,6 +56,8 @@ namespace scls {
     inline double degrees_to_radians(double degrees) {return (degrees / 180.0) * SCLS_PI;};
 
     // Rotates a 3D vector and returns it normalized
+    double* rotate_vector_3d_cylindrical(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z);
+    double* rotate_vector_3d_cylindrical(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z);
     double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z);
     inline double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z){return __rotate_vector_3d(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
 
@@ -64,6 +66,9 @@ namespace scls {
 	public:
 		// Plane_Base constructor
 		Plane_Base(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):a_height_unit_in_canonical_base(needed_height_unit_in_canonical_base),a_width_unit_in_canonical_base(needed_width_unit_in_canonical_base),a_x_middle_in_canonical_base(needed_x_unit_in_canonical_base),a_y_middle_in_canonical_base(needed_y_unit_in_canonical_base){};
+
+		// Static creator
+        static Plane_Base base_for_image(double image_width, double image_height, double pixel_in_unit_width, double pixel_in_unit_height){return Plane_Base(pixel_in_unit_width, pixel_in_unit_height, image_width / 2.0, image_height / 2.0);};
 
 		// Conversion BASE -> CANONICAL
 		double base_scale_x_to_canonical_scale_x(double x_from_base){return x_from_base * a_width_unit_in_canonical_base;};
@@ -222,9 +227,8 @@ namespace scls {
 
     // Converts a lot of points with a base
     std::vector<Point_2D> canonical_points_to_base_points(Plane_Base* base, std::vector<Point_2D> points_to_convert);
-
-    // Operators
-    bool operator==(const Point_2D object_1, const Point_2D object_2);
+    // Center a set of points
+    void center_and_normalize_points(std::vector<Point_2D>& points);
 
     class __Point_2D_Formula {
         // Class representing a 2D point with formulas
@@ -400,6 +404,8 @@ namespace scls {
         // Transform_Object_2D destructor
         ~Transform_Object_2D();
 
+        // Clones the transform object
+        std::shared_ptr<Transform_Object_2D> clone();
         // Soft-resets the transform
         void soft_reset();
 
@@ -477,6 +483,7 @@ namespace scls {
         double min_y() const;
 
         // Precise next movement
+        Point_2D absolute_position_next() const;
         double max_absolute_x_next() const;
         double max_absolute_y_next() const;
         double min_absolute_x_next() const;

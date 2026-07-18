@@ -110,7 +110,6 @@ namespace scls {
 
         // Load some datas
         Transform_Object_3D* transform_1 = collision_1.get()->attached_transform();
-        Transform_Object_3D* transform_2 = collision_2.get()->attached_transform();
 
         // Get the differences
         std::shared_ptr<Collision_3D::Collision_Event_Rect_Rect> to_return_1 = std::make_shared<Collision_3D::Collision_Event_Rect_Rect>(collision_1);
@@ -208,6 +207,10 @@ namespace scls {
 
     // Deletes the object
     void Physic_Object_3D::delete_object(){a_attached_transform.reset();};
+
+    // Apply a fore on the object
+    void Physic_Object_3D::apply_force(Point_3D needed_force) {needed_force /= a_mass;accelerate(needed_force);}
+    void Physic_Object_3D::apply_force_absolute(Point_3D needed_force) {needed_force /= a_mass;accelerate_absolute(needed_force);}
 
     // Returns a new a collision to the graphic object
     std::shared_ptr<Collision_3D> Physic_Object_3D::new_collision(Collision_Type_3D type){
@@ -314,7 +317,7 @@ namespace scls {
             if(physic_objects().at(i).get()->collisions().size() <= 0){continue;}
 
             if(!physic_objects().at(i)->is_static()) {dynamic_objects_physic.push_back(physic_objects().at(i));}
-            else{
+            else {
                 // Get the basic datas
                 int x_start = physic_objects().at(i)->collision_x_start()-1;
                 int y_start = physic_objects().at(i)->collision_y_start()-1;
@@ -351,6 +354,7 @@ namespace scls {
         }
 
         // Dynamic objects
+        bool use_case = false;
         for(int i = 0;i<static_cast<int>(dynamic_objects_physic.size());i++) {
             // Get the needed datas
             int needed_depht = std::ceil(dynamic_objects_physic.at(i)->max_absolute_z_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_z_next());
@@ -362,13 +366,15 @@ namespace scls {
             int z_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_z_next());
 
             // Check the cases
-            for(int j = 0;j<needed_width;j++) {
-                for(int h = 0;h<needed_height;h++) {
-                    for(int k = 0;k<needed_depht;k++) {
-                        Physic_Case_3D* current_case = physic_case(x_start + j, y_start + h, z_start + k);
-                        if(current_case != 0 && current_case->static_objects_collisions.size() > 0){
-                            for(int h = 0;h<static_cast<int>(current_case->static_objects_collisions.size());h++) {
-                                dynamic_objects_physic.at(i)->check_collision(current_case->static_objects_collisions.at(h).lock(), current_case->static_objects_collisions_physic[h].lock().get());
+            if(use_case) {
+                for(int j = 0;j<needed_width;j++) {
+                    for(int h = 0;h<needed_height;h++) {
+                        for(int k = 0;k<needed_depht;k++) {
+                            Physic_Case_3D* current_case = physic_case(x_start + j, y_start + h, z_start + k);
+                            if(current_case != 0 && current_case->static_objects_collisions.size() > 0){
+                                for(int h = 0;h<static_cast<int>(current_case->static_objects_collisions.size());h++) {
+                                    dynamic_objects_physic.at(i)->check_collision(current_case->static_objects_collisions.at(h).lock(), current_case->static_objects_collisions_physic[h].lock().get());
+                                }
                             }
                         }
                     }

@@ -32,17 +32,12 @@ namespace scls {
     // Checks the collision between two circles
     void check_collision_circle_circle_maths(Point_2D position, Point_2D other_position, Point_2D scale, Point_2D other_scale, Point_2D velocity, Point_2D velocity_other, bool can_be_in_each_other, double object_restitution, double other_restitution, bool object_is_static, bool other_is_static){
         // Calculate the position
-        bool circle_1_in_other = false;bool circle_2_in_other = false;
+        bool circle_1_in_other = false;
         double distance = position.distance(other_position);
         Point_2D position_from_here = (other_position - position).normalized();
         Point_2D position_from_other = (position - other_position).normalized();
         if(distance < other_scale.x() / 2.0 && can_be_in_each_other){position_from_here *= -1;circle_1_in_other=true;}
         if(distance < scale.x() / 2.0 && can_be_in_each_other){position_from_other *= -1;}
-        Point_2D position_contact = position + (position_from_here) * oval_radius(scale.x() / 2.0, scale.y() / 2.0, vector_2d_angle(position_from_here));
-
-        // Calculate the angle
-        double angle_tangent = vector_2d_angle(position_from_other);
-        double angle_tangent_other = vector_2d_angle(position_from_here);
 
         // TEMP
         //to_return.get()->angle = angle_tangent_other;
@@ -112,27 +107,6 @@ namespace scls {
         // Collision 1
         //std::shared_ptr<Collision::Collision_Event_Circle> to_return_1 = std::make_shared<Collision::Collision_Event_Circle>(collision_1);
         //std::shared_ptr<Collision::Collision_Event_Circle> to_return_2 = std::make_shared<Collision::Collision_Event_Circle>(collision_2);
-
-        // Calculate the needed angle
-        Point_2D line_vector_normal = line_vector.rotated(90);
-        Point_2D position_from_1 = (contact_point - position_1).normalized();
-        Point_2D position_from_2 = (position_1 - contact_point).normalized();
-        if(distance < min_distance){position_from_2 *= -1;}
-        //double kept_proportion = 1.0;
-        Point_2D velocity_from_1 = velocity_circle;
-        double angle_tangent_1 = vector_2d_angle(position_from_1);
-        // TEMP
-        // to_return_1.get()->angle = vector_2d_angle(position_from_1);
-        // to_return_2.get()->angle = vector_2d_angle(position_from_2);
-
-        double difference_angle = vector_2d_angle(velocity_from_1) - vector_2d_angle(line_vector_normal);
-        Point_2D new_velocity_direction = line_vector_normal.rotated(difference_angle * (180.0/SCLS_PI)).normalized() * -1;
-
-        // Calculate the velocity of the object 1
-        double multiplier = velocity_from_1.norm();
-        // TEMP
-        // Point_2D new_velocity = new_velocity_direction * multiplier * object_line->restitution();
-        // to_return_1.get()->acceleration = velocity_circle * -1 + new_velocity;
     }
 
     //******************
@@ -141,6 +115,7 @@ namespace scls {
 
     // Getters and setters
     scls::Fraction Collision::absolute_height() const {return attached_transform()->absolute_scale_y();};
+    scls::Point_2D Collision::absolute_position_next() const {return attached_transform()->absolute_position_next();};
     scls::Point_2D Collision::absolute_scale() const {return attached_transform()->absolute_scale();};
     scls::Fraction Collision::absolute_width() const {return attached_transform()->absolute_scale_x();};
     double Collision::absolute_x() const {return attached_transform()->absolute_x();};
@@ -225,7 +200,7 @@ namespace scls {
         attached_transform()->set_angular_momentum(attached_transform()->angular_momentum() - force_value * std::sin(angle) * SCLS_RADIANS_TO_ANGLE);
     }
 
-    // Checks if a collision occurs with an another object
+    // Maths behing collisions
     struct Collision_Result{
         Collision_Result(){};
         Collision_Result(std::shared_ptr<Collision::Collision_Event> c_1):Collision_Result(c_1, std::shared_ptr<Collision::Collision_Event>()){}
@@ -239,16 +214,14 @@ namespace scls {
     };
     void __check_collision_circle_circle_maths(scls::Point_2D position, scls::Point_2D other_position, scls::Point_2D scale, scls::Point_2D other_scale, scls::Point_2D velocity, scls::Point_2D velocity_other, bool can_be_in_each_other, Physic_Object* object, Physic_Object* other_object, std::shared_ptr<Collision::Collision_Event_Circle> to_return){
         // Calculate the position
-        bool circle_1_in_other = false;bool circle_2_in_other = false;
+        bool circle_1_in_other = false;
         double distance = position.distance(other_position);
         scls::Point_2D position_from_here = (other_position - position).normalized();
         scls::Point_2D position_from_other = (position - other_position).normalized();
         if(distance < other_scale.x() / 2.0 && can_be_in_each_other){position_from_here *= -1;circle_1_in_other=true;}
         if(distance < scale.x() / 2.0 && can_be_in_each_other){position_from_other *= -1;}
         scls::Point_2D velocity_from_here = (velocity_other - velocity);
-        scls::Point_2D velocity_from_here_normalized = velocity_from_here.normalized();
         scls::Point_2D velocity_from_other = (velocity - velocity_other);
-        scls::Point_2D velocity_from_other_normalized = velocity_from_other.normalized();
 
         // Calculate the angle
         double angle_tangent = scls::vector_2d_angle(position_from_other);
@@ -278,12 +251,84 @@ namespace scls {
             to_return.get()->acceleration = new_velocity;
         }
     }
-    void __check_collision_circle_circle_maths(Collision* collision, Collision* collision_other, Physic_Object* object, Physic_Object* other_object, std::shared_ptr<Collision::Collision_Event_Circle> to_return){
-        __check_collision_circle_circle_maths(collision->position_next(), collision_other->position_next(), collision->absolute_scale(), collision_other->absolute_scale(), object->velocity(), other_object->velocity(), true, object, other_object, to_return);
+    void __check_collision_circle_circle_maths(Collision* collision, Collision* collision_other, Physic_Object* object, Physic_Object* other_object, std::shared_ptr<Collision::Collision_Event_Circle> to_return){__check_collision_circle_circle_maths(collision->position_next(), collision_other->position_next(), collision->absolute_scale(), collision_other->absolute_scale(), object->velocity(), other_object->velocity(), true, object, other_object, to_return);}
+    Collision_Result __check_collision_circle_line_maths(double x_circle, double y_circle, double width_circle, scls::Point_2D position_next_circle, scls::Point_2D velocity_circle, double x_1, double y_1, double x_2, double y_2, std::shared_ptr<Collision> collision_1, std::shared_ptr<Collision> collision_2, Physic_Object* object_circle, Physic_Object* object_line){
+        // Get the angle
+        scls::Point_2D line_end = scls::Point_2D(x_2, y_2);
+        scls::Point_2D line_start = scls::Point_2D(x_1, y_1);
+        scls::Point_2D line_vector = line_end - line_start;
+        scls::Point_2D position_1 = position_next_circle;
+
+        // Get the contact point
+        scls::Point_2D contact_point = scls::orthogonal_projection(line_start, line_end, position_1);
+        // Get the distance
+        double distance = contact_point.distance(position_1);
+        double min_distance = std::abs(width_circle / 2.0);
+        if(distance > min_distance){return Collision_Result();}
+        if(!contact_point.in_rect(line_start, line_vector)){
+            // Check if the collision is nearer from an extremity or not
+            double d_1 = line_start.distance(position_1);
+            double d_2 = line_end.distance(position_1);
+            if(d_1 < width_circle / 2.0){
+                // Get the datas about the collision
+                // Collision 1
+                std::shared_ptr<Collision::Collision_Event_Circle> to_return_1 = std::make_shared<Collision::Collision_Event_Circle>(collision_1);
+                std::shared_ptr<Collision::Collision_Event_Circle> to_return_2 = std::make_shared<Collision::Collision_Event_Circle>(collision_2);
+
+                // Calculate the collision in the objects
+                __check_collision_circle_circle_maths(position_1, line_start, scls::Point_2D(width_circle, width_circle), scls::Point_2D(0.1, 0.1), velocity_circle, scls::Point_2D(0, 0), 0, object_circle, object_line, to_return_1);
+
+                // Return the result
+                return Collision_Result(to_return_1, to_return_2);
+            }
+            else if(d_2 < width_circle / 2.0){
+                // Get the datas about the collision
+                // Collision 1
+                std::shared_ptr<Collision::Collision_Event_Circle> to_return_1 = std::make_shared<Collision::Collision_Event_Circle>(collision_1);
+                std::shared_ptr<Collision::Collision_Event_Circle> to_return_2 = std::make_shared<Collision::Collision_Event_Circle>(collision_2);
+
+                // Calculate the collision in the objects
+                __check_collision_circle_circle_maths(position_1, line_end, scls::Point_2D(width_circle, width_circle), scls::Point_2D(0.1, 0.1), velocity_circle, scls::Point_2D(0, 0), 0, object_circle, object_line, to_return_1);
+
+                // Return the result
+                return Collision_Result(to_return_1, to_return_2);
+            }
+
+            return Collision_Result();
+        }
+
+        // Get the datas about the collision
+        // Collision 1
+        std::shared_ptr<Collision::Collision_Event_Circle> to_return_1 = std::make_shared<Collision::Collision_Event_Circle>(collision_1);
+        std::shared_ptr<Collision::Collision_Event_Circle> to_return_2 = std::make_shared<Collision::Collision_Event_Circle>(collision_2);
+
+        // Calculate the needed angle
+        scls::Point_2D line_vector_normal = line_vector.rotated(90);
+        scls::Point_2D position_from_1 = (contact_point - position_1).normalized();
+        scls::Point_2D position_from_2 = (position_1 - contact_point).normalized();
+        if(distance < min_distance){position_from_2 *= -1;}
+        //double kept_proportion = 1.0;
+        scls::Point_2D velocity_from_1 = velocity_circle;
+        to_return_1.get()->angle = scls::vector_2d_angle(position_from_1);
+        to_return_2.get()->angle = scls::vector_2d_angle(position_from_2);
+
+        double difference_angle = scls::vector_2d_angle(velocity_from_1) - scls::vector_2d_angle(line_vector_normal);
+        scls::Point_2D new_velocity_direction = line_vector_normal.rotated(difference_angle * (180.0/SCLS_PI)).normalized() * -1;
+
+        // Calculate the velocity of the object 1
+        double multiplier = velocity_from_1.norm();
+        double needed_restitution = 1;//if(object_2 != 0){needed_restitution = object_2->restitution();}
+        scls::Point_2D new_velocity = new_velocity_direction * multiplier * needed_restitution;
+        to_return_1.get()->acceleration = velocity_circle * -1 + new_velocity;
+
+        // Return the result
+        return Collision_Result(to_return_1, to_return_2);
     }
+
+    // Checks if a collision occurs with an another object
     Collision_Result __check_collision_circle_circle(std::shared_ptr<Collision> collision_1, std::shared_ptr<Collision> collision_2, Physic_Object* object_1, Physic_Object* object_2){
         // Change the positions if needed
-        scls::Point_2D position_1 = collision_1.get()->position_next();scls::Point_2D position_2 = collision_2.get()->position_next();
+        scls::Point_2D position_1 = collision_1.get()->absolute_position_next();scls::Point_2D position_2 = collision_2.get()->absolute_position_next();
         position_1.set_y(position_1.y() * (collision_2.get()->attached_transform()->scale_x() / collision_2.get()->attached_transform()->scale_y()));
 
         // Get the distance
@@ -376,7 +421,6 @@ namespace scls {
 
         // Load some datas
         scls::Transform_Object_2D* transform_1 = collision_1.get()->attached_transform();
-        scls::Transform_Object_2D* transform_2 = collision_2.get()->attached_transform();
 
         // Get the differences
         std::shared_ptr<Collision::Collision_Event_Rect_Rect> to_return_1 = std::make_shared<Collision::Collision_Event_Rect_Rect>(collision_1);
@@ -427,136 +471,7 @@ namespace scls {
         // Return the result
         return Collision_Result(to_return_1, to_return_2);
     };
-    Collision_Result __check_collision_circle_line_maths(double x_circle, double y_circle, double width_circle, scls::Point_2D position_next_circle, scls::Point_2D velocity_circle, double x_1, double y_1, double x_2, double y_2, std::shared_ptr<Collision> collision_1, std::shared_ptr<Collision> collision_2, Physic_Object* object_circle, Physic_Object* object_line){
-        // Get the angle
-        scls::Point_2D line_end = scls::Point_2D(x_2, y_2);
-        scls::Point_2D line_start = scls::Point_2D(x_1, y_1);
-        scls::Point_2D line_vector = line_end - line_start;
-        scls::Point_2D position_1 = position_next_circle;
-
-        // Get the contact point
-        scls::Point_2D contact_point = scls::orthogonal_projection(line_start, line_end, position_1);
-        // Get the distance
-        double distance = contact_point.distance(position_1);
-        double min_distance = std::abs(width_circle / 2.0);
-        if(distance > min_distance){return Collision_Result();}
-        if(!contact_point.in_rect(line_start, line_vector)){
-            // Check if the collision is nearer from an extremity or not
-            double d_1 = line_start.distance(position_1);
-            double d_2 = line_end.distance(position_1);
-            if(d_1 < width_circle / 2.0){
-                // Get the datas about the collision
-                // Collision 1
-                std::shared_ptr<Collision::Collision_Event_Circle> to_return_1 = std::make_shared<Collision::Collision_Event_Circle>(collision_1);
-                std::shared_ptr<Collision::Collision_Event_Circle> to_return_2 = std::make_shared<Collision::Collision_Event_Circle>(collision_2);
-
-                // Calculate the collision in the objects
-                __check_collision_circle_circle_maths(position_1, line_start, scls::Point_2D(width_circle, width_circle), scls::Point_2D(0.1, 0.1), velocity_circle, scls::Point_2D(0, 0), 0, object_circle, object_line, to_return_1);
-
-                // Return the result
-                return Collision_Result(to_return_1, to_return_2);
-            }
-            else if(d_2 < width_circle / 2.0){
-                // Get the datas about the collision
-                // Collision 1
-                std::shared_ptr<Collision::Collision_Event_Circle> to_return_1 = std::make_shared<Collision::Collision_Event_Circle>(collision_1);
-                std::shared_ptr<Collision::Collision_Event_Circle> to_return_2 = std::make_shared<Collision::Collision_Event_Circle>(collision_2);
-
-                // Calculate the collision in the objects
-                __check_collision_circle_circle_maths(position_1, line_end, scls::Point_2D(width_circle, width_circle), scls::Point_2D(0.1, 0.1), velocity_circle, scls::Point_2D(0, 0), 0, object_circle, object_line, to_return_1);
-
-                // Return the result
-                return Collision_Result(to_return_1, to_return_2);
-            }
-
-            return Collision_Result();
-        }
-
-        // Get the datas about the collision
-        // Collision 1
-        std::shared_ptr<Collision::Collision_Event_Circle> to_return_1 = std::make_shared<Collision::Collision_Event_Circle>(collision_1);
-        std::shared_ptr<Collision::Collision_Event_Circle> to_return_2 = std::make_shared<Collision::Collision_Event_Circle>(collision_2);
-
-        // Calculate the needed angle
-        scls::Point_2D line_vector_normal = line_vector.rotated(90);
-        scls::Point_2D position_from_1 = (contact_point - position_1).normalized();
-        scls::Point_2D position_from_2 = (position_1 - contact_point).normalized();
-        if(distance < min_distance){position_from_2 *= -1;}
-        //double kept_proportion = 1.0;
-        scls::Point_2D velocity_from_1 = velocity_circle;
-        double angle_tangent_1 = scls::vector_2d_angle(position_from_1);
-        to_return_1.get()->angle = scls::vector_2d_angle(position_from_1);
-        to_return_2.get()->angle = scls::vector_2d_angle(position_from_2);
-
-        double difference_angle = scls::vector_2d_angle(velocity_from_1) - scls::vector_2d_angle(line_vector_normal);
-        scls::Point_2D new_velocity_direction = line_vector_normal.rotated(difference_angle * (180.0/SCLS_PI)).normalized() * -1;
-
-        // Calculate the velocity of the object 1
-        double multiplier = velocity_from_1.norm();
-        double needed_restitution = 1;//if(object_2 != 0){needed_restitution = object_2->restitution();}
-        scls::Point_2D new_velocity = new_velocity_direction * multiplier * needed_restitution;
-        to_return_1.get()->acceleration = velocity_circle * -1 + new_velocity;
-
-        // Return the result
-        return Collision_Result(to_return_1, to_return_2);
-    }
-    Collision_Result __check_collision_circle_line(std::shared_ptr<Collision> collision_1, std::shared_ptr<Collision> collision_2, Physic_Object* object_1, Physic_Object* object_2){
-        // Get the angle
-        scls::Point_2D line_end = scls::Point_2D(collision_2->direct_x_2(), collision_2->direct_y_2());
-        scls::Point_2D line_start = scls::Point_2D(collision_2->direct_x_1(), collision_2->direct_y_1());
-        scls::Point_2D line_vector = line_end - line_start;
-        scls::Point_2D position_1 = collision_1->position_next();
-
-        // Get the contact point
-        scls::Point_2D contact_point = scls::orthogonal_projection(line_start, line_end, position_1);
-        // Get the distance
-        double distance = contact_point.distance(position_1);
-        double min_distance = std::abs(collision_1->attached_transform()->scale_x() / 2.0);
-        if(distance > min_distance){return Collision_Result();}
-        if(!contact_point.in_rect(line_start, line_vector)){
-            // Check the edge of the collision
-            distance = position_1.distance(line_start);scls::Point_2D needed_point = line_start;
-            if(distance > min_distance){
-                distance = position_1.distance(line_end);needed_point = line_end;
-                if(distance > min_distance){return Collision_Result();}
-            }
-
-            std::shared_ptr<Collision::Collision_Event_Circle> to_return_1 = std::make_shared<Collision::Collision_Event_Circle>(collision_1);
-            std::shared_ptr<Collision::Collision_Event_Circle> to_return_2 = std::make_shared<Collision::Collision_Event_Circle>(collision_2);
-            Point_2D velocity_1 = Point_2D(0, 0);if(object_1 != 0){velocity_1 = object_1->velocity();}Point_2D velocity_2 = Point_2D(0, 0);if(object_2 != 0){velocity_2 = object_2->velocity();}
-            __check_collision_circle_circle_maths(position_1, needed_point, collision_1->absolute_scale(), scls::Point_2D(0.01, 0.01), velocity_1, velocity_2, false, object_1, object_2, to_return_1);
-            __check_collision_circle_circle_maths(needed_point, position_1, scls::Point_2D(0.01, 0.01), collision_1->absolute_scale(), velocity_2, velocity_1, false, object_2, object_1, to_return_2);
-            return Collision_Result(to_return_1, to_return_2);
-        }
-
-        // Get the datas about the collision
-        // Collision 1
-        std::shared_ptr<Collision::Collision_Event_Circle> to_return_1 = std::make_shared<Collision::Collision_Event_Circle>(collision_1);
-        std::shared_ptr<Collision::Collision_Event_Circle> to_return_2 = std::make_shared<Collision::Collision_Event_Circle>(collision_2);
-
-        // Calculate the needed angle
-        scls::Point_2D line_vector_normal = line_vector.rotated(90);
-        scls::Point_2D position_from_1 = (contact_point - position_1).normalized();
-        scls::Point_2D position_from_2 = (position_1 - contact_point).normalized();
-        if(distance < min_distance){position_from_2 *= -1;}
-        //double kept_proportion = 1.0;
-        scls::Point_2D velocity_from_1 = collision_1->attached_transform()->velocity();
-        double angle_tangent_1 = scls::vector_2d_angle(position_from_1);
-        to_return_1.get()->angle = scls::vector_2d_angle(position_from_1);
-        to_return_2.get()->angle = scls::vector_2d_angle(position_from_2);
-
-        double difference_angle = scls::vector_2d_angle(velocity_from_1) - scls::vector_2d_angle(line_vector_normal);
-        scls::Point_2D new_velocity_direction = line_vector_normal.rotated(difference_angle * (180.0/SCLS_PI)).normalized() * -1;
-
-        // Calculate the velocity of the object 1
-        double multiplier = velocity_from_1.norm();
-        double needed_restitution = 1;if(object_2 != 0){needed_restitution = object_2->restitution();}
-        scls::Point_2D new_velocity = new_velocity_direction * multiplier * needed_restitution;
-        if(object_1 != 0){to_return_1.get()->acceleration = object_1->velocity() * -1 + new_velocity;}
-
-        // Return the result
-        return Collision_Result(to_return_1, to_return_2);
-    }
+    Collision_Result __check_collision_circle_line(std::shared_ptr<Collision> collision_1, std::shared_ptr<Collision> collision_2, Physic_Object* object_1, Physic_Object* object_2){Point_2D velocity_1 = Point_2D(0, 0);if(collision_1.get() != 0){velocity_1 = collision_1->attached_transform()->velocity();}return __check_collision_circle_line_maths(0, 0, collision_1->attached_transform()->scale_x(), collision_1->position_next(), velocity_1, collision_2->direct_x_1(), collision_2->direct_y_1(), collision_2->direct_x_2(), collision_2->direct_y_2(), collision_1, collision_2, object_1, object_2);}
     Collision_Result __check_collision_circle_rect(std::shared_ptr<Collision> collision_circle, std::shared_ptr<Collision> collision_rect, Physic_Object* object_circle, Physic_Object* object_rect){
         // Check the collisions as line
         // Top collision
@@ -634,9 +549,9 @@ namespace scls {
     //*/
     void Physic_Object::check_collision(std::shared_ptr<Collision> collision, Physic_Object* other_object) {
         // Asserts
-        if(collision == 0 || collision->attached_transform() == attached_transform() || other_object == 0 || other_object->attached_transform() == 0){return;}
+    	if(collision == 0 || collision->attached_transform() == attached_transform() || other_object == 0 || other_object->attached_transform() == 0){return;}
 
-        // Check each collision
+    	// Check each collision
         for(int i = 0;i<static_cast<int>(a_collisions.size());i++) {
             // TEMP
             bool already_in = false;
@@ -648,6 +563,28 @@ namespace scls {
             if(current_result.collision_1.get() != 0 && current_result.collision_1.get()->happens){a_current_collisions_results.push_back(current_result.collision_1);}
             if(current_result.collision_2.get() != 0 && current_result.collision_2.get()->happens){other_object->a_current_collisions_results.push_back(current_result.collision_2);}
         }
+    }
+
+    // Clones the object
+    void Physic_Object::clone(Physic_Object* object) {
+    	object->a_ignore_dynamic_collisions = a_ignore_dynamic_collisions;
+    	object->a_loaded_in_map = a_loaded_in_map;
+    	object->a_mass = a_mass;
+    	object->a_restitution = a_restitution;
+    	object->a_static = a_static;
+    	object->a_use_gravity = a_use_gravity;
+
+    	// Collisions
+    	for(std::size_t i = 0;i<a_collisions.size();i++) {
+    		std::shared_ptr<Collision> c = std::make_shared<Collision>(object->a_this_object, object->a_attached_transform);
+    		c.get()->set_type(a_collisions.at(i).get()->type());
+    		c.get()->set_x_1(a_collisions.at(i).get()->x_1());
+    		c.get()->set_y_1(a_collisions.at(i).get()->y_1());
+    		c.get()->set_x_2(a_collisions.at(i).get()->x_2());
+    		c.get()->set_y_2(a_collisions.at(i).get()->y_2());
+
+    		object->add_collision(c);
+    	}
     }
 
     // Deletes the object
@@ -670,6 +607,17 @@ namespace scls {
     // Physic engine
     //******************
 
+    // Apply a force from a field 2D
+    void apply_force_from_field_2d(scls::Physic_Object* object, scls::Formula_Base* formula_x, scls::Formula_Base* formula_y, double delta_time) {
+        double current_x = object->attached_transform()->x();
+        double current_y = object->attached_transform()->y();
+
+        // Get the needed vector
+        scls::Fraction current_value_x = *formula_x->replace_unknowns("x", scls::Fraction::from_double(current_x)).get()->replace_unknowns("y", scls::Fraction::from_double(current_y)).get()->value<scls::Fraction>();
+        scls::Fraction current_value_y = *formula_y->replace_unknowns("x", scls::Fraction::from_double(current_x)).get()->replace_unknowns("y", scls::Fraction::from_double(current_y)).get()->value<scls::Fraction>();
+        object->apply_force(scls::Point_2D(current_value_x.to_double(), current_value_y.to_double()) * delta_time);
+    }
+
     // Check the physic object to delete
     void Physic_Engine::check_delete_physic_object() {
         for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {
@@ -678,6 +626,21 @@ namespace scls {
                 physic_objects().erase(physic_objects().begin() + i);i--;
             }
         }
+    }
+
+    // Clones the physic engine
+    void Physic_Engine::clone(Physic_Engine* engine, std::map<Transform_Object_2D*, std::shared_ptr<Transform_Object_2D>>& transforms) {
+    	// Clone the transform objects
+    	for(std::size_t i = 0;i<a_physic_objects.size();i++) {
+    		Transform_Object_2D* current_transform = a_physic_objects.at(i).get()->attached_transform();
+    		if(transforms.count(current_transform) == 0){transforms[current_transform] = current_transform->clone();}
+    	}
+
+    	// Clone the physic objects
+    	for(std::size_t i = 0;i<a_physic_objects.size();i++) {
+			std::shared_ptr<Physic_Object> object = engine->new_physic_object(transforms[a_physic_objects.at(i).get()->attached_transform()]);
+			a_physic_objects.at(i).get()->clone(object.get());
+    	}
     }
 
     // Deletes the physic in a case
@@ -880,6 +843,15 @@ namespace scls {
         // Apply gravity
         for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {if(physic_objects().at(i).get()->use_gravity()){physic_objects().at(i).get()->accelerate(a_gravity * used_delta_time);needed_update++;}}
 
+        // Apply fields
+        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {
+            if(!physic_objects().at(i).get()->is_static()){
+                for(std::size_t j = 0;j<a_vector_fields_acceleration.size();j++) {
+                    apply_force_from_field_2d(physic_objects().at(i).get(), a_vector_fields_acceleration.at(j).a_x.get(), a_vector_fields_acceleration.at(j).a_y.get(), used_delta_time);
+                }
+            }
+        }
+
         // Update raw velocity
         for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {physic_objects().at(i).get()->update_raw_velocity();}
 
@@ -965,7 +937,7 @@ namespace scls {
                     for(int j = i + 1;j<static_cast<int>(dynamic_objects_physic.size());j++){
                         for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
                             if(dynamic_objects_physic.at(i).get() != dynamic_objects_physic.at(j).get()) {
-                                dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
+                            	dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
                             }
                         }
                     }

@@ -184,7 +184,7 @@ namespace scls {
         // Creates a new algebra element of the same type
         void algebra_clone(Formula_Base* b) const {Formula_Base_Field::algebra_clone(b);};
         void algebra_clone(Algebra_Element* b) const {Formula_Base_Field::algebra_clone(b);};
-        void clone(Formula_Base* b) const {Formula_Base_Field::clone(b);};
+        virtual void clone(Formula_Base_Field* b) const {Formula_Base_Field::clone(b);};
         virtual std::shared_ptr<Algebra_Element> algebra_clone() const {return clone();};
         virtual std::shared_ptr<Formula_Base> clone() const {std::shared_ptr<Formula_Base> b = std::make_shared<Formula_Base>();clone(b.get());b.get()->a_modified = a_modified;return b;};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element() const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;s.get()->a_modified = false;return s;};
@@ -201,15 +201,17 @@ namespace scls {
         Formula_Base* formula_element(int index);
 
         // Adds an element to this one
+        // Algebra element
         void add(Formula_Base* formula);
-        void add(Fraction other);
         void divide(Formula_Base* formula);
-        void divide(Fraction other);
         void multiply(Formula_Base* formula);
-        void multiply(Fraction other);
-        void operate(Formula_Base* formula, std::string operation);
-        void operate(Fraction other, std::string operation);
         void substract(Formula_Base* formula);
+        virtual void operate(Algebra_Element* formula, std::string operation);
+        // Fraction
+        void add(Fraction other);
+        void divide(Fraction other);
+        void multiply(Fraction other);
+        void operate(Fraction other, std::string operation);
         void substract(Fraction other);
 
         // Equality operators
@@ -288,7 +290,7 @@ namespace scls {
         // Creates a new algebra element of the same type
         void algebra_clone(Extendable_Formula_Base* b) const {Formula_Base_Field::algebra_clone(b);};
         void algebra_clone(Algebra_Element* b) const {Formula_Base_Field::algebra_clone(b);};
-        void clone(Extendable_Formula_Base* b) const {Formula_Base_Field::clone(b);};
+        virtual void clone(Formula_Base_Field* b) const {Formula_Base_Field::clone(b);};
         virtual std::shared_ptr<Algebra_Element> algebra_clone() const {return clone();};
         virtual std::shared_ptr<Extendable_Formula_Base> clone() const {std::shared_ptr<Extendable_Formula_Base> b = std::make_shared<Extendable_Formula_Base>();clone(b.get());b.get()->a_modified = a_modified;return b;};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element() const {std::shared_ptr<Extendable_Formula_Base> s = std::make_shared<Extendable_Formula_Base>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;s.get()->a_modified = false;return s;};
@@ -305,15 +307,17 @@ namespace scls {
         Extendable_Formula_Base* formula_element(int index);
 
         // Adds an element to this one
+        // Algebra element
         void add(Extendable_Formula_Base* formula);
-        void add(Extendable_Fraction other);
         void divide(Extendable_Formula_Base* formula);
-        void divide(Extendable_Fraction other);
         void multiply(Extendable_Formula_Base* formula);
-        void multiply(Extendable_Fraction other);
-        void operate(Extendable_Formula_Base* formula, std::string operation);
-        void operate(Extendable_Fraction other, std::string operation);
         void substract(Extendable_Formula_Base* formula);
+        virtual void operate(Algebra_Element* formula, std::string operation);
+        // Fraction
+        void add(Extendable_Fraction other);
+        void divide(Extendable_Fraction other);
+        void multiply(Extendable_Fraction other);
+        void operate(Extendable_Fraction other, std::string operation);
         void substract(Extendable_Fraction other);
 
         // Creates the unknown

@@ -116,6 +116,7 @@ namespace scls {
 
             // Getters and setters
             scls::Fraction absolute_height() const;
+            scls::Point_2D absolute_position_next() const;
             scls::Point_2D absolute_scale() const;
             scls::Fraction absolute_width() const;
             double absolute_x() const;
@@ -181,6 +182,8 @@ namespace scls {
         // Physic_Object destructor
         virtual ~Physic_Object();
 
+        // Clones the object
+        void clone(Physic_Object* object);
         // Deletes the object
         void delete_object();
         // If the object should be deleted or not
@@ -201,7 +204,6 @@ namespace scls {
         std::shared_ptr<Collision> new_collision(){return new_collision(Collision_Type::GCT_Rect);};
 
         // Accelerates the object
-        inline void accelerate(scls::Point_2D_Formula acceleration){a_attached_transform.lock().get()->accelerate(acceleration);};
         inline void accelerate(scls::Point_2D acceleration){a_attached_transform.lock().get()->accelerate(acceleration);};
         inline void accelerate_x(double acceleration){a_attached_transform.lock().get()->accelerate_x(acceleration);};
         inline void accelerate_y(double acceleration){a_attached_transform.lock().get()->accelerate_y(acceleration);};
@@ -326,11 +328,16 @@ namespace scls {
     class Physic_Engine {
         // Class representating a physic engine
     public:
+        // Class representing a vector field
+        struct Vector_Field{Vector_Field(std::shared_ptr<Formula_Base> x, std::shared_ptr<Formula_Base> y){a_x = x;a_y = y;};std::shared_ptr<Formula_Base> a_x;std::shared_ptr<Formula_Base> a_y;};
+
         // Physic_Engine constructor
         Physic_Engine(){};
 
         // Clears the physic engine
         void clear(){a_physic_map.clear();a_physic_objects.clear();a_physic_map_start_x=0;a_physic_map_start_y=0;};
+        // Clones the physic engine
+        void clone(Physic_Engine* engine, std::map<Transform_Object_2D*, std::shared_ptr<Transform_Object_2D>>& transforms);
 
         // Adds a physic object
         void add_physic_object(std::shared_ptr<Physic_Object> new_object){a_physic_objects.push_back(new_object);}
@@ -351,6 +358,9 @@ namespace scls {
         struct Raycast_Result{std::shared_ptr<Collision::Collision_Event> collision;Collision::Collision_Event* collision_event(){return collision.get();};Point_2D position;};;
         Raycast_Result raycast(double x_start, double y_start, double x_direction, double y_direction, double distance);
 
+        // Creates a new field
+        void new_vector_field_acceleration(std::shared_ptr<Formula_Base> x, std::shared_ptr<Formula_Base> y){a_vector_fields_acceleration.push_back(Vector_Field(x, y));};
+
         // Soft reset the engine
         void soft_reset(double used_delta_time);
         // Updates the physic
@@ -362,7 +372,11 @@ namespace scls {
         inline std::vector<std::vector<std::shared_ptr<Physic_Case>>>& physic_map(){return a_physic_map;};
         inline std::vector<std::shared_ptr<Physic_Object>>& physic_objects(){return a_physic_objects;};
         inline void set_gravity(Point_2D new_gravity){a_gravity = new_gravity;};
+        inline std::vector<Vector_Field>& vector_fields_acceleration(){return a_vector_fields_acceleration;};
     private:
+
+        // Vector fields
+        std::vector<Vector_Field> a_vector_fields_acceleration;
 
         // Gravity
         Point_2D a_gravity = Point_2D(0, -9.8);

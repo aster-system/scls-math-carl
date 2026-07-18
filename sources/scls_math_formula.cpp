@@ -271,7 +271,7 @@ namespace scls {
     void Extendable_Formula_Base::add(Extendable_Formula_Base* formula){Formula_Base_Field::add(formula);};
     void Extendable_Formula_Base::divide(Extendable_Formula_Base* formula){Formula_Base_Field::divide(formula);};
     void Extendable_Formula_Base::multiply(Extendable_Formula_Base* formula){Formula_Base_Field::multiply(formula);};
-    void Extendable_Formula_Base::operate(Extendable_Formula_Base* formula, std::string operation){Formula_Base_Field::operate(formula, operation);};
+    void Extendable_Formula_Base::operate(Algebra_Element* formula, std::string operation){Formula_Base_Field::operate(formula, operation);};
     void Extendable_Formula_Base::substract(Extendable_Formula_Base* formula){std::shared_ptr<Extendable_Formula_Base>f=formula->clone();f.get()->multiply(-1);add(f.get());}
     // Fraction operations
     void Extendable_Formula_Base::add(Extendable_Fraction other){std::shared_ptr<Extendable_Formula_Base>f=std::make_shared<Extendable_Formula_Base>(other);add(f.get());}
@@ -285,7 +285,7 @@ namespace scls {
     void Formula_Base::add(Formula_Base* formula){Formula_Base_Field::add(formula);};
     void Formula_Base::divide(Formula_Base* formula){Formula_Base_Field::divide(formula);};
     void Formula_Base::multiply(Formula_Base* formula){Formula_Base_Field::multiply(formula);};
-    void Formula_Base::operate(Formula_Base* formula, std::string operation){Formula_Base_Field::operate(formula, operation);};
+    void Formula_Base::operate(Algebra_Element* formula, std::string operation){Formula_Base_Field::operate(formula, operation);};
     void Formula_Base::substract(Formula_Base* formula){std::shared_ptr<Formula_Base>f=formula->clone();f.get()->multiply(-1);add(f.get());}
     // Fraction operations
     void Formula_Base::add(Fraction other){std::shared_ptr<Formula_Base>f=std::make_shared<Formula_Base>(other);add(f.get());}

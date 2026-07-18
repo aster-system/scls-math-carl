@@ -863,12 +863,11 @@ namespace scls {
         }
         void Solid::fill_faces_point_by_point_one_texture(std::shared_ptr<Face> face_1, std::shared_ptr<Face> face_2, double texture_x, double texture_y, double texture_width, double texture_height, bool reverse_texture_y, std::shared_ptr<Transform_Object_3D> face_parent) {
             // Needed datas
-            double current_face_part = 0;
             double face_number = static_cast<int>(face_1.get()->points().size());
-            double face_width = 1.0 / face_number;
+            double face_width = (1.0 / face_number) * texture_width;
             double inner_texture_position = 0;
             double inner_texture_width = 1;
-            double inner_face_width = 1.0 / (face_1.get()->exclusion_points().size());
+            double inner_face_width = (1.0 / (face_1.get()->exclusion_points().size())) * inner_texture_width;
 
             // Create the side faces
             double current_texture_position = 0;face_number = 0;
@@ -882,23 +881,23 @@ namespace scls {
 
                 // Texturing
                 if(reverse_texture_y) {
-                    first_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                    first_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
                     first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                    second_point.get()->set_texture_x(face_center.get()->id(), texture_width - (current_texture_position + face_width)); second_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                    second_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - (current_texture_position + face_width)); second_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
                     second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                    third_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                    third_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y);
                     third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                    fourth_point.get()->set_texture_x(face_center.get()->id(), texture_width - (current_texture_position + face_width)); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                    fourth_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - (current_texture_position + face_width)); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y);
                     fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
                 }
                 else {
-                    first_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                    first_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y);
                     first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                    second_point.get()->set_texture_x(face_center.get()->id(), texture_width - (current_texture_position + face_width)); second_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                    second_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - (current_texture_position + face_width)); second_point.get()->set_texture_y(face_center.get()->id(), texture_y);
                     second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                    third_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                    third_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
                     third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                    fourth_point.get()->set_texture_x(face_center.get()->id(), texture_width - (current_texture_position + face_width)); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                    fourth_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - (current_texture_position + face_width)); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
                     fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
                 }
 
@@ -934,23 +933,23 @@ namespace scls {
 
             // Texturing
             if(reverse_texture_y) {
-                first_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                first_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
                 first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                second_point.get()->set_texture_x(face_center.get()->id(), texture_width - 1); second_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                second_point.get()->set_texture_x(face_center.get()->id(), texture_x); second_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
                 second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                third_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                third_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y);
                 third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                fourth_point.get()->set_texture_x(face_center.get()->id(), texture_width - 1); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                fourth_point.get()->set_texture_x(face_center.get()->id(), texture_x); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y);
                 fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
             }
             else {
-                first_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                first_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - current_texture_position); first_point.get()->set_texture_y(face_center.get()->id(), texture_y);
                 first_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); first_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                second_point.get()->set_texture_x(face_center.get()->id(), texture_width - 1); second_point.get()->set_texture_y(face_center.get()->id(), texture_y);
+                second_point.get()->set_texture_x(face_center.get()->id(), texture_x); second_point.get()->set_texture_y(face_center.get()->id(), texture_y);
                 second_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); second_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                third_point.get()->set_texture_x(face_center.get()->id(), texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                third_point.get()->set_texture_x(face_center.get()->id(), texture_x + texture_width - current_texture_position); third_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
                 third_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); third_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
-                fourth_point.get()->set_texture_x(face_center.get()->id(), texture_width - 1); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
+                fourth_point.get()->set_texture_x(face_center.get()->id(), texture_x); fourth_point.get()->set_texture_y(face_center.get()->id(), texture_y + texture_height);
                 fourth_point.get()->set_texture_multiplier_x(face_center.get()->id(), 1); fourth_point.get()->set_texture_multiplier_y(face_center.get()->id(), 2);
             }
 
@@ -1392,6 +1391,7 @@ namespace scls {
 
             return to_return;
         }
+        std::shared_ptr<Face> polygon(std::vector<Point_2D> points, bool reverse_texture_x, bool reverse_texture_z, double y){std::vector<Point> p = std::vector<Point>(points.size());for(std::size_t i = 0;i<points.size();i++){p[i] = Point(points.at(i).x(), 0, points.at(i).y());}return polygon(p, reverse_texture_x, reverse_texture_z, y);}
         std::shared_ptr<Face> polygon(std::vector<Point> points, bool reverse_texture_x, bool reverse_texture_z, double y) {
             // Create the polygon
             std::shared_ptr<Polygon> created_polygon = std::make_shared<Polygon>();

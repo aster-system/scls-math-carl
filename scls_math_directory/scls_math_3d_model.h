@@ -1013,6 +1013,7 @@ namespace scls {
 
         // Returns a face which make a simple polygon
         std::shared_ptr<Face> polygon(std::shared_ptr<Polygon> polygon, bool reverse_texture_x = false, bool reverse_texture_z = false, double y = 0);
+        std::shared_ptr<Face> polygon(std::vector<Point_2D> points, bool reverse_texture_x = false, bool reverse_texture_z = false, double y = 0);
         std::shared_ptr<Face> polygon(std::vector<Point> points, bool reverse_texture_x = false, bool reverse_texture_z = false, double y = 0);
 
         // Returns a face which make a simple polygon in 3D

@@ -171,7 +171,7 @@ namespace scls {
         else if(a_parts.size() == 1 || c->a_parts.size() > a_parts.size()) {Extendable_Int temp = (*this);(*this) = (*c);multiply(&temp);}
         else {
             Extendable_Int result = 0;
-            for(int i = 0;i<a_parts.size();i++) {
+            for(std::size_t i = 0;i<a_parts.size();i++) {
                 Extendable_Int current = 1;if(i < c->a_parts.size()){current = c->a_parts.at(i);}
                 Extendable_Int temp = (*this);//for(int j = 0;j<i;j++){temp.a_parts.erase(temp.a_parts.end() - 1);}
                 temp.multiply(&current);temp.shift_left(32 * i);result.add(&temp);//std::cout << "H " << i << " " << temp.to_std_string() << std::endl;
@@ -206,7 +206,6 @@ namespace scls {
         while(n > 32){n -= 32;a_parts.erase(a_parts.end() - 1);}
 
         unsigned int r = 0;
-        std::size_t start_size = a_parts.size();
         for(std::size_t i = 0;i<a_parts.size();i++) {
             std::size_t current_i = a_parts.size() - (i + 1);
             unsigned int r_temp = a_parts[current_i] << (32 - n);
@@ -300,14 +299,13 @@ namespace scls {
         std::string to_return = std::string();
         Extendable_Int f = (*this);
         f.a_negative = false;
-        int current_part = a_parts.size() - 1;
         int size_f = f.size_in_bit();
         unsigned long long n = std::ceil(static_cast<double>(size_f) * (ln_2 / ln_10));
-        for(int i = 0;i<n;i++) {
+        for(unsigned long long i = 0;i<n;i++) {
             // Get the power
             Extendable_Int d = 1;
             Extendable_Int temp = Extendable_Int(10);
-            for(int j = 1;j<n - i;j++){d.multiply(&temp);}
+            for(unsigned long long j = 1;j<n - i;j++){d.multiply(&temp);}
 
             Extendable_Int mod = f;
             mod.divide(&d);temp = mod;

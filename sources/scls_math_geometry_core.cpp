@@ -30,6 +30,67 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
     // Rotate a 3D vector
+    double* rotate_vector_3d_cylindrical(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z){return rotate_vector_3d_cylindrical(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
+    double* rotate_vector_3d_cylindrical(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z) {
+        double* to_return = new double[3];to_return[0] = vector_x;to_return[1] = vector_y;to_return[2] = vector_z;
+        vector_x -= anchor_x;vector_y -= anchor_y;vector_z -= anchor_z;
+        while(rotation_x < 0){rotation_x += 360;}
+
+        bool debug = false;
+        if(debug)std::cout << "Start " << to_return[0] << " " << to_return[1] << " " << to_return[2] << std::endl;
+
+        // Calculate the real local Y anchored position
+        double total_yz_length = std::sqrt(vector_y * vector_y + to_return[2] * to_return[2]);
+        if(total_yz_length > 0 && rotation_x > 0) {
+            // Get the current angle
+            double current_angle = std::asin(vector_y / total_yz_length);
+            if(debug)std::cout << "T " << current_angle * SCLS_RADIANS_TO_ANGLE << std::endl;
+            if(to_return[2] < 0){current_angle = SCLS_PI - current_angle;}
+            if(debug)std::cout << "U " << current_angle * SCLS_RADIANS_TO_ANGLE << std::endl;
+
+            // Get the Y position
+            double final_angle = current_angle - degrees_to_radians(rotation_x);
+            if(vector_y > 0){final_angle = current_angle - degrees_to_radians(rotation_x);}if(debug)std::cout << "V " << rotation_x << " " << final_angle * SCLS_RADIANS_TO_ANGLE << std::endl;
+            double y_sin = std::sin(final_angle);
+            to_return[1] = y_sin * total_yz_length;
+
+            // Final calculation
+            double y_cos = std::cos(final_angle);if(debug)std::cout << "W " << final_angle * SCLS_RADIANS_TO_ANGLE << " " << y_cos << std::endl;
+            to_return[2] = y_cos * total_yz_length;
+        }
+        else{to_return[1] = vector_y;}
+
+        if(debug)std::cout << "Mid " << to_return[0] << " " << to_return[1] << " " << to_return[2] << std::endl;
+
+        // Calculate the first XZ angle
+        double rotation_y_x = 0;double rotation_y_z = 1;
+        double total_xz_length = std::sqrt(vector_x * vector_x + to_return[2] * to_return[2]);
+        double to_add = 0;
+        if(total_xz_length > 0) {
+            to_add = std::acos(std::abs(to_return[2]) / total_xz_length);
+            // Get the current angle
+            double current_angle = 0;
+            if(to_return[2] >= 0 && vector_x >= 0) {current_angle = to_add;}
+            else if (to_return[2] < 0 && vector_x >= 0) {current_angle = 3.1415 - to_add;}
+            else if(to_return[2] < 0 && vector_x < 0) {current_angle = 3.1415 + to_add;}
+            else {current_angle = 3.1415 * 2.0 - to_add;}
+
+            // Get the final XZ position
+            current_angle += degrees_to_radians(rotation_y);
+            while(current_angle < 0) current_angle += 3.1415 * 2.0;
+            while(current_angle >= 3.1415 * 2) current_angle -= 3.1415 * 2.0;
+
+            // Final calculation
+            rotation_y_x = std::sin(current_angle);
+            rotation_y_z = std::cos(current_angle);
+            to_return[2] = rotation_y_z * total_xz_length;
+            to_return[0] = rotation_y_x * total_xz_length;
+        }
+        else {to_return[2] = 0; to_return[0] = 0;}
+
+        to_return[0] += anchor_x;to_return[1] += anchor_y;to_return[2] += anchor_z;
+        return to_return;
+    }
     double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z) {
         double* to_return = new double[3];
         vector_x -= anchor_x;vector_y -= anchor_y;vector_z -= anchor_z;
@@ -153,6 +214,34 @@ namespace scls {
 		}
 		return to_return;
 	}
+
+	// Center a set of points
+    void center_and_normalize_points(std::vector<Point_2D>& points) {
+        // Datas
+        double max_x = points.at(0).x();
+        double max_y = points.at(0).y();
+        double min_x = points.at(0).x();
+        double min_y = points.at(0).y();
+
+        // Get the points
+        for(std::size_t i = 0;i<points.size();i++){
+            if(points.at(i).x() > max_x){max_x = points.at(i).x();}
+            if(points.at(i).x() < min_x){min_x = points.at(i).x();}
+            if(points.at(i).y() > max_y){max_y = points.at(i).y();}
+            if(points.at(i).y() < min_y){min_y = points.at(i).y();}
+        }
+
+        double middle_x = (max_x + min_x) / 2.0;
+        double middle_y = (max_y + min_y) / 2.0;
+        double total_x = max_x - min_x;
+        double total_y = max_y - min_y;
+
+        // Change the points
+        for(std::size_t i = 0;i<points.size();i++){
+            points[i].set_x(((points[i].x() - min_x) + -0.5) / total_x);
+            points[i].set_y(((points[i].y() - min_y) + -0.5) / total_y);
+        }
+    }
 
     // Returns the datas point of two crossing lines
     Crossing_Datas check_crossing(double first_point_x, double first_point_y, double second_point_x, double second_point_y, double third_point_x, double third_point_y, double fourth_point_x, double fourth_point_y) {
@@ -367,6 +456,25 @@ namespace scls {
     void Transform_Object_2D::add_x(double x_to_add){a_position.move_x(x_to_add);};
     void Transform_Object_2D::add_y(double y_to_add){a_position.move_y(y_to_add);};
 
+    // Clones the transform object
+    std::shared_ptr<Transform_Object_2D> Transform_Object_2D::clone() {
+    	std::shared_ptr<Transform_Object_2D> new_transform = std::make_shared<Transform_Object_2D>();
+    	new_transform.get()->a_this_object = new_transform;
+
+    	new_transform.get()->a_last_position = a_last_position;
+    	new_transform.get()->a_position = a_position;
+    	new_transform.get()->a_real_velocity = a_real_velocity;
+    	new_transform.get()->a_raw_velocity = a_raw_velocity;
+    	new_transform.get()->a_velocity = a_velocity;
+
+    	new_transform.get()->a_angular_momentum = a_angular_momentum;
+    	new_transform.get()->a_rotation = a_rotation;
+
+    	new_transform.get()->a_scale = a_scale;
+
+    	return new_transform;
+    }
+
     // Returns the distance from an another object
     double Transform_Object_2D::distance(Point_2D point) {return std::sqrt((pow(point.x() - absolute_x(), 2) + pow(point.y() - absolute_y(), 2))); };
     double Transform_Object_2D::distance(const Transform_Object_2D& object) {return std::sqrt((pow((object.absolute_x() - absolute_x()), 2) + pow((object.absolute_y() - absolute_y()), 2)));};
@@ -396,6 +504,7 @@ namespace scls {
     double Transform_Object_2D::min_y() const {return y() - scale_y() / 2;};
 
     // Precise next movement
+    Point_2D Transform_Object_2D::absolute_position_next() const{return Point_2D(absolute_x() + next_movement_x(), absolute_y() + next_movement_y());};
     double Transform_Object_2D::max_absolute_x_next() const {return max_absolute_x() + next_movement_x();};
     double Transform_Object_2D::max_absolute_y_next() const {return max_absolute_y() + next_movement_y();};
     double Transform_Object_2D::min_absolute_x_next() const {return min_absolute_x() + next_movement_x();};

@@ -100,5 +100,5 @@ namespace scls {
         return to_return;
     }
     std::string moves_en[] = {"bottom", "left", "right", "top"};
-    std::string djikstra_2d_move(char m){return moves_en[m];}
+    std::string djikstra_2d_move(char m){return moves_en[static_cast<std::size_t>(m)];}
 }

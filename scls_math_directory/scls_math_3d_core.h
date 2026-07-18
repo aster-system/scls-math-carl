@@ -100,20 +100,19 @@ namespace scls {
         inline Point_3D normalized() {double divisor = (1.0/norm());return Point_3D(a_x * divisor, a_y * divisor, a_z * divisor);};
 
         // Applies a rotation to the point
-        inline Point_3D rotated(Point_3D rotation) const {
-            double* rotated_point = __rotate_vector_3d(a_x, a_y, a_z, rotation.a_x, rotation.a_y, rotation.a_z);
-            scls::Point_3D to_return;
-            to_return.a_x = rotated_point[0]; to_return.a_y = rotated_point[1]; to_return.a_z = rotated_point[2];
-            delete rotated_point; rotated_point = 0; return to_return;
-        };
-        inline void rotate(scls::Point_3D rotation) {rotation = rotated(rotation);a_x = rotation.a_x; a_y = rotation.a_y; a_z = rotation.a_z;};
-        inline void rotate_y(double rotation) {rotate(scls::Point_3D(0, rotation, 0));};
+        Point_3D rotated(Point_3D rotation) const;
+        void rotate(scls::Point_3D rotation);
+        void rotate_x(double rotation);
+        void rotate_y(double rotation);
+        // Returns the associated rotation
+        double rotation_xz();
 
         // Adds a vector to this vector with another
         inline void __add(Point_3D object) {set_x(x()+object.x());set_y(y()+object.y());set_z(z()+object.z());};
         inline Point_3D __add_without_modification(Point_3D object) const {Point_3D to_return;to_return.set_x(x()+object.x());to_return.set_y(y()+object.y());to_return.set_z(z()+object.z());return to_return;};
         // Divides a vector to this vector with another
         inline void __divide(double value) {set_x(x()/value);set_y(y()/value);set_z(z()/value);};
+        inline void __divide(Point_3D value) {set_x(x()/value.x());set_y(y()/value.y());set_z(z()/value.z());};
         // Multiplies a vector to this vector with another
         inline void __multiply(double value) {set_x(x()*value);set_y(y()*value);set_z(z()*value);};
         inline void __multiply(Point_3D value) {set_x(x()*value.x());set_y(y()*value.y());set_z(z()*value.z());};
@@ -129,7 +128,9 @@ namespace scls {
         inline Point_3D& operator-=(Point_3D object){__substract(object);return *this;};
         inline Point_3D operator*(Point_3D object){Point_3D temp(*this);temp.__multiply(object);return temp;};
         inline Point_3D& operator*=(Point_3D object){__multiply(object);return *this;};
+        inline Point_3D& operator/=(Point_3D object){__divide(object);return *this;};
         inline bool operator==(Point_3D object){return object.x() == x() && object.y() == y() && object.z() == z();};
+        inline bool operator!=(Point_3D object){return object.x() != x() || object.y() != y() || object.z() != z();};
         // With double
         inline Point_3D operator/(double object)const{Point_3D to_return=*this;to_return.__divide(object);return to_return;};
         inline Point_3D operator*(double object)const{Point_3D to_return=*this;to_return.__multiply(object);return to_return;};
@@ -173,9 +174,7 @@ namespace scls {
 
         // Transform_Object_3D constructor
         Transform_Object_3D(){};
-        // Copy constructor
         Transform_Object_3D(Point_3D point_3d):a_position(point_3d){};
-        // Transform_Object_3D destructor
         virtual ~Transform_Object_3D(){if(a_parent.get() != 0) a_parent.get()->remove_child(this);};
 
         // Soft-resets the transform
@@ -187,26 +186,18 @@ namespace scls {
         void remove_child(Transform_Object_3D* children_to_remove){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i].lock().get() ==children_to_remove)a_children.erase(a_children.begin()+i,a_children.begin()+i+1);}};
         void remove_child(std::shared_ptr<Transform_Object_3D> children_to_remove){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i].lock().get()==children_to_remove.get())a_children.erase(a_children.begin()+i,a_children.begin()+i+1);}};
 
+        // Set a new parent
+        void set_parent(std::shared_ptr<Transform_Object_3D> new_parent);
+        void set_parent(std::shared_ptr<Transform_Object_3D>* new_parent);
+        void set_parent_without_modification();
+        void set_parent_without_modification(std::shared_ptr<Transform_Object_3D> new_parent);
+
         // Getters and setters
         inline std::vector<std::weak_ptr<Transform_Object_3D>>& children() {return a_children;};
         inline unsigned int id() const {return a_id;};
         inline bool moved_during_this_frame() const {return a_moved_during_this_frame;};
         inline Transform_Object_3D* parent() const {return a_parent.get();};
         inline void set_delta_time(Fraction new_delta_time){a_delta_time = new_delta_time;};
-        inline void set_parent(const std::shared_ptr<Transform_Object_3D>& new_parent) {
-            if(a_parent.get() != 0){a_parent.get()->remove_child(this);}
-            a_parent = new_parent;
-            if(a_parent.get() != 0){a_parent.get()->add_child(a_this_object.lock());}
-            update_vectors();
-        };
-        inline void set_parent(std::shared_ptr<Transform_Object_3D>* new_parent) {
-            if(new_parent==0) {
-                if(a_parent.get() != 0) a_parent.get()->remove_child(this);
-                a_parent.reset();
-                update_vectors();
-            }
-            else{set_parent(*new_parent);}
-        };
         inline void set_this_object(std::weak_ptr<Transform_Object_3D> this_object){a_this_object=this_object;};
 
         //*********
@@ -218,11 +209,18 @@ namespace scls {
         // Returns the distance from an another object
         inline double distance(Point_3D point) { return std::sqrt((pow(point.x() - absolute_inner_x(), 2) + pow(point.y() - absolute_inner_y(), 2)) + pow(point.z() - absolute_inner_z(), 2)); };
         inline double distance(const Transform_Object_3D& object) { return std::sqrt((pow(object.absolute_inner_x() - absolute_inner_x(), 2) + pow(object.absolute_inner_y() - absolute_inner_y(), 2)) + pow(object.absolute_inner_z() - absolute_inner_z(), 2)); };
+        inline double distance(Transform_Object_3D* object) { return std::sqrt((pow(object->absolute_inner_x() - absolute_inner_x(), 2) + pow(object->absolute_inner_y() - absolute_inner_y(), 2)) + pow(object->absolute_inner_z() - absolute_inner_z(), 2)); };
 
         // Absolute position handling
+        Point_3D absolute_position() const;
         double absolute_x() const;
         double absolute_y() const;
         double absolute_z() const;
+        // Absolute velocity handling
+        Point_3D absolute_velocity() const;
+        double absolute_velocity_x() const;
+        double absolute_velocity_y() const;
+        double absolute_velocity_z() const;
         // Returns the real local parent position
         inline double __real_local_parent_x() const {return a_real_local_parent_x;};
         inline double __real_local_parent_y() const {return a_real_local_parent_y;};
@@ -242,6 +240,7 @@ namespace scls {
         void accelerate(Point_3D acceleration){a_velocity += acceleration;};
         void accelerate_x(double acceleration){a_velocity.move_x(acceleration);};
         void accelerate_y(double acceleration){a_velocity.move_y(acceleration);};
+        void accelerate_absolute(Point_3D acceleration){if(parent() != 0){acceleration /= parent()->absolute_scale();}accelerate(acceleration);};
 
         // Anchored position
         // Returns the X anchored position of the point
@@ -257,13 +256,30 @@ namespace scls {
         inline double forward_vector_y() const {return a_forward_vector_y;};
         inline double forward_vector_z() const {return a_forward_vector_z;};
         // Returns the X of the right vector of the object
+        inline Point_3D right_vector() const {return Point_3D(a_right_vector_x, a_right_vector_y, a_right_vector_z);};
         inline double right_vector_x() const {return a_right_vector_x;};
         inline double right_vector_y() const {return a_right_vector_y;};
         inline double right_vector_z() const {return a_right_vector_z;};
         // Returns the X of the top vector of the object
+        inline Point_3D top_vector() const {return Point_3D(a_top_vector_x, a_top_vector_y, a_top_vector_z);};
         inline double top_vector_x() const {return a_top_vector_x;};
         inline double top_vector_y() const {return a_top_vector_y;};
         inline double top_vector_z() const {return a_top_vector_z;};
+        // Returns the X of the X vector of the object
+        inline Point_3D x_vector() const {return Point_3D(a_x_vector_x, a_x_vector_y, a_x_vector_z);};
+        inline double x_vector_x() const {return a_x_vector_x;};
+        inline double x_vector_y() const {return a_x_vector_y;};
+        inline double x_vector_z() const {return a_x_vector_z;};
+        // Returns the X of the Y vector of the object
+        inline Point_3D y_vector() const {return Point_3D(a_y_vector_x, a_y_vector_y, a_y_vector_z);};
+        inline double y_vector_x() const {return a_y_vector_x;};
+        inline double y_vector_y() const {return a_y_vector_y;};
+        inline double y_vector_z() const {return a_y_vector_z;};
+        // Returns the X of the Z vector of the object
+        inline Point_3D z_vector() const {return Point_3D(a_z_vector_x, a_z_vector_y, a_z_vector_z);};
+        inline double z_vector_x() const {return a_z_vector_x;};
+        inline double z_vector_y() const {return a_z_vector_y;};
+        inline double z_vector_z() const {return a_z_vector_z;};
 
         // Update the real local position of the children
         void update_children_real_local_position();
@@ -330,9 +346,11 @@ namespace scls {
         // Next position
         double x_next() const;
         double y_next() const;
+        double z_next() const;
 
         // Getters and setters
         inline Point_3D position() const {return a_position;};
+        inline double real_local_parent_y() const {return a_real_local_parent_y;}
         inline void set_anchored_x(double new_anchored_x) {a_anchored_x = new_anchored_x;};
         inline void set_anchored_y(double new_anchored_y) {a_anchored_y = new_anchored_y;};
         inline void set_anchored_z(double new_anchored_z) {a_anchored_z = new_anchored_z;};
@@ -343,6 +361,9 @@ namespace scls {
         virtual void set_y(double new_y) {a_position.set_y(new_y);update_real_local_position();};
         virtual void set_z(double new_z) {a_position.set_z(new_z);update_real_local_position();};
         inline Point_3D velocity() const {return a_velocity;};
+        inline double velocity_x() const {return a_velocity.x();};
+        inline double velocity_y() const {return a_velocity.y();};
+        inline double velocity_z() const {return a_velocity.z();};
         inline double x() const {return a_position.x();};
         inline double y() const {return a_position.y();};
         inline double z() const {return a_position.z();};
@@ -364,12 +385,18 @@ namespace scls {
         inline void rotate_x(double movement) {set_rotation_x(rotation_x() + movement);};
         inline void rotate_y(double movement) {set_rotation_y(rotation_y() + movement);};
         inline void rotate_z(double movement) {set_rotation_z(rotation_z() + movement);};
+        // Rotate a point locally
+        Point_3D rotate_local(Point_3D to_rotate);
 
         // Returns a vector to an object
         inline Point_3D vector_to(Point_3D object) {Point_3D to_return = a_position.__substract_without_modification(object);to_return.normalize();return to_return;};
         inline Point_3D vector_to(Transform_Object_3D object) {return vector_to(object.a_position);};
 
         // Getters
+        inline double angular_velocity_x() const {return a_angular_velocity_x;};
+        inline double angular_velocity_y() const {return a_angular_velocity_y;};
+        inline void set_angular_velocity_x(double new_angular_velocity_x){a_angular_velocity_x = new_angular_velocity_x;};
+        inline void set_angular_velocity_y(double new_angular_velocity_y){a_angular_velocity_y = new_angular_velocity_y;};
         inline void set_rotation(Point_3D new_rotation){a_rotation_x = new_rotation.x();a_rotation_y = new_rotation.y();a_rotation_z = new_rotation.z();update_vectors();};
         inline void set_rotation_x(double new_rotation_x) {a_rotation_x = new_rotation_x;update_vectors();};
         inline void set_rotation_y(double new_rotation_y) {a_rotation_y = new_rotation_y;update_vectors();};
@@ -386,18 +413,19 @@ namespace scls {
         //*********
 
         // Returns the absolute X scale
-        inline Point_3D absolute_scale() const {return Point_3D(absolute_scale_x(), absolute_scale_y(), absolute_scale_z());};
-        inline double absolute_scale_x() const {if(parent() == 0)return scale_x();else return parent()->absolute_scale_x() * scale_x();};
-        inline double absolute_scale_y() const {if(parent() == 0)return scale_y();else return parent()->absolute_scale_y() * scale_y();};
-        inline double absolute_scale_z() const {if(parent() == 0)return scale_z();else return parent()->absolute_scale_z() * scale_z();};
+        Point_3D absolute_scale() const;
+        double absolute_scale_x() const;
+        double absolute_scale_y() const;
+        double absolute_scale_z() const;
 
         // Getters
+        inline void set_inherit_scale(bool new_inherit_scale){a_inherit_scale = new_inherit_scale;};
         inline void set_scale(double new_scale_x, double new_scale_y, double new_scale_z) {set_scale_x(new_scale_x);set_scale_y(new_scale_y);set_scale_z(new_scale_z);};
         inline void set_scale(double new_scale) {set_scale_x(new_scale);set_scale_y(new_scale);set_scale_z(new_scale);};
         inline void set_scale(Point_3D new_scale) {set_scale_x(new_scale.x());set_scale_y(new_scale.y());set_scale_z(new_scale.z());};
-        inline void set_scale_x(double new_scale_x) {a_scale_x = new_scale_x;};
-        inline void set_scale_y(double new_scale_y) {a_scale_y = new_scale_y;};
-        inline void set_scale_z(double new_scale_z) {a_scale_z = new_scale_z;};
+        inline void set_scale_x(double new_scale_x) {a_scale_x = new_scale_x;update_children_real_local_position();};
+        inline void set_scale_y(double new_scale_y) {a_scale_y = new_scale_y;update_children_real_local_position();};
+        inline void set_scale_z(double new_scale_z) {a_scale_z = new_scale_z;update_children_real_local_position();};
         inline Point_3D scale() const {return Point_3D(a_scale_x, a_scale_y, a_scale_z);};
         inline double scale_x() const {return a_scale_x;};
         inline double scale_y() const {return a_scale_y;};
@@ -413,6 +441,7 @@ namespace scls {
         inline void __add(Point_3D object) {a_position.__add(object);};
         inline void add_x(double new_x){a_position.move_x(new_x);};
         inline void add_y(double new_y){a_position.move_y(new_y);};
+        inline void add_z(double new_z){a_position.move_z(new_z);};
 
         // Built-in operator
         inline Transform_Object_3D& operator+=(Point_3D object){__add(object);return *this;};
@@ -461,6 +490,10 @@ namespace scls {
         // Velocity of the object
         Point_3D a_velocity;
 
+        // Angular velocity
+        double a_angular_velocity_x = 0;
+        double a_angular_velocity_y = 0;
+
         // Anchored position
         // X anchored position of the point
         double a_anchored_x = 0;
@@ -483,13 +516,31 @@ namespace scls {
         double a_right_vector_y = 0;
         // Right z
         double a_right_vector_z = 0;
-        // Top vector
-        // Top x
+        // Y x
         double a_top_vector_x = 0;
-        // Top y
+        // Y y
         double a_top_vector_y = 1;
-        // Top z
+        // Y z
         double a_top_vector_z = 0;
+
+        // X x
+        double a_x_vector_x = 1;
+        // X y
+        double a_x_vector_y = 0;
+        // X z
+        double a_x_vector_z = 0;
+        // Y x
+        double a_y_vector_x = 0;
+        // Y y
+        double a_y_vector_y = 1;
+        // Y z
+        double a_y_vector_z = 0;
+        // Z x
+        double a_z_vector_x = 0;
+        // Z y
+        double a_z_vector_y = 0;
+        // Z z
+        double a_z_vector_z = 1;
 
         // Real local anchored position
         // Real X anchored position of the point
@@ -500,12 +551,14 @@ namespace scls {
         double a_real_local_anchored_z = 0;
 
         // Real local parent position
-        // Real X parent position of the point
+        // Real parent position of the point
         double a_real_local_parent_x = 0;
-        // Real Y parent position of the point
         double a_real_local_parent_y = 0;
-        // Real Z parent position of the point
         double a_real_local_parent_z = 0;
+        // Real parent velocity of the point
+        double a_real_local_parent_velocity_x = 0;
+        double a_real_local_parent_velocity_y = 0;
+        double a_real_local_parent_velocity_z = 0;
 
         // Rotated position
         // X position of the point after a rotation
@@ -540,6 +593,9 @@ namespace scls {
         double a_scale_y = 1;
         // Z scale of the object
         double a_scale_z = 1;
+
+        // If the scale is heritated or not
+        bool a_inherit_scale = true;
     };
 }
 
