@@ -209,8 +209,9 @@ namespace scls {
         inline double next_movement_z()const{return a_attached_transform.lock().get()->next_movement_z();};
 
         // Moves the object
-        void __move(Point_3D point){Transform_Object_3D* t=a_attached_transform.lock().get();t->set_x(t->x() + point.x());t->set_y(t->y() + point.y());t->rotate_x(t->angular_velocity_x() * delta_time().to_double());t->rotate_y(t->angular_velocity_y() * delta_time().to_double());};
-        void __move(){Transform_Object_3D* t=a_attached_transform.lock().get();t->add_x(next_movement_x());t->add_y(next_movement_y());t->add_z(next_movement_z());t->rotate_x(t->angular_velocity_x() * delta_time().to_double());t->rotate_y(t->angular_velocity_y() * delta_time().to_double());};
+        inline void update_move(){Transform_Object_3D* t=a_attached_transform.lock().get();t->add_x(next_movement_x());t->add_y(next_movement_y());t->add_z(next_movement_z());};
+        inline void update_rotation(){Transform_Object_3D* t=a_attached_transform.lock().get();t->rotate(Point_3D(t->angular_velocity_x() * delta_time().to_double(), t->angular_velocity_y() * delta_time().to_double(), 0));};
+        inline void update(){update_move();update_rotation();};
 
         // Physic
         virtual int collision_depht(){return std::ceil(max_absolute_z_next()) - std::floor(min_absolute_z_next());};

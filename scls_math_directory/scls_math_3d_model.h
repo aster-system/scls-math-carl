@@ -1043,6 +1043,10 @@ namespace scls {
         std::shared_ptr<Solid> regular_polygon_3d(unsigned short side_number, unsigned short needed_side_number, int side_start);
         std::shared_ptr<Solid> regular_polygon_3d(unsigned short side_number);
 
+        // Returns a solid group which make a simple regular polygon in 3D
+        std::shared_ptr<Solid_Group> regular_polygon_3d_solid_group(unsigned short side_number, unsigned short needed_side_number, int side_start);
+        std::shared_ptr<Solid_Group> regular_polygon_3d_solid_group(unsigned short side_number);
+
         // Returns a squared-solid with a frame of faces in its top
         std::shared_ptr<Solid> frame_polyhedron_in_top(unsigned int frame_width, unsigned int frame_height);
     }

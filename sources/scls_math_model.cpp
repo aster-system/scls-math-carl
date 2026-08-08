@@ -1370,7 +1370,7 @@ namespace scls {
                 std::shared_ptr<Point> to_add = std::make_shared<Point>(*points.at(i).get());
                 to_add.get()->set_this_object(to_add);
                 to_add.get()->reset();
-                to_add.get()->set_parent(to_return); to_return.get()->add_child(to_add);
+                to_add.get()->set_parent(to_return);//to_return.get()->add_child(to_add);
 
                 // Calculate the texture position of the point
                 double x_texture = to_add.get()->x();
@@ -1560,6 +1560,10 @@ namespace scls {
             return to_return;
         }
         std::shared_ptr<Solid> regular_polygon_3d(unsigned short side_number){return regular_polygon_3d(side_number, side_number, 0);}
+
+        // Returns a solid group which make a simple regular polygon in 3D
+        std::shared_ptr<Solid_Group> regular_polygon_3d_solid_group(unsigned short side_number, unsigned short needed_side_number, int side_start) {std::shared_ptr<scls::model_maker::Solid_Group> to_return_shared_ptr = std::make_shared<scls::model_maker::Solid_Group>();to_return_shared_ptr.get()->add_solid(regular_polygon_3d(side_number, needed_side_number, side_start));return to_return_shared_ptr;}
+        std::shared_ptr<Solid_Group> regular_polygon_3d_solid_group(unsigned short side_number){std::shared_ptr<scls::model_maker::Solid_Group> to_return_shared_ptr = std::make_shared<scls::model_maker::Solid_Group>();to_return_shared_ptr.get()->add_solid(regular_polygon_3d(side_number));return to_return_shared_ptr;}
 
         // Returns a squared-solid with a frame of faces in its top
         std::shared_ptr<Solid> frame_polyhedron_in_top(unsigned int frame_width, unsigned int frame_height) {

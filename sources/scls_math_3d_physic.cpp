@@ -291,12 +291,18 @@ namespace scls {
 
     // Updates the physic
     scls::Point_3D gravity_3d = scls::Point_3D(0, -9.8, 0);
-    int Physic_Engine_3D::update_physic(double used_delta_time) {int needed_upate = update_physic_early(used_delta_time);needed_upate += update_physic_late(used_delta_time);return needed_upate;};
+    int Physic_Engine_3D::update_physic(double used_delta_time) {
+        int needed_update = 0;
+        //needed_update += update_physic_early(used_delta_time);
+        needed_update += update_physic_late(used_delta_time);
+        return needed_update;
+    };
     int Physic_Engine_3D::update_physic_early(double used_delta_time) {
         scls::Fraction delta_time_fraction = scls::Fraction::from_double(used_delta_time);
 
         // Realised updates
         int needed_update = 0;
+        bool use_collision = false;
 
         // Soft-reset the physic
         for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {
@@ -310,88 +316,90 @@ namespace scls {
         // Apply gravity
         for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {if(physic_objects().at(i).get()->use_gravity()){physic_objects().at(i).get()->accelerate(gravity_3d * used_delta_time);needed_update++;}}
 
-        // Update each objects in the case
-        std::vector<std::shared_ptr<Physic_Object_3D>> dynamic_objects_physic;
-        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {
-            // Asserts
-            if(physic_objects().at(i).get()->collisions().size() <= 0){continue;}
+        if(use_collision) {
+            // Update each objects in the case
+            std::vector<std::shared_ptr<Physic_Object_3D>> dynamic_objects_physic;
+            for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {
+                // Asserts
+                if(physic_objects().at(i).get()->collisions().size() <= 0){continue;}
 
-            if(!physic_objects().at(i)->is_static()) {dynamic_objects_physic.push_back(physic_objects().at(i));}
-            else {
-                // Get the basic datas
-                int x_start = physic_objects().at(i)->collision_x_start()-1;
-                int y_start = physic_objects().at(i)->collision_y_start()-1;
-                int z_start = physic_objects().at(i)->collision_z_start()-1;
-                bool good_position = (physic_objects().at(i)->used_physic_case().size() > 0 && (physic_objects().at(i)->used_physic_case().at(0)->x() != x_start));
+                if(!physic_objects().at(i)->is_static()) {dynamic_objects_physic.push_back(physic_objects().at(i));}
+                else {
+                    // Get the basic datas
+                    int x_start = physic_objects().at(i)->collision_x_start()-1;
+                    int y_start = physic_objects().at(i)->collision_y_start()-1;
+                    int z_start = physic_objects().at(i)->collision_z_start()-1;
+                    bool good_position = (physic_objects().at(i)->used_physic_case().size() > 0 && (physic_objects().at(i)->used_physic_case().at(0)->x() != x_start));
 
-                if(!physic_objects().at(i)->loaded_in_map() || physic_objects().at(i)->moved_during_this_frame() || good_position) {
-                    // Delete the last cases
-                    delete_physic_object_case(physic_objects().at(i).get());
+                    if(!physic_objects().at(i)->loaded_in_map() || physic_objects().at(i)->moved_during_this_frame() || good_position) {
+                        // Delete the last cases
+                        delete_physic_object_case(physic_objects().at(i).get());
 
-                    // Get the needed datas
-                    physic_objects().at(i)->set_loaded_in_map(true);
-                    int needed_height = physic_objects().at(i)->collision_height() + 2;
-                    int needed_width = physic_objects().at(i)->collision_width() + 2;
-                    int needed_depht = physic_objects().at(i)->collision_depht() + 2;
+                        // Get the needed datas
+                        physic_objects().at(i)->set_loaded_in_map(true);
+                        int needed_height = physic_objects().at(i)->collision_height() + 2;
+                        int needed_width = physic_objects().at(i)->collision_width() + 2;
+                        int needed_depht = physic_objects().at(i)->collision_depht() + 2;
 
-                    // Add the cases
+                        // Add the cases
+                        for(int j = 0;j<needed_width;j++) {
+                            for(int h = 0;h<needed_height;h++) {
+                                for(int k = 0;k<needed_depht;k++) {
+                                    Physic_Case_3D* current_case = physic_case(x_start + j, y_start + h, z_start + k);
+                                    if(current_case != 0){
+                                        for(int l = 0;l<static_cast<int>(physic_objects().at(i)->collisions().size());l++){
+                                            current_case->static_objects_collisions.push_back(physic_objects().at(i)->collisions()[l]);
+                                            current_case->static_objects_collisions_physic.push_back(physic_objects().at(i));
+                                        }
+                                        physic_objects().at(i)->used_physic_case().push_back(current_case);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Dynamic objects
+            bool use_case = false;
+            for(int i = 0;i<static_cast<int>(dynamic_objects_physic.size());i++) {
+                // Get the needed datas
+                int needed_depht = std::ceil(dynamic_objects_physic.at(i)->max_absolute_z_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_z_next());
+                int needed_height = std::ceil(dynamic_objects_physic.at(i)->max_absolute_y_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_y_next());
+                int needed_width = std::ceil(dynamic_objects_physic.at(i)->max_absolute_x_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_x_next());
+                if(needed_width <= 0){needed_width = 1;};
+                int x_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_x_next());
+                int y_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_y_next());
+                int z_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_z_next());
+
+                // Check the cases
+                if(use_case) {
                     for(int j = 0;j<needed_width;j++) {
                         for(int h = 0;h<needed_height;h++) {
                             for(int k = 0;k<needed_depht;k++) {
                                 Physic_Case_3D* current_case = physic_case(x_start + j, y_start + h, z_start + k);
-                                if(current_case != 0){
-                                    for(int l = 0;l<static_cast<int>(physic_objects().at(i)->collisions().size());l++){
-                                        current_case->static_objects_collisions.push_back(physic_objects().at(i)->collisions()[l]);
-                                        current_case->static_objects_collisions_physic.push_back(physic_objects().at(i));
+                                if(current_case != 0 && current_case->static_objects_collisions.size() > 0){
+                                    for(int h = 0;h<static_cast<int>(current_case->static_objects_collisions.size());h++) {
+                                        dynamic_objects_physic.at(i)->check_collision(current_case->static_objects_collisions.at(h).lock(), current_case->static_objects_collisions_physic[h].lock().get());
                                     }
-                                    physic_objects().at(i)->used_physic_case().push_back(current_case);
                                 }
                             }
                         }
                     }
                 }
-            }
+
+                // Check the dynamics collisions
+                if(!dynamic_objects_physic.at(i).get()->ignore_dynamic_collisions()){
+                    for(int j = i + 1;j<static_cast<int>(dynamic_objects_physic.size());j++){
+                        for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
+                            if(dynamic_objects_physic.at(i).get() != dynamic_objects_physic.at(j).get()) {
+                                dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
+                            }
+                        }
+                    }
+                }
+            }//*/
         }
-
-        // Dynamic objects
-        bool use_case = false;
-        for(int i = 0;i<static_cast<int>(dynamic_objects_physic.size());i++) {
-            // Get the needed datas
-            int needed_depht = std::ceil(dynamic_objects_physic.at(i)->max_absolute_z_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_z_next());
-            int needed_height = std::ceil(dynamic_objects_physic.at(i)->max_absolute_y_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_y_next());
-            int needed_width = std::ceil(dynamic_objects_physic.at(i)->max_absolute_x_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_x_next());
-            if(needed_width <= 0){needed_width = 1;};
-            int x_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_x_next());
-            int y_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_y_next());
-            int z_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_z_next());
-
-            // Check the cases
-            if(use_case) {
-                for(int j = 0;j<needed_width;j++) {
-                    for(int h = 0;h<needed_height;h++) {
-                        for(int k = 0;k<needed_depht;k++) {
-                            Physic_Case_3D* current_case = physic_case(x_start + j, y_start + h, z_start + k);
-                            if(current_case != 0 && current_case->static_objects_collisions.size() > 0){
-                                for(int h = 0;h<static_cast<int>(current_case->static_objects_collisions.size());h++) {
-                                    dynamic_objects_physic.at(i)->check_collision(current_case->static_objects_collisions.at(h).lock(), current_case->static_objects_collisions_physic[h].lock().get());
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Check the dynamics collisions
-            if(!dynamic_objects_physic.at(i).get()->ignore_dynamic_collisions()){
-                for(int j = i + 1;j<static_cast<int>(dynamic_objects_physic.size());j++){
-                    for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
-                        if(dynamic_objects_physic.at(i).get() != dynamic_objects_physic.at(j).get()) {
-                            dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
-                        }
-                    }
-                }
-            }
-        }//*/
 
         return needed_update;
     }
@@ -407,7 +415,7 @@ namespace scls {
         }
 
         // Apply next movement
-        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {physic_objects().at(i).get()->__move();needed_update++;}
+        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {physic_objects().at(i).get()->update_move();needed_update++;}
 
         return needed_update;
     }
