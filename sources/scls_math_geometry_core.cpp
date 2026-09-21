@@ -30,8 +30,148 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
     // Rotate a 3D vector
-    double* rotate_vector_3d_cylindrical(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z){return rotate_vector_3d_cylindrical(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
-    double* rotate_vector_3d_cylindrical(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z) {
+    long double pi = SCLS_PI;long double pi_unprecise = 3.1415L;
+    double* rotate_vector_3d_cylindrical(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z){return rotate_vector_3d_cylindrical(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
+    double* rotate_vector_3d_cylindrical(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z, long double anchor_x, long double anchor_y, long double anchor_z) {
+        double* to_return = new double[3];to_return[0] = vector_x;to_return[1] = vector_y;to_return[2] = vector_z;
+
+        // Optimization
+        if(rotation_x == 0 && rotation_y == 0 && rotation_z == 0){return to_return;}
+
+        vector_x -= anchor_x;vector_y -= anchor_y;vector_z -= anchor_z;
+        while(rotation_x < 0){rotation_x += 360;}
+
+        bool debug = false;
+        if(debug)std::cout << "Start " << to_return[0] << " " << to_return[1] << " " << to_return[2] << std::endl;
+
+        // Calculate the real local Y anchored position
+        long double total_yz_length = std::hypot(vector_y, to_return[2]);
+        if(total_yz_length > 0 && rotation_x > 0) {
+            // Get the current angle
+            long double current_angle = std::asin(vector_y / total_yz_length);
+            if(debug)std::cout << "T " << current_angle * SCLS_RADIANS_TO_ANGLE << std::endl;
+            if(to_return[2] < 0){current_angle = pi - current_angle;}
+            if(debug)std::cout << "U " << current_angle * SCLS_RADIANS_TO_ANGLE << std::endl;
+
+            // Get the Y position
+            long double final_angle = current_angle - degrees_to_radians(rotation_x);
+            if(vector_y > 0){final_angle = current_angle - degrees_to_radians(rotation_x);}if(debug)std::cout << "V " << rotation_x << " " << final_angle * SCLS_RADIANS_TO_ANGLE << std::endl;
+            long double y_sin = std::sin(final_angle);
+            to_return[1] = y_sin * total_yz_length;
+
+            // Final calculation
+            long double y_cos = std::cos(final_angle);if(debug)std::cout << "W " << final_angle * SCLS_RADIANS_TO_ANGLE << " " << y_cos << std::endl;
+            to_return[2] = y_cos * total_yz_length;
+        }
+        else{to_return[1] = vector_y;}
+
+        if(debug)std::cout << "Mid " << to_return[0] << " " << to_return[1] << " " << to_return[2] << std::endl;
+
+        // Calculate the first XZ angle
+        long double rotation_y_x = 0;long double rotation_y_z = 1;
+        long double total_xz_length = std::hypot(vector_x, to_return[2]);
+        long double to_add = 0;
+        if(total_xz_length > 0) {
+            to_add = std::acos(std::abs(to_return[2]) / total_xz_length);
+            // Get the current angle
+            long double current_angle = 0;
+            if(to_return[2] >= 0 && vector_x >= 0) {current_angle = to_add;}
+            else if (to_return[2] < 0 && vector_x >= 0) {current_angle = pi_unprecise - to_add;}
+            else if(to_return[2] < 0 && vector_x < 0) {current_angle = pi_unprecise + to_add;}
+            else {current_angle = pi_unprecise * 2.0 - to_add;}
+
+            // Get the final XZ position
+            current_angle += degrees_to_radians(rotation_y);
+            while(current_angle < 0) current_angle += pi_unprecise * 2.0;
+            while(current_angle >= pi_unprecise * 2) current_angle -= pi_unprecise * 2.0;
+
+            // Final calculation
+            rotation_y_x = std::sin(current_angle);
+            rotation_y_z = std::cos(current_angle);
+            to_return[2] = rotation_y_z * total_xz_length;
+            to_return[0] = rotation_y_x * total_xz_length;
+        }
+        else {to_return[2] = 0; to_return[0] = 0;}
+
+        to_return[0] += anchor_x;to_return[1] += anchor_y;to_return[2] += anchor_z;
+        return to_return;
+    }
+    double* __rotate_vector_3d(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z, long double anchor_x, long double anchor_y, long double anchor_z) {
+        double* to_return = new double[3];
+        vector_x -= anchor_x;vector_y -= anchor_y;vector_z -= anchor_z;
+        while(rotation_x < 0){rotation_x += 360;}
+
+        // Calculate the first XZ angle
+        long double total_xz_length = std::hypot(vector_x, vector_z);
+        long double to_add = 0;
+        if(total_xz_length > 0) {
+            //double y_acos = std::sqrt(1.0 - (std::abs(vector_z) / total_xz_length)*(std::abs(vector_z) / total_xz_length));
+            //to_add = std::atan2(y_acos, std::abs(vector_z) / total_xz_length);
+            if(vector_z >= 0){to_add = std::acos(vector_z / total_xz_length);}
+            else{to_add = std::acos((-vector_z) / total_xz_length);}
+
+            // Get the current angle
+            long double current_angle = 0;
+            if(vector_z >= 0 && vector_x >= 0) {current_angle = to_add;}
+            else if (vector_z < 0 && vector_x >= 0) {current_angle = pi_unprecise - to_add;}
+            else if(vector_z < 0 && vector_x < 0) {current_angle = pi_unprecise + to_add;}
+            else {current_angle = pi_unprecise * 2.0L - to_add;}
+
+            // Get the final XZ position
+            current_angle += degrees_to_radians(rotation_y);
+            while(current_angle < 0) current_angle += pi_unprecise * 2.0L;
+            while(current_angle >= pi_unprecise * 2.0L) current_angle -= pi_unprecise * 2.0L;
+            to_return[2] = std::cos(current_angle) * total_xz_length;
+            to_return[0] = std::sin(current_angle) * total_xz_length;
+        }
+        else {to_return[2] = 0; to_return[0] = 0;}
+
+        // Calculate the real local Y anchored position
+        long double total_length = std::hypot(total_xz_length, vector_y);
+        if(total_length > 0 && rotation_x > 0) {
+            // XZ
+            to_return[2] /= total_xz_length;
+            to_return[0] /= total_xz_length;
+
+            // Calculate the Y multiplier
+            // Calculate the current angle
+            long double y_sin = std::abs(vector_y) / total_length;
+            // Apply an X transformation
+            long double current_angle = std::asin(y_sin);
+            // Get the Y position
+            long double final_angle = current_angle + degrees_to_radians(rotation_x);
+            if(vector_y > 0) final_angle += pi_unprecise;
+            y_sin = std::sin(final_angle);
+            to_return[1] = -y_sin * total_length;
+
+            // Calculate the XZ multiplier
+            while(current_angle > pi_unprecise / 2.0L && current_angle < pi_unprecise * 1.5L) current_angle += pi_unprecise;
+            while(current_angle >= pi_unprecise * 2.0L) current_angle -= pi_unprecise * 2.0L;
+            final_angle = current_angle + degrees_to_radians(rotation_x);
+            while(final_angle < 0) final_angle += pi_unprecise * 2.0;
+            while(final_angle >= pi_unprecise * 2.0L) final_angle -= pi_unprecise * 2.0L;
+            const long double real_final_angle = final_angle;
+            while(final_angle > pi_unprecise / 2.0L && final_angle < pi_unprecise * 1.5L) final_angle += pi_unprecise;
+            while(final_angle >= pi_unprecise * 2.0L) final_angle -= pi_unprecise * 2.0L;
+            // Apply the XZ multiplier
+            long double y_cos = std::abs(std::cos(final_angle));
+            if(real_final_angle > pi_unprecise / 2.0 && real_final_angle < pi_unprecise * 1.5L) y_cos = -y_cos;
+            to_return[0] *= y_cos;
+            to_return[2] *= y_cos;
+
+            // Scale each vectors
+            to_return[2] *= total_length;
+            to_return[0] *= total_length;
+        }else{to_return[1] = vector_y;}
+
+        to_return[0] += anchor_x;to_return[1] += anchor_y;to_return[2] += anchor_z;
+        return to_return;
+    }
+    //*/
+
+    /*// Rotate a 3D vector
+    double* rotate_vector_3d_cylindrical(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z){return rotate_vector_3d_cylindrical(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
+    double* rotate_vector_3d_cylindrical(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z, long double anchor_x, long double anchor_y, long double anchor_z) {
         double* to_return = new double[3];to_return[0] = vector_x;to_return[1] = vector_y;to_return[2] = vector_z;
         vector_x -= anchor_x;vector_y -= anchor_y;vector_z -= anchor_z;
         while(rotation_x < 0){rotation_x += 360;}
@@ -45,7 +185,7 @@ namespace scls {
             // Get the current angle
             double current_angle = std::asin(vector_y / total_yz_length);
             if(debug)std::cout << "T " << current_angle * SCLS_RADIANS_TO_ANGLE << std::endl;
-            if(to_return[2] < 0){current_angle = SCLS_PI - current_angle;}
+            if(to_return[2] < 0){current_angle = pi - current_angle;}
             if(debug)std::cout << "U " << current_angle * SCLS_RADIANS_TO_ANGLE << std::endl;
 
             // Get the Y position
@@ -71,14 +211,14 @@ namespace scls {
             // Get the current angle
             double current_angle = 0;
             if(to_return[2] >= 0 && vector_x >= 0) {current_angle = to_add;}
-            else if (to_return[2] < 0 && vector_x >= 0) {current_angle = 3.1415 - to_add;}
-            else if(to_return[2] < 0 && vector_x < 0) {current_angle = 3.1415 + to_add;}
-            else {current_angle = 3.1415 * 2.0 - to_add;}
+            else if (to_return[2] < 0 && vector_x >= 0) {current_angle = pi_unprecise - to_add;}
+            else if(to_return[2] < 0 && vector_x < 0) {current_angle = pi_unprecise + to_add;}
+            else {current_angle = pi_unprecise * 2.0 - to_add;}
 
             // Get the final XZ position
             current_angle += degrees_to_radians(rotation_y);
-            while(current_angle < 0) current_angle += 3.1415 * 2.0;
-            while(current_angle >= 3.1415 * 2) current_angle -= 3.1415 * 2.0;
+            while(current_angle < 0) current_angle += pi_unprecise * 2.0;
+            while(current_angle >= pi_unprecise * 2) current_angle -= pi_unprecise * 2.0;
 
             // Final calculation
             rotation_y_x = std::sin(current_angle);
@@ -91,7 +231,7 @@ namespace scls {
         to_return[0] += anchor_x;to_return[1] += anchor_y;to_return[2] += anchor_z;
         return to_return;
     }
-    double* __rotate_vector_3d(double vector_x, double vector_y, double vector_z, double rotation_x, double rotation_y, double rotation_z, double anchor_x, double anchor_y, double anchor_z) {
+    double* __rotate_vector_3d(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z, long double anchor_x, long double anchor_y, long double anchor_z) {
         double* to_return = new double[3];
         vector_x -= anchor_x;vector_y -= anchor_y;vector_z -= anchor_z;
         while(rotation_x < 0){rotation_x += 360;}
@@ -104,14 +244,14 @@ namespace scls {
             // Get the current angle
             double current_angle = 0;
             if(vector_z >= 0 && vector_x >= 0) {current_angle = to_add;}
-            else if (vector_z < 0 && vector_x >= 0) {current_angle = 3.1415 - to_add;}
-            else if(vector_z < 0 && vector_x < 0) {current_angle = 3.1415 + to_add;}
-            else {current_angle = 3.1415 * 2.0 - to_add;}
+            else if (vector_z < 0 && vector_x >= 0) {current_angle = pi_unprecise - to_add;}
+            else if(vector_z < 0 && vector_x < 0) {current_angle = pi_unprecise + to_add;}
+            else {current_angle = pi_unprecise * 2.0 - to_add;}
 
             // Get the final XZ position
             current_angle += degrees_to_radians(rotation_y);
-            while(current_angle < 0) current_angle += 3.1415 * 2.0;
-            while(current_angle >= 3.1415 * 2) current_angle -= 3.1415 * 2.0;
+            while(current_angle < 0) current_angle += pi_unprecise * 2.0;
+            while(current_angle >= pi_unprecise * 2) current_angle -= pi_unprecise * 2.0;
             to_return[2] = std::cos(current_angle) * total_xz_length;
             to_return[0] = std::sin(current_angle) * total_xz_length;
         }
@@ -120,6 +260,10 @@ namespace scls {
         // Calculate the real local Y anchored position
         double total_length = std::sqrt(total_xz_length * total_xz_length + vector_y * vector_y);
         if(total_length > 0 && rotation_x > 0) {
+            // TEMP
+            to_return[2] /= total_xz_length;
+            to_return[0] /= total_xz_length;
+
             // Calculate the Y multiplier
             // Calculate the current angle
             double y_sin = std::abs(vector_y) / total_length;
@@ -127,22 +271,23 @@ namespace scls {
             double current_angle = std::asin(y_sin);
             // Get the Y position
             double final_angle = current_angle + degrees_to_radians(rotation_x);
-            if(vector_y > 0) final_angle += 3.1415;
+            if(vector_y > 0) final_angle += pi_unprecise;
             y_sin = std::sin(final_angle);
             to_return[1] = -y_sin * total_length;
 
             // Calculate the XZ multiplier
-            while(current_angle > 3.1415 / 2.0 && current_angle < 3.1415 * 1.5) current_angle += 3.1415;
-            while(current_angle >= 3.1415 * 2) current_angle -= 3.1415 * 2;
+            while(current_angle > pi_unprecise / 2.0 && current_angle < pi_unprecise * 1.5) current_angle += pi_unprecise;
+            while(current_angle >= pi_unprecise * 2) current_angle -= pi_unprecise * 2;
             final_angle = current_angle + degrees_to_radians(rotation_x);
-            while(final_angle < 0) final_angle += 3.1415 * 2;
-            while(final_angle >= 3.1415 * 2) final_angle -= 3.1415 * 2;
+            while(final_angle < 0) final_angle += pi_unprecise * 2;
+            while(final_angle >= pi_unprecise * 2) final_angle -= pi_unprecise * 2;
             const double real_final_angle = final_angle;
-            while(final_angle > 3.1415 / 2.0 && final_angle < 3.1415 * 1.5) final_angle += 3.1415;
-            while(final_angle >= 3.1415 * 2) final_angle -= 3.1415 * 2;
+            while(final_angle > pi_unprecise / 2.0 && final_angle < pi_unprecise * 1.5) final_angle += pi_unprecise;
+            while(final_angle >= pi_unprecise * 2) final_angle -= pi_unprecise * 2;
+
             // Apply the XZ multiplier
             double y_cos = std::abs(std::cos(final_angle));
-            if(real_final_angle > 3.1415 / 2.0 && real_final_angle < 3.1415 * 1.5) y_cos = -y_cos;
+            if(real_final_angle > pi_unprecise / 2.0 && real_final_angle < pi_unprecise * 1.5) y_cos = -y_cos;
             to_return[0] *= y_cos;
             to_return[2] *= y_cos;
 
@@ -154,6 +299,7 @@ namespace scls {
         to_return[0] += anchor_x;to_return[1] += anchor_y;to_return[2] += anchor_z;
         return to_return;
     }
+    //*/
 
     // Vector_Base_2D constructor
     Vector_Base_2D::Vector_Base_2D(double needed_width_unit_in_canonical_base, double needed_height_unit_in_canonical_base, double needed_x_unit_in_canonical_base, double needed_y_unit_in_canonical_base):Plane_Base(needed_width_unit_in_canonical_base, needed_height_unit_in_canonical_base, needed_x_unit_in_canonical_base, needed_y_unit_in_canonical_base){};
@@ -578,9 +724,9 @@ namespace scls {
         // Get the current angle
         double current_angle = 0;
         if(vector_y >= 0 && vector_x >= 0) {current_angle = to_add;}
-        else if (vector_x < 0 && vector_y >= 0) {current_angle = 3.1415 - to_add;}
-        else if(vector_x < 0 && vector_y < 0) {current_angle = 3.1415 + to_add;}
-        else {current_angle = 3.1415 * 2.0 - to_add;}
+        else if (vector_x < 0 && vector_y >= 0) {current_angle = pi_unprecise - to_add;}
+        else if(vector_x < 0 && vector_y < 0) {current_angle = pi_unprecise + to_add;}
+        else {current_angle = pi_unprecise * 2.0 - to_add;}
 
         return current_angle;
     }

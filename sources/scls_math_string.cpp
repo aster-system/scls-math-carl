@@ -146,6 +146,7 @@ namespace scls {
     	std::string t = std::string();t += to_test;
     	return string_is_special(operator_order, t);
     }
+    std::vector<std::string> algebra_functions = {"ln", "exp", "sqrt", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "abs", "random", "random_int_between_included", "repetition"};
     void __string_to_algebra_element_operator(Algebra_Element* element, const Math_Environment* env, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order, int position) {
         // Cut the text operator by * operator
     	std::vector<std::string> cutted = cut_string_out_of_2(source, operator_order.at(position).name(), "(", ")");
@@ -156,9 +157,13 @@ namespace scls {
                 if(parts.at(parts.size() - 1).size() < 2 || (parts.at(parts.size() - 1).at(0) != '(')) {current_element = element->new_algebra_element(parts.at(parts.size() - 1));}
                 else {current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), env, parts.at(parts.size() - 1).substr(1, parts.at(parts.size() - 1).size() - 2), operator_order, operator_order.size() - 1);}
 
+                // ONLY WORKS FOR THE FUNCTIONS IN "algebra_functions"
                 if(parts.size() == 2) {
                     std::string needed_function = parts.at(0);
                     if(needed_function == std::string_view("random")) {current_element = element->new_algebra_element(random_fraction(0, 1).to_std_string(0));}
+                    else if(needed_function == std::string_view("random_int_between_included")) {
+                        current_element = element->new_algebra_element(std::to_string(scls::random_int_between_included(0, 15)));
+                    }
                     else if(needed_function == std::string_view("repetition")) {
                         if(env != 0) {
                             current_element = element->new_algebra_element(std::to_string(env->repetition(current_element.get()->value_to_double())));
@@ -173,7 +178,6 @@ namespace scls {
     }
     void Math_Environment::string_to_algebra_element(const Math_Environment* env, Algebra_Element* element, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order) {
         // Operator order
-    	std::vector<std::string> functions = {"ln", "exp", "sqrt", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "abs", "random", "repetition"};
         source = remove_space(source);
 
         // First / last elements
@@ -193,7 +197,7 @@ namespace scls {
 					int current_pos = i - 1;
 					while(current_pos >= 0 && (!string_is_operator(operator_order, source[current_pos]) && source[current_pos]!='(' && source[current_pos]!=')')){total_function=source[current_pos]+total_function;current_pos--;}
 					std::size_t index = 0;char l = -1;
-					for(;index<functions.size();index++) {if(functions.at(index) == total_function) {l=0;break;}}
+					for(;index<algebra_functions.size();index++) {if(algebra_functions.at(index) == total_function) {l=0;break;}}
 
 					if(l != -1) {
 						// The part is a function

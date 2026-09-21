@@ -322,13 +322,14 @@ namespace scls {
 
     // Returns a fraction from a double
     constexpr double from_double_precision = 1000;
-    __Fraction_Base __Fraction_Base::from_double(double result) {
+    __Fraction_Base __Fraction_Base::from_double(double result, double precision) {
         long long result_in_long = static_cast<long long>(result);
         double after_decimal_point = static_cast<double>(result - static_cast<double>(result_in_long));
         if(after_decimal_point == 0){return Fraction(result_in_long, 1);}
-        long long after_decimal_point_in_long = static_cast<long long>(after_decimal_point * from_double_precision);
-        return Fraction(result_in_long, 1) + Fraction(after_decimal_point_in_long, from_double_precision);
-    };
+        long long after_decimal_point_in_long = static_cast<long long>(after_decimal_point * precision);
+        return Fraction(result_in_long, 1) + Fraction(after_decimal_point_in_long, precision);
+    }
+    __Fraction_Base __Fraction_Base::from_double(double result) {return from_double(result, from_double_precision);};
     // Returns a fraction from a std::string
     __Fraction_Base __Fraction_Base::from_std_string(std::string content) {
         std::vector<std::string> cutted = cut_string(content, "/");
@@ -507,6 +508,7 @@ namespace scls {
     void sort_fractions(std::vector<Fraction>& fractions){std::sort(fractions.begin(), fractions.end(), __sort_fractions);}
 
     // Returns a fraction from a double
+    Fraction Fraction::from_double(double result, double precision){__Fraction_Base b = __Fraction_Base::from_double(result, precision);return Fraction(b);}
     Fraction Fraction::from_double(double result) {__Fraction_Base b = __Fraction_Base::from_double(result);return Fraction(b);}
 }
 

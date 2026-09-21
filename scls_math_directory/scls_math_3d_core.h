@@ -99,12 +99,17 @@ namespace scls {
         inline void normalize() {double divisor = (1.0/norm());a_x *= divisor;a_y *= divisor;a_z *= divisor;};
         inline Point_3D normalized() {double divisor = (1.0/norm());return Point_3D(a_x * divisor, a_y * divisor, a_z * divisor);};
 
+        // Points
+        Point_3D point_3d_xz();
+
         // Applies a rotation to the point
         Point_3D rotated(Point_3D rotation) const;
+        Point_3D rotated_y(double rotation) const;
         void rotate(scls::Point_3D rotation);
         void rotate_x(double rotation);
         void rotate_y(double rotation);
         // Returns the associated rotation
+        double rotation_y();
         double rotation_xz();
 
         // Adds a vector to this vector with another
@@ -128,6 +133,7 @@ namespace scls {
         inline Point_3D& operator-=(Point_3D object){__substract(object);return *this;};
         inline Point_3D operator*(Point_3D object){Point_3D temp(*this);temp.__multiply(object);return temp;};
         inline Point_3D& operator*=(Point_3D object){__multiply(object);return *this;};
+        inline Point_3D operator/(Point_3D object){Point_3D temp(*this);temp.__divide(object);return temp;};
         inline Point_3D& operator/=(Point_3D object){__divide(object);return *this;};
         inline bool operator==(Point_3D object){return object.x() == x() && object.y() == y() && object.z() == z();};
         inline bool operator!=(Point_3D object){return object.x() != x() || object.y() != y() || object.z() != z();};
@@ -198,7 +204,9 @@ namespace scls {
         inline bool moved_during_this_frame() const {return a_moved_during_this_frame;};
         inline Transform_Object_3D* parent() const {return a_parent.get();};
         inline void set_delta_time(Fraction new_delta_time){a_delta_time = new_delta_time;};
+        inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;};
         inline void set_this_object(std::weak_ptr<Transform_Object_3D> this_object){a_this_object=this_object;};
+        inline bool should_delete() const {return a_should_delete;};
 
         //*********
         //
@@ -299,6 +307,7 @@ namespace scls {
         }
 
         // Update each vectors
+        void update_vectors_base();
         void update_vectors();
 
         // Move on the forward axis
@@ -384,6 +393,7 @@ namespace scls {
         inline void rotate(Point_3D movement){set_rotation(rotation() + movement);};
         inline void rotate_x(double movement) {set_rotation_x(rotation_x() + movement);};
         inline void rotate_y(double movement) {set_rotation_y(rotation_y() + movement);};
+        inline void rotate_y_directly(double movement) {set_rotation_y_directly(rotation_y() + movement);};
         inline void rotate_z(double movement) {set_rotation_z(rotation_z() + movement);};
         // Rotate a point locally
         Point_3D rotate_local(Point_3D to_rotate);
@@ -397,9 +407,11 @@ namespace scls {
         inline double angular_velocity_y() const {return a_angular_velocity_y;};
         inline void set_angular_velocity_x(double new_angular_velocity_x){a_angular_velocity_x = new_angular_velocity_x;};
         inline void set_angular_velocity_y(double new_angular_velocity_y){a_angular_velocity_y = new_angular_velocity_y;};
-        inline void set_rotation(Point_3D new_rotation){a_rotation_x = new_rotation.x();a_rotation_y = new_rotation.y();a_rotation_z = new_rotation.z();update_vectors();};
+        inline void set_rotation(double new_rotation_x, double new_rotation_y, double new_rotation_z){a_rotation_x = new_rotation_x;a_rotation_y = new_rotation_y;a_rotation_z = new_rotation_z;update_vectors();};
+        inline void set_rotation(Point_3D new_rotation){set_rotation(new_rotation.x(), new_rotation.y(), new_rotation.z());};
         inline void set_rotation_x(double new_rotation_x) {a_rotation_x = new_rotation_x;update_vectors();};
         inline void set_rotation_y(double new_rotation_y) {a_rotation_y = new_rotation_y;update_vectors();};
+        inline void set_rotation_y_directly(double new_rotation_y) {a_rotation_y = new_rotation_y;};
         inline void set_rotation_z(double new_rotation_z) {a_rotation_z = new_rotation_z;update_vectors();};
         inline Point_3D rotation() const {return Point_3D(a_rotation_x, a_rotation_y, a_rotation_z);};
         inline double rotation_x() const {return a_rotation_x;};
@@ -477,6 +489,8 @@ namespace scls {
         Fraction a_delta_time = Fraction(1, 100);
         // If the transform has been moved during this frame
         bool a_moved_during_this_frame = false;
+        // If the transform should be deleted or not
+        bool a_should_delete = false;
 
         //*********
         //

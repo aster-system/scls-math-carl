@@ -44,6 +44,12 @@ namespace scls {
         // Matrix constructor
     	Matrix(int width);
     	Matrix(int width, int height);
+    	Matrix(int width, int height, std::vector<std::shared_ptr<Formula_Base>> elements);
+
+    	// Matrix colum
+    	static Matrix matrix_column(std::vector<std::shared_ptr<Formula_Base>> elements);
+    	// Matrix random
+    	static Matrix matrix_random_integer_included_between(int width, int height, int min, int max);
 
         // Do a matricial addition
         void add(Matrix* m);
@@ -59,6 +65,9 @@ namespace scls {
         Formula_Base* element_at(int x, int y);
         void set_element_at(int x, std::shared_ptr<Formula_Base> value);
         void set_element_at(int x, int y, std::shared_ptr<Formula_Base> value);
+
+        // Get a sub-matrix
+        Matrix sub_matrix_copy(int x, int y, int width, int height);
 
         // Returns the matrix to an MathML
         std::string to_mathml(scls::Textual_Math_Settings* settings);

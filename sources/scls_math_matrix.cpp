@@ -39,6 +39,26 @@ namespace scls {
     // Matrix constructor
 	Matrix::Matrix(int width):Matrix(1, width){}
     Matrix::Matrix(int width, int height):a_height(height),a_width(width){create_elements();};
+    Matrix::Matrix(int width, int height, std::vector<std::shared_ptr<Formula_Base>> elements):a_height(height),a_width(width),a_elements(elements){
+    	// Handle the elements vector
+    	if(a_elements.size() > static_cast<unsigned int>(width * height)){a_elements.resize(width * height);scls::print("Warning", "SCLS Math Matrix", "Too much elements in a matrix.");}
+    	else if(a_elements.size() < static_cast<unsigned int>(width * height)){a_elements.resize(width * height);scls::print("Warning", "SCLS Math Matrix", "Too many elements in a matrix.");}
+    	for(std::size_t i = 0;i<a_elements.size();i++){
+    		if(a_elements.at(i).get() == 0){
+    			a_elements[i] = std::make_shared<scls::Formula_Base>(0);
+    		}
+    	}
+    }
+
+    // Matrix colum
+    Matrix Matrix::matrix_column(std::vector<std::shared_ptr<Formula_Base>> elements){return Matrix(1, elements.size(), elements);}
+
+    // Matrix random
+    Matrix Matrix::matrix_random_integer_included_between(int width, int height, int min, int max) {
+    	std::vector<std::shared_ptr<Formula_Base>> values = std::vector<std::shared_ptr<Formula_Base>>(width * height);
+    	for(std::size_t i = 0;i<values.size();i++){values[i] = std::make_shared<scls::Formula_Base>(scls::Fraction(scls::random_int_between_included(min, max)));}
+    	return Matrix(width, height, values);
+    }
 
     // Do a matricial addition
     void Matrix::add(Matrix* m) {
@@ -49,6 +69,16 @@ namespace scls {
         for(int i = 0;i<a_width;i++) {
             for(int j = 0;j<a_height;j++) {
                 (a_elements[i * a_height + j].get())->add(m->a_elements[i * a_height + j].get());
+            }
+        }
+    }
+
+    // Create the elements
+    void Matrix::create_elements(){
+        a_elements = std::vector<std::shared_ptr<scls::Formula_Base>>(a_width * a_height);
+        for(int i = 0;i<a_width;i++) {
+            for(int j = 0;j<a_height;j++) {
+                a_elements[i * a_height + j] = std::make_shared<scls::Formula_Base>(0);
             }
         }
     }
@@ -90,6 +120,17 @@ namespace scls {
     Formula_Base* Matrix::element_at(int x, int y){return a_elements.at(x * a_height + y).get();};
     void Matrix::set_element_at(int x, std::shared_ptr<Formula_Base> value){return set_element_at(0, x, value);};
     void Matrix::set_element_at(int x, int y, std::shared_ptr<Formula_Base> value){a_elements[x * a_height + y] = value;};
+
+    // Get a sub-matrix
+    Matrix Matrix::sub_matrix_copy(int x, int y, int width, int height) {
+        Matrix s = Matrix(width, height);
+        for(int i = 0;i<width;i++){
+        	for(int j = 0;j<height;j++){
+				s.set_element_at(i, j, element_at(x + i, y + j)->clone());
+			}
+        }
+        return s;
+    }
 
     // Returns the matrix to an MathML
     std::string Matrix::to_mathml(scls::Textual_Math_Settings* settings) {
@@ -138,13 +179,4 @@ namespace scls {
         return to_return;
     }
 
-    // Create the elements
-    void Matrix::create_elements(){
-        a_elements = std::vector<std::shared_ptr<scls::Formula_Base>>(a_width * a_height);
-        for(int i = 0;i<a_width;i++) {
-            for(int j = 0;j<a_height;j++) {
-                a_elements[i * a_height + j] = std::make_shared<scls::Formula_Base>(0);
-            }
-        }
-    }
 }

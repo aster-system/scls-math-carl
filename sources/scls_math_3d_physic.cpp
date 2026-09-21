@@ -293,6 +293,15 @@ namespace scls {
     scls::Point_3D gravity_3d = scls::Point_3D(0, -9.8, 0);
     int Physic_Engine_3D::update_physic(double used_delta_time) {
         int needed_update = 0;
+
+        // Check the deleted objects
+        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {
+            if(physic_objects().at(i).get()->should_delete()){
+                delete_physic_object_case(physic_objects().at(i).get());
+                physic_objects().erase(physic_objects().begin() + i);i--;
+            }
+        }
+
         //needed_update += update_physic_early(used_delta_time);
         needed_update += update_physic_late(used_delta_time);
         return needed_update;
@@ -305,13 +314,7 @@ namespace scls {
         bool use_collision = false;
 
         // Soft-reset the physic
-        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {
-            if(physic_objects().at(i).get()->should_delete()){
-                delete_physic_object_case(physic_objects().at(i).get());
-                physic_objects().erase(physic_objects().begin() + i);i--;
-            }
-            else{physic_objects().at(i).get()->soft_reset();physic_objects().at(i).get()->set_delta_time(delta_time_fraction);}
-        }
+        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {physic_objects().at(i).get()->soft_reset();physic_objects().at(i).get()->set_delta_time(delta_time_fraction);}
 
         // Apply gravity
         for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {if(physic_objects().at(i).get()->use_gravity()){physic_objects().at(i).get()->accelerate(gravity_3d * used_delta_time);needed_update++;}}
@@ -398,7 +401,7 @@ namespace scls {
                         }
                     }
                 }
-            }//*/
+            }
         }
 
         return needed_update;
@@ -415,7 +418,7 @@ namespace scls {
         }
 
         // Apply next movement
-        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {physic_objects().at(i).get()->update_move();needed_update++;}
+        for(int i = 0;i<static_cast<int>(physic_objects().size());i++) {physic_objects().at(i).get()->set_delta_time(used_delta_time);physic_objects().at(i).get()->update_move();needed_update++;}
 
         return needed_update;
     }

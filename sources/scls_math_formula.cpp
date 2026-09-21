@@ -442,7 +442,7 @@ namespace scls {
     }
 
     // Returns the element to a simple std::string
-    std::string Formula_Base_Field::to_mathml(scls::Textual_Math_Settings* settings) const{return std::string();};
+    std::string Formula_Base_Field::to_mathml(scls::Textual_Math_Settings* settings) const{return to_std_string(settings);};
     std::string Formula_Base_Field::to_std_string(scls::Textual_Math_Settings* settings) const{
         std::string to_return = std::string();
         if(is_final_element()){

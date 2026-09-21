@@ -30,13 +30,17 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
 
+    // Points
+    Point_3D Point_3D::point_3d_xz(){return Point_3D(a_x, 0, a_z);}
+
     // Applies a rotation to the point
     Point_3D Point_3D::rotated(Point_3D rotation) const {
         double* rotated_point = __rotate_vector_3d(a_x, a_y, a_z, rotation.a_x, rotation.a_y, rotation.a_z);
         scls::Point_3D to_return;
         to_return.a_x = rotated_point[0]; to_return.a_y = rotated_point[1]; to_return.a_z = rotated_point[2];
-        delete rotated_point; rotated_point = 0; return to_return;
+        delete rotated_point; rotated_point = 0;return to_return;
     };
+    Point_3D Point_3D::rotated_y(double rotation) const{return rotated(Point_3D(0, rotation, 0));}
     void Point_3D::rotate(scls::Point_3D rotation) {rotation = rotated(rotation);a_x = rotation.a_x; a_y = rotation.a_y; a_z = rotation.a_z;};
     void Point_3D::rotate_x(double rotation) {rotate(Point_3D(rotation, 0, 0));};
     void Point_3D::rotate_y(double rotation) {rotate(Point_3D(0, rotation, 0));};
@@ -46,6 +50,7 @@ namespace scls {
         Point_2D needed_point = Point_2D(std::sqrt(a_x * a_x + a_z * a_z), a_y);
         return vector_2d_angle(needed_point);
     }
+    double Point_3D::rotation_y() {return vector_2d_angle(Point_2D(a_x, a_z));}
 
     // Absolute position handling
     // Returns the absolute X position
@@ -145,14 +150,14 @@ namespace scls {
     void Transform_Object_3D::update_real_local_position() {
         // Calculate the real local parent position
         if(parent() != 0) {
-            // Rotate the vector
+            /*// Rotate the vector
             double* rotated = rotate_vector_3d_cylindrical(x() * parent()->absolute_scale_x(), y() * parent()->absolute_scale_y(), z() * parent()->absolute_scale_z(), parent()->absolute_rotation_x(), parent()->absolute_rotation_y(), parent()->absolute_rotation_z());
 
             // Calculate the final positions
             a_real_local_parent_x = rotated[0];
             a_real_local_parent_y = rotated[1];
             a_real_local_parent_z = rotated[2];
-            delete[] rotated;
+            delete[] rotated//*/
 
             // TEMP
             Point_3D p = parent()->x_vector() * x() * parent()->absolute_scale_x() + parent()->y_vector() * y() * parent()->absolute_scale_y() + parent()->z_vector() * z() * parent()->absolute_scale_z();
@@ -161,7 +166,7 @@ namespace scls {
             a_real_local_parent_z = p.z();//*/
 
             // Velocity
-            rotated = rotate_vector_3d_cylindrical(velocity_x() * parent()->absolute_scale_x(), velocity_y() * parent()->absolute_scale_y(), velocity_z() * parent()->absolute_scale_z(), parent()->absolute_rotation_x(), parent()->absolute_rotation_y(), parent()->absolute_rotation_z());
+            double* rotated = rotate_vector_3d_cylindrical(velocity_x() * parent()->absolute_scale_x(), velocity_y() * parent()->absolute_scale_y(), velocity_z() * parent()->absolute_scale_z(), parent()->absolute_rotation_x(), parent()->absolute_rotation_y(), parent()->absolute_rotation_z());
             a_real_local_parent_velocity_x = rotated[0];
             a_real_local_parent_velocity_y = rotated[1];
             a_real_local_parent_velocity_z = rotated[2];
@@ -182,6 +187,19 @@ namespace scls {
     }
 
     // Update each vectors
+	void Transform_Object_3D::update_vectors_base() {
+		// Create the X vector
+		Point_3D parent_x = rotate_local(Point_3D(1, 0, 0));
+		a_x_vector_x = parent_x.x(); a_x_vector_y = parent_x.y(); a_x_vector_z = parent_x.z();
+
+		// Create the Y vector
+		Point_3D parent_y = rotate_local(Point_3D(0, 1, 0));
+		a_y_vector_x = parent_y.x(); a_y_vector_y = parent_y.y(); a_y_vector_z = parent_y.z();
+
+		// Create the Z vector
+		Point_3D parent_z = rotate_local(Point_3D(0, 0, 1));
+		a_z_vector_x = parent_z.x(); a_z_vector_y = parent_z.y(); a_z_vector_z = parent_z.z();
+	}
 	void Transform_Object_3D::update_vectors() {
 		// Update the directions vector
 		// Calculate the forward vector
@@ -199,24 +217,16 @@ namespace scls {
 		Point_3D parent_top = Point_3D(new_top_vector[0], new_top_vector[1], new_top_vector[2]);
 		if(parent() != 0){parent_top = parent()->rotate_local(parent_top);}
 		a_top_vector_x = parent_top.x(); a_top_vector_y = parent_top.y(); a_top_vector_z = parent_top.z();
-		delete new_top_vector; new_top_vector = 0;
+		delete new_top_vector; new_top_vector = 0;//*/
 
 
 
 
 
 
-		// Create the X vector
-		Point_3D parent_x = rotate_local(Point_3D(1, 0, 0));
-		a_x_vector_x = parent_x.x(); a_x_vector_y = parent_x.y(); a_x_vector_z = parent_x.z();
 
-		// Create the Y vector
-		Point_3D parent_y = rotate_local(Point_3D(0, 1, 0));
-		a_y_vector_x = parent_y.x(); a_y_vector_y = parent_y.y(); a_y_vector_z = parent_y.z();
-
-		// Create the Z vector
-		Point_3D parent_z = rotate_local(Point_3D(0, 0, 1));
-		a_z_vector_x = parent_z.x(); a_z_vector_y = parent_z.y(); a_z_vector_z = parent_z.z();
+		// Create the base
+		update_vectors_base();
 
 		// Update the real position
 		update_real_local_position();

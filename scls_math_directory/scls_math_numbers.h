@@ -347,6 +347,7 @@ namespace scls {
         // Crop the fraction
         void crop(int limit);
         // Returns a fraction from a double
+        static __Fraction_Base from_double(double result, double precision);
         static __Fraction_Base from_double(double result);
         // Returns a fraction from a std::string
         static __Fraction_Base from_std_string(std::string content);
@@ -470,6 +471,7 @@ namespace scls {
         //*********
 
     	// Returns a fraction from a double
+    	static Fraction from_double(double result, double precision);
     	static Fraction from_double(double result);
 
         // Most simple fraction constructor
