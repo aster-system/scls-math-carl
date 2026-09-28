@@ -193,7 +193,8 @@ namespace scls {
         virtual bool is_multiplication_neutral() const{return false;};
 
         // Creates a new algebra element of the same type
-        void __clone_base(Algebra_Element* e) const;
+        void clone_base(Algebra_Element* e) const;
+        void clone_base_without_sub_elements(Algebra_Element* e) const;
         virtual void algebra_clone(Algebra_Element* e) const = 0;
         virtual std::shared_ptr<Algebra_Element> algebra_clone() const = 0;
         virtual std::shared_ptr<Algebra_Element> new_algebra_element() const = 0;
@@ -224,7 +225,7 @@ namespace scls {
         Algebra_Element* known_algebra_element();
 
         // Simplify the element
-        virtual void simplify(){};
+        virtual void simplify();
 
         // Sub-places the element
         void sub_place();

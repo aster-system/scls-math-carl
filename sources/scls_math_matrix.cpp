@@ -73,6 +73,23 @@ namespace scls {
         }
     }
 
+    // Clone the matrice
+    void Matrix::clone(Matrix* m) {
+    	for(int i = 0;i<a_width;i++) {
+    		for(int j = 0;j<a_height;j++) {
+    			m->set_element_at(i, j, element_at(i, j)->clone());
+    		}
+    	}
+    }
+	std::shared_ptr<Matrix> Matrix::clone_shared_ptr() {
+		std::shared_ptr<Matrix> cloned = std::make_shared<Matrix>(a_width, a_height);
+		for(std::size_t i = 0;i<a_elements.size();i++) {
+			cloned.get()->a_elements[i] = a_elements.at(i).get()->clone();
+		}
+
+		return cloned;
+	}
+
     // Create the elements
     void Matrix::create_elements(){
         a_elements = std::vector<std::shared_ptr<scls::Formula_Base>>(a_width * a_height);
@@ -92,6 +109,11 @@ namespace scls {
             }
         }
     }
+    void Matrix::multiply_line(int line, Formula_Base* f) {
+    	for(int i = 0;i<a_width;i++) {
+			element_at(i, line)->multiply(f);
+		}
+    }
 
     // Do a matrix product (this * m)
     Matrix Matrix::product(Matrix* m) {
@@ -107,7 +129,7 @@ namespace scls {
                 for(int k = 0;k<a_width;k++) {
                     std::shared_ptr<Formula_Base> f = element_at(k, j)->clone();
                     f.get()->multiply(m->element_at(i, k));
-                    current->add(f.get());std::cout << "A " << k << " " << j << " " << element_at(k, j)->to_std_string(0) << " " << f.get()->to_std_string(0) << std::endl;
+                    current->add(f.get());
                 }
             }
         }
@@ -118,6 +140,7 @@ namespace scls {
     // Access to an element
     Formula_Base* Matrix::element_at(int x){return element_at(0, x);};
     Formula_Base* Matrix::element_at(int x, int y){return a_elements.at(x * a_height + y).get();};
+    std::shared_ptr<Formula_Base> Matrix::element_at_shared_ptr(int x, int y){return a_elements.at(x * a_height + y);};
     void Matrix::set_element_at(int x, std::shared_ptr<Formula_Base> value){return set_element_at(0, x, value);};
     void Matrix::set_element_at(int x, int y, std::shared_ptr<Formula_Base> value){a_elements[x * a_height + y] = value;};
 
@@ -130,6 +153,23 @@ namespace scls {
 			}
         }
         return s;
+    }
+
+    // Subtract a line with an another line (with a multiplication)
+    void Matrix::subtract_line(int line_1, int line_2, Formula_Base* multiple) {
+    	for(int i = 0;i<a_width;i++) {
+    		std::shared_ptr<Formula_Base> f = element_at(i, line_2)->clone();f.get()->multiply(multiple);
+			element_at(i, line_1)->substract(f.get());element_at(i, line_1)->simplify();
+		}
+    }
+
+    // Swap lines / columns
+    void Matrix::swap_lines(int line_1, int line_2) {
+    	for(int i = 0;i<width();i++) {
+			std::shared_ptr<scls::Formula_Base> temp = element_at_shared_ptr(i, line_2);
+			set_element_at(i, line_2, element_at_shared_ptr(i, line_1));
+			set_element_at(i, line_1, temp);
+		}
     }
 
     // Returns the matrix to an MathML
@@ -179,4 +219,54 @@ namespace scls {
         return to_return;
     }
 
+    // Gaussian elemination
+    std::shared_ptr<Matrix> gaussian_elimination_shared_ptr(Matrix* to_reduce) {
+        std::shared_ptr<Matrix> m = to_reduce->clone_shared_ptr();
+        int number = m.get()->height();
+
+        // Do the algorithm
+        for(int i = 0;i<number;i++) {
+            // Get the pivot
+            int pivot = 0;
+            for(int j = i + 1;j<number;j++) {
+                if(m.get()->element_at(i, j)->value_to_double() > pivot) {
+                    pivot = j;
+                }
+            }
+
+            // Permutation
+            for(int j = pivot;j>i;j--) {
+                m.get()->swap_lines(j, j - 1);
+            }
+
+            // Divide
+            m.get()->multiply_line(i, m.get()->element_at(i, i)->multiplication_inverse().get());
+
+            // Subtraction
+            for(int j = 0;j<i;j++) {
+                std::shared_ptr<Formula_Base> p_value = m.get()->element_at(i, j)->clone();
+                m.get()->subtract_line(j, i, p_value.get());
+            }
+            for(int j = i + 1;j<number;j++) {
+                std::shared_ptr<Formula_Base> p_value = m.get()->element_at(i, j)->clone();
+                m.get()->subtract_line(j, i, p_value.get());
+            }
+        }
+
+        return m;
+    }
+    std::shared_ptr<Matrix> gaussian_elimination_inverse_shared_ptr(Matrix* to_reduce) {
+        std::shared_ptr<Matrix> m = std::make_shared<Matrix>(to_reduce->width() * 2, to_reduce->height());
+        to_reduce->clone(m.get());
+        for(int i = 0;i<m.get()->height();i++) {
+            for(int j = 0;j<m.get()->height();j++) {
+                if(i == j){m.get()->set_element_at(m.get()->height() + i, i, std::make_shared<Formula_Base>(Fraction(1)));}
+                else{m.get()->set_element_at(m.get()->height() + i, j, std::make_shared<Formula_Base>(Fraction(0)));}
+            }
+        }
+
+        m = gaussian_elimination_shared_ptr(m.get());
+
+        return std::make_shared<Matrix>(m.get()->sub_matrix_copy(m.get()->height(), 0, m.get()->height(), m.get()->height()));
+    }
 }

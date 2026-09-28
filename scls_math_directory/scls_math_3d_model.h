@@ -67,6 +67,10 @@ namespace scls {
             //
             //*********
 
+            // Creates and return a new face object
+            static std::shared_ptr<Point> new_point_object(Point_3D p);
+            static std::shared_ptr<Point> new_point_object();
+
             // Point constructor
             Point(Point_3D pos) : Transform_Object_3D(pos) { reset(); };
             Point(double x, double y, double z) : Point(scls::Point_3D(x, y, z)) {};
@@ -192,6 +196,9 @@ namespace scls {
 
             // Creates and return a new face object
             static std::shared_ptr<Face> new_face_object();
+
+            // Add a points
+            void add_point(std::shared_ptr<Point> new_point);
 
             // Returns the face as a binary
             std::shared_ptr<Bytes_Set> binary();

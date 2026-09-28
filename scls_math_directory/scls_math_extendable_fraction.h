@@ -45,7 +45,7 @@ namespace scls {
         virtual ~Extendable_Fraction();
 
         // Creates a new algebra element of the same type
-        void clone(Extendable_Fraction* e) const{__clone_base(e);e->a_denominator = a_denominator;e->a_numerator = a_numerator;};
+        void clone(Extendable_Fraction* e) const{clone_base(e);e->a_denominator = a_denominator;e->a_numerator = a_numerator;};
         virtual void algebra_clone(Algebra_Element* e) const{clone(reinterpret_cast<Extendable_Fraction*>(e));};
         virtual std::shared_ptr<Algebra_Element> algebra_clone() const{std::shared_ptr<Extendable_Fraction> to_return = std::make_shared<Extendable_Fraction>();clone(to_return.get());return to_return;};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element() const{std::shared_ptr<Extendable_Fraction> to_return = std::make_shared<Extendable_Fraction>();return to_return;};

@@ -41,6 +41,20 @@ namespace scls {
         //
         //*********
 
+        // Creates and return a new face object
+        std::shared_ptr<Point> Point::new_point_object(Point_3D point){
+        	std::shared_ptr<Point> p = std::make_shared<Point>(point);
+			p.get()->set_this_object(p);
+			p.get()->reset();
+			return p;
+        }
+        std::shared_ptr<Point> Point::new_point_object(){
+        	std::shared_ptr<Point> p = std::make_shared<Point>();
+        	p.get()->set_this_object(p);
+        	p.get()->reset();
+        	return p;
+        }
+
         // Returns the point as a binary
         std::shared_ptr<Bytes_Set> Point::binary() {
             std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
@@ -212,6 +226,9 @@ namespace scls {
 
         // Creates and return a new face object
         std::shared_ptr<Face> Face::new_face_object(){std::shared_ptr<Face> f = std::shared_ptr<Face>(new Face());f.get()->set_this_object(f);return f;}
+
+        // Add a points
+        void Face::add_point(std::shared_ptr<Point> new_point){a_points.push_back(new_point);}
 
         // Returns if a side of points cross the boundary or not
         bool model_maker::Face::cross_boundary(std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point) {return __cross_boundary(points(), first_point, second_point);}

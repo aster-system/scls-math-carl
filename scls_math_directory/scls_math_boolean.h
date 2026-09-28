@@ -99,9 +99,9 @@ namespace scls {
 		void add_or(std::string unknown_name){Boolean b = Boolean(unknown_name);add_or(b);};
 
     	// Creates a new algebra element of the same type
-		virtual void algebra_clone(Algebra_Element* e) const{__clone_base(e);reinterpret_cast<Boolean*>(e)->a_value = a_value;}
+		virtual void algebra_clone(Algebra_Element* e) const{clone_base(e);reinterpret_cast<Boolean*>(e)->a_value = a_value;}
 		virtual std::shared_ptr<Algebra_Element> algebra_clone() const {return clone();};
-		virtual std::shared_ptr<Boolean> clone() const {std::shared_ptr<Boolean> b = std::make_shared<Boolean>();__clone_base(b.get());b.get()->a_value = a_value;return b;};
+		virtual std::shared_ptr<Boolean> clone() const {std::shared_ptr<Boolean> b = std::make_shared<Boolean>();clone_base(b.get());b.get()->a_value = a_value;return b;};
     	virtual std::shared_ptr<Algebra_Element> new_algebra_element() const {std::shared_ptr<Boolean> s = std::make_shared<Boolean>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
     	virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const {std::shared_ptr<Boolean> s = std::make_shared<Boolean>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
 

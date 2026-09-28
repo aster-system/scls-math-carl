@@ -54,6 +54,10 @@ namespace scls {
         // Do a matricial addition
         void add(Matrix* m);
 
+        // Clone the matrice
+        void clone(Matrix* m);
+        std::shared_ptr<Matrix> clone_shared_ptr();
+
         // Do a matrix multiplication
         void multiply(Formula_Base* f);
 
@@ -63,16 +67,30 @@ namespace scls {
         // Access to an element
         Formula_Base* element_at(int x);
         Formula_Base* element_at(int x, int y);
+        std::shared_ptr<Formula_Base> element_at_shared_ptr(int x, int y);
         void set_element_at(int x, std::shared_ptr<Formula_Base> value);
         void set_element_at(int x, int y, std::shared_ptr<Formula_Base> value);
 
         // Get a sub-matrix
         Matrix sub_matrix_copy(int x, int y, int width, int height);
 
+        // Multiply a value to a line
+        void multiply_line(int line, Formula_Base* f);
+
+        // Subtract a line with an another line (with a multiplication)
+        void subtract_line(int line_1, int line_2, Formula_Base* multiple);
+
+        // Swap lines / columns
+        void swap_lines(int line_1, int line_2);
+
         // Returns the matrix to an MathML
         std::string to_mathml(scls::Textual_Math_Settings* settings);
         // Returns the matrix to an std::string
         std::string to_std_string(scls::Textual_Math_Settings* settings);
+
+        // Getters and setters
+        inline int height() const {return a_height;};
+        inline int width() const {return a_width;};
 
     private:
         // Create the elements
@@ -84,6 +102,10 @@ namespace scls {
         // Elements
         std::vector<std::shared_ptr<Formula_Base>> a_elements;
     };
+
+    // Gaussian elemination
+    std::shared_ptr<Matrix> gaussian_elimination_shared_ptr(Matrix* to_reduce);
+    std::shared_ptr<Matrix> gaussian_elimination_inverse_shared_ptr(Matrix* to_reduce);
 }
 
 #endif // SCLS_MATH_MATRIX

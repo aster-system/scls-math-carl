@@ -95,15 +95,19 @@ namespace scls {
 	// Virtual functions
 
 	// Creates a new algebra element of the same type
-	void Algebra_Element::__clone_base(Algebra_Element* e)const{
-		e->a_operator = a_operator;
-		e->a_unknown = a_unknown;
+	void Algebra_Element::clone_base(Algebra_Element* e)const{
+		// Base
+		clone_base_without_sub_elements(e);
 
 		// Copy the element
-		e->a_elements = std::vector<std::shared_ptr<Algebra_Element>>(a_elements.size());
 		for(std::size_t i = 0;i<a_elements.size();i++) {
 			e->a_elements[i] = a_elements.at(i).get()->algebra_clone();
 		}
+	}
+	void Algebra_Element::clone_base_without_sub_elements(Algebra_Element* e) const {
+	    e->a_operator = a_operator;
+		e->a_unknown = a_unknown;
+		e->a_elements = std::vector<std::shared_ptr<Algebra_Element>>(a_elements.size());
 	}
 
 	// Creates the unknown
@@ -259,6 +263,9 @@ namespace scls {
 			}
 		}
 	}
+
+	// Simplify the element
+    void Algebra_Element::simplify(){};
 
     //*********
     //

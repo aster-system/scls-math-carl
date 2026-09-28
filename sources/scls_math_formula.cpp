@@ -76,7 +76,7 @@ namespace scls {
     	else if(formula->is_final_element() && formula->is_known() && formula->a_value.get()->is_multiplication_neutral()){return;}
         else if(is_final_element() && is_known() && a_value.get()->is_multiplication_neutral()){formula->clone(this);}
         else if(is_final_element() && formula->is_final_element() && !is_unknown() && !formula->is_unknown()){
-            a_value->operate(formula->a_value.get(), "*");
+            a_value->operate(formula->a_value.get(), "*");a_value.get()->simplify();
         }
         else {
             if(algebra_operator_name() != std::string_view("*")){
@@ -379,6 +379,7 @@ namespace scls {
         // Simplification
         element->simplify();
     }
+    std::shared_ptr<Formula_Base_Field> Extendable_Formula_Base::replace_unknowns_formula(std::string unknown, Algebra_Element* element) const{return replace_unknowns(unknown, *reinterpret_cast<Extendable_Fraction*>(element));};
     std::shared_ptr<Extendable_Formula_Base> Extendable_Formula_Base::replace_unknowns(std::string unknown, Extendable_Fraction f) const {
         Extendable_Unknowns_Container c;c.create_unknown(unknown)->value = new_formula(f);
         return replace_unknowns(&c);
@@ -414,6 +415,7 @@ namespace scls {
         // Simplification
         element->simplify();
     }
+    std::shared_ptr<Formula_Base_Field> Formula_Base::replace_unknowns_formula(std::string unknown, Algebra_Element* element) const{return replace_unknowns(unknown, *reinterpret_cast<Fraction*>(element));};
     std::shared_ptr<Formula_Base> Formula_Base::replace_unknowns(std::string unknown, Fraction f) const {
         Unknowns_Container c;c.create_unknown(unknown)->value = new_formula(f.to_std_string(0));
         return replace_unknowns(&c);
