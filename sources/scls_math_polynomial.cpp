@@ -463,31 +463,4 @@ namespace scls {
     }
     //*/
 
-    // Converts a polynomial to a complex
-    std::shared_ptr<Polynomial_Complex> Polynomial_Complex::from_polynomial(Polynomial_Template<Complex>* polynomial) {
-        // Create the polynomial complex
-        std::shared_ptr<Polynomial_Complex> needed_polynomial = std::make_shared<Polynomial_Complex>();
-
-        // Handle each monomonial
-        Polynomial_Template<Complex>* imaginary_polynomial = needed_polynomial.get()->imaginary_polynomial();
-        Polynomial_Template<Complex>* real_polynomial = needed_polynomial.get()->real_polynomial();
-        for(int i = 0;i<static_cast<int>(polynomial->monomonials().size());i++) {
-            // Real and imaginary factor
-            scls::__Monomonial_Template<Complex>* needed_monomonial = polynomial->monomonial(i);
-            scls::Fraction imaginary_factor = needed_monomonial->factor()->imaginary();
-            scls::Fraction real_factor = needed_monomonial->factor()->real();
-
-            // Add the needed factors
-            scls::__Monomonial_Template<Complex> imaginary_monomonial = *needed_monomonial;
-            imaginary_monomonial.set_factor(imaginary_factor);
-            scls::__Monomonial_Template<Complex> real_monomonial = *needed_monomonial;
-            real_monomonial.set_factor(real_factor);
-            imaginary_polynomial->__add(&imaginary_monomonial);
-            real_polynomial->__add(&real_monomonial);
-        }
-
-        // Return the needed polynomial
-        return needed_polynomial;
-    }
-
 }

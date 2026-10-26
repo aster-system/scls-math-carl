@@ -99,6 +99,10 @@ namespace scls {
         bool empty() const;
         void fix_emptiness();
 
+        // Datas about the formula
+        virtual bool is_multiplication_absorbing() const;
+        virtual bool is_multiplication_neutral() const;
+
         // Adds an element to this one
         void add(Formula_Base_Field* formula);
         void divide(Formula_Base_Field* formula);
@@ -185,7 +189,7 @@ namespace scls {
         Formula_Base_Template():Formula_Base_Field(){};
         Formula_Base_Template(std::shared_ptr<Algebra_Element> e):Formula_Base_Field(e){};
         Formula_Base_Template(T e):Formula_Base_Field(std::make_shared<T>(e)){};
-        Formula_Base_Template(std::string unknown_name):Formula_Base_Template(){if(string_is_number(unknown_name)){a_value = std::make_shared<T>(T::from_std_string(unknown_name));}else{new_unknown(unknown_name);}};
+        Formula_Base_Template(std::string unknown_name):Formula_Base_Template(){if(string_is_number(unknown_name, {'i'})){std::cout << "D " << unknown_name << std::endl; a_value = std::make_shared<T>(T::from_std_string(unknown_name));}else{new_unknown(unknown_name);}};
 
         // Creates a new formula
         static std::shared_ptr<Formula_Base_Template<T>> new_formula(T content) {std::shared_ptr<Formula_Base_Template<T>> s = std::make_shared<Formula_Base_Template<T>>(content);s.get()->a_this_object=s;return s;};
@@ -255,6 +259,7 @@ namespace scls {
             element->simplify();
         };
         virtual std::shared_ptr<Formula_Base_Field> replace_unknowns_formula(std::string unknown, Algebra_Element* element) const{return replace_unknowns(unknown, *reinterpret_cast<T*>(element));};
+        std::shared_ptr<Formula_Base_Template<T>> replace_unknowns(std::string unknown, std::shared_ptr<Formula_Base_Template<T>> f) const{Unknowns_Container c;c.create_unknown(unknown)->value = f;return replace_unknowns(&c);};
         std::shared_ptr<Formula_Base_Template<T>> replace_unknowns(std::string unknown, T f) const{Unknowns_Container c;c.create_unknown(unknown)->value = new_formula(f);return replace_unknowns(&c);};
         std::shared_ptr<Formula_Base_Template<T>> replace_unknowns(Unknowns_Container* values) const{std::shared_ptr<Formula_Base_Template<T>> s = std::make_shared<Formula_Base_Template<T>>();s.get()->a_this_object=s;replace_unknowns_algebra(s.get(), values);s.get()->simplify();return s;};
 
@@ -273,6 +278,7 @@ namespace scls {
 
         // Different kinds of values
         virtual double value_to_double(Unknowns_Container* values) const{std::shared_ptr<Formula_Base_Template<T>> u = replace_unknowns(values);return u.get()->value_to_double();};
+        virtual double value_to_double(std::string unknown, T f) const{std::shared_ptr<Formula_Base_Template<T>> u = replace_unknowns(unknown, f);return u.get()->value_to_double();};
         virtual double value_to_double() const{if(a_value.get() == 0){return 0;}return value()->to_double();};;
 
         // Getters and setters
@@ -368,6 +374,8 @@ namespace scls {
         void multiply(Fraction other);
         void operate(Fraction other, std::string operation);
         void substract(Fraction other);
+        // Do the operation without modification
+        std::shared_ptr<Formula_Base> multiplied(Fraction other);
 
         // Equality operators
         bool equals(Fraction f);

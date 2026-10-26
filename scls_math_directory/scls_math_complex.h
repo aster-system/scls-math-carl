@@ -18,6 +18,7 @@
 #include "scls_math_formula.h"
 #include "scls_math_numbers.h"
 #include "scls_math_polynomial.h"
+#include "scls_math_algebra/scls_math_algebra_double.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {
@@ -32,15 +33,17 @@ namespace scls {
         //*********
 
         // Simple fraction constructor
-        Complex(__Fraction_Base real_part, __Fraction_Base imaginary) : __Field_Element(), a_imaginary(imaginary), a_real(real_part) {};
-        Complex(Fraction real_part, Fraction imaginary) : __Field_Element(), a_imaginary(imaginary), a_real(real_part) {};
-        Complex(long long real_part, long long imaginary_part) : Complex(Fraction(real_part), Fraction(imaginary_part)) {};
-        Complex(long long real_part, Fraction imaginary_part) : Complex(Fraction(real_part), imaginary_part) {};
-        Complex(Fraction real_part, long long imaginary_part) : Complex(real_part, Fraction(imaginary_part)) {};
-        Complex(__Fraction_Base real_part) : Complex(real_part, __Fraction_Base(0)){};
-        Complex(Fraction real_part) : Complex(real_part, Fraction(0)) {};
-        Complex(double real_part) : Complex(Fraction::from_double(real_part)) {};
-        Complex(int real_part) : Complex(Fraction(real_part)) {};
+    	Complex(Double real_part, Double imaginary) : __Field_Element(), a_imaginary(imaginary), a_real(real_part) {};
+    	Complex(__Fraction_Base real_part, __Fraction_Base imaginary) : Complex(Double(real_part.to_double()), Double(imaginary.to_double())) {};
+        Complex(Fraction real_part, Fraction imaginary) : Complex(real_part.to_double(), imaginary.to_double()) {};
+        Complex(long long real_part, Fraction imaginary_part) : Complex(Double(real_part), Double(imaginary_part.to_double())) {};
+        Complex(Fraction real_part, long long imaginary_part) : Complex(Double(real_part.to_double()), Double(imaginary_part)) {};
+        Complex(__Fraction_Base real_part) : Complex(Double(real_part.to_double()), Double(0)){};
+        Complex(Fraction real_part) : Complex(Double(real_part.to_double()), Double(0)) {};
+        Complex(double real_part, double imaginary_part) : Complex(Double(real_part), Double(imaginary_part)) {};
+        Complex(double real_part) : Complex(Double(real_part), Double(0)) {};
+        Complex(Double real_part) : Complex(real_part, Double(0)) {};
+        Complex(int real_part) : Complex(Double(real_part), Double(0)) {};
         Complex(const Complex& to_copy) : Complex(to_copy.real(), to_copy.imaginary()) {};
 
         // Clone
@@ -56,22 +59,27 @@ namespace scls {
         virtual bool is_multiplication_neutral() const{return a_real == 1 && a_imaginary == 0;};
 
         // Operates this element with another one
-        virtual void operate(Algebra_Element* other, std::string operation){};
+        virtual void operate(Algebra_Element* other, std::string operation);
 
         // Returns a fraction from a double
         static Complex from_double(double result){return __Fraction_Base::from_double(result);};
+        // Returns a fraction from a std::string
+        static Complex from_std_string(std::string content);
+
         // Returns the module of the complex
-        inline scls::Fraction module() const{return a_real * a_real + a_imaginary * a_imaginary; };
-        // Normalize the number
-        inline void normalize(int limit){a_imaginary.normalize(limit);a_real.normalize(limit);};
+        inline Double argument() const{double r = module().to_double();if(r == 0){return Double(0);} if(a_imaginary < 0){return Double(-std::acos(a_real.to_double() / r));}return Double(std::acos(a_real.to_double() / r));};
+        // Returns the module of the complex
+        inline Double module() const{return (a_real * a_real + a_imaginary * a_imaginary).sqrt(); };
         // Converts the number to a double
         inline double to_double(){return a_real.to_double();};
 
         // Getters and setter
-        inline Fraction imaginary() const {return a_imaginary;};
-        inline Fraction real() const {return a_real;};
-        inline void set_imaginary(Fraction new_imaginary) {a_imaginary=new_imaginary;};
-        inline void set_real(Fraction new_real) {a_real=new_real;};
+        inline Double imaginary() const {return a_imaginary;};
+        inline Double real() const {return a_real;};
+        inline void set_imaginary(Double new_imaginary) {a_imaginary=new_imaginary;};
+        inline void set_imaginary(Fraction new_imaginary) {a_imaginary=new_imaginary.to_double();};
+        inline void set_real(Double new_real) {a_real=new_real;};
+        inline void set_real(Fraction new_real) {a_real=new_real.to_double();};
 
         // Returns the Complex to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;
@@ -109,7 +117,7 @@ namespace scls {
         inline Complex _multiply_without_modification(Complex const& obj) const {return Complex(real() * obj.real() - (imaginary() * obj.imaginary()), real() * obj.imaginary() + imaginary() * obj.real());};
 
         // Multiplies the Complex with a double
-        Complex _multiply_without_modification(Fraction const& obj) const { return Complex(real() * obj, imaginary() * obj); };
+        Complex _multiply_without_modification(Double const& obj) const { return Complex(real() * obj, imaginary() * obj); };
         Complex _multiply_without_modification(int const& obj) const { return Complex(real() * obj, imaginary() * obj); };
         Complex _multiply_without_modification(unsigned int const& obj) const { return Complex(real() * obj, imaginary() * obj); };
 
@@ -133,6 +141,7 @@ namespace scls {
         Complex& operator-=(Fraction const& obj) { _substract(Complex(obj)); return *this; }
         // Multiplication operator
         Complex operator*(Fraction const& obj) const { return _multiply_without_modification(obj); }
+        Complex operator*(double const& obj) const { return _multiply_without_modification(Double(obj)); }
         // Plus operator
         Complex operator+(Fraction const& obj) { return _add_without_modification(Complex(obj)); };
         // Plus operator assignment
@@ -169,9 +178,9 @@ namespace scls {
         //*********
 
         // Imaginary part of the complex
-        Fraction a_imaginary = Fraction(0);
+        Double a_imaginary = Double(0);
         // Real part of the complex
-        Fraction a_real = Fraction(0);
+        Double a_real = Double(0);
 	};
 
 	// Returns a complex from a std::string (indev)
@@ -182,9 +191,10 @@ namespace scls {
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const Complex& obj);
 
-    // Complex polynomial
     typedef __Monomonial_Template<Complex> __Monomonial;
     typedef Polynomial_Template<Complex> Polynomial;
+
+    /*// Complex polynomial
     class Polynomial_Complex {
         public:
             // Polynomial_Complex constructor
@@ -211,7 +221,7 @@ namespace scls {
 
     // Complex formula
 
-    /*// Trigonometric complex
+    // Trigonometric complex
     struct Complex_Polar {
     	// Complex_Polar constructor
     	Complex_Polar(std::shared_ptr<__Formula_Base_Template<Complex>> needed_argument, std::shared_ptr<__Formula_Base_Template<Complex>> needed_modulus):a_argument(needed_argument),a_modulus(needed_modulus){};

@@ -206,6 +206,9 @@ namespace scls {
             std::shared_ptr<Bytes_Set> binary_stl(double multiplication, unsigned int& triangle_count);
             std::shared_ptr<Bytes_Set> binary_vbo(unsigned int asker_id, unsigned int& total_points, Point::_VBO_Types vbo_type = Point::_VT_Normal);
 
+            // Check triangulation
+            void check_triangulation(std::string method);
+
             // Create a copy of the face with new points
             std::shared_ptr<Face> copy_with_new_points();
 
@@ -220,6 +223,7 @@ namespace scls {
             inline std::vector<std::shared_ptr<Point>>& points() {return a_points;};
             inline std::vector<std::shared_ptr<Point>>& points_for_rendering() {return a_points_for_rendering;};
             inline std::vector<int>& points_for_rendering_index() {return a_points_for_rendering_index;};
+            inline void set_triangulated(bool new_triangulated){a_triangulated = new_triangulated;};
 
             //*********
             //
@@ -364,7 +368,7 @@ namespace scls {
             //*********
 
             // Face constructor
-            Face() : Transform_Object_3D() { a_id = a_faces_number; a_faces_number++; };
+            Face();
 
             // Each exclusion points in the face
             std::vector<std::vector<std::shared_ptr<Point>>> a_exclusion_points = std::vector<std::vector<std::shared_ptr<Point>>>();
@@ -373,6 +377,9 @@ namespace scls {
             // Each points position in the face for rendering
             std::vector<std::shared_ptr<Point>> a_points_for_rendering = std::vector<std::shared_ptr<Point>>();
             std::vector<int> a_points_for_rendering_index = std::vector<int>();
+
+            // If the face is triangulated or not
+            bool a_triangulated = false;
 
             //*********
             //
@@ -787,14 +794,8 @@ namespace scls {
                 }
             };
             // Sets the rect of the face by tis name
-            inline void set_face_rect_in_texture_by_name(std::string face_name, double image_width, double image_height, double texture_rect_x, double texture_rect_y, double texture_rect_width, double texture_rect_height) {
-                __Face_Datas_By_Solid* datas = face_data_by_name(face_name);
-                if(datas == 0) return;
-                datas->texture_rect_x = texture_rect_x / static_cast<double>(image_width) + (1.0 / (static_cast<double>(image_width) * 5.0));
-                datas->texture_rect_y = texture_rect_y / static_cast<double>(image_height) + (1.0 / (static_cast<double>(image_height) * 5.0));
-                datas->texture_rect_width = texture_rect_width / static_cast<double>(image_width) - (1.0 / (static_cast<double>(image_width) * 2.0));
-                datas->texture_rect_height = texture_rect_height / static_cast<double>(image_height) - (1.0 / (static_cast<double>(image_height) * 2.0));
-            };
+            void set_face_rect_in_texture_by_name(std::string face_name, double texture_rect_x, double texture_rect_y, double texture_rect_width, double texture_rect_height);
+            void set_face_rect_in_texture_by_name(std::string face_name, double image_width, double image_height, double texture_rect_x, double texture_rect_y, double texture_rect_width, double texture_rect_height);
 
             // Returns the value of an attribute
             inline double attribute(unsigned int attribute_id) const {return a_attributes.at(attribute_id);};

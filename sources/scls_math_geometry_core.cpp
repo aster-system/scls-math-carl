@@ -30,7 +30,6 @@
 // The namespace "scls" is used to simplify the all.
 namespace scls {
     // Rotate a 3D vector
-    long double pi = SCLS_PI;long double pi_unprecise = 3.1415L;
     double* rotate_vector_3d_cylindrical(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z){return rotate_vector_3d_cylindrical(vector_x, vector_y, vector_z, rotation_x, rotation_y, rotation_z, 0, 0, 0);}
     double* rotate_vector_3d_cylindrical(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z, long double anchor_x, long double anchor_y, long double anchor_z) {
         double* to_return = new double[3];to_return[0] = vector_x;to_return[1] = vector_y;to_return[2] = vector_z;
@@ -76,14 +75,14 @@ namespace scls {
             // Get the current angle
             long double current_angle = 0;
             if(to_return[2] >= 0 && vector_x >= 0) {current_angle = to_add;}
-            else if (to_return[2] < 0 && vector_x >= 0) {current_angle = pi_unprecise - to_add;}
-            else if(to_return[2] < 0 && vector_x < 0) {current_angle = pi_unprecise + to_add;}
-            else {current_angle = pi_unprecise * 2.0 - to_add;}
+            else if (to_return[2] < 0 && vector_x >= 0) {current_angle = pi - to_add;}
+            else if(to_return[2] < 0 && vector_x < 0) {current_angle = pi + to_add;}
+            else {current_angle = pi * 2.0 - to_add;}
 
             // Get the final XZ position
             current_angle += degrees_to_radians(rotation_y);
-            while(current_angle < 0) current_angle += pi_unprecise * 2.0;
-            while(current_angle >= pi_unprecise * 2) current_angle -= pi_unprecise * 2.0;
+            while(current_angle < 0) current_angle += pi * 2.0;
+            while(current_angle >= pi * 2) current_angle -= pi * 2.0;
 
             // Final calculation
             rotation_y_x = std::sin(current_angle);
@@ -113,14 +112,14 @@ namespace scls {
             // Get the current angle
             long double current_angle = 0;
             if(vector_z >= 0 && vector_x >= 0) {current_angle = to_add;}
-            else if (vector_z < 0 && vector_x >= 0) {current_angle = pi_unprecise - to_add;}
-            else if(vector_z < 0 && vector_x < 0) {current_angle = pi_unprecise + to_add;}
-            else {current_angle = pi_unprecise * 2.0L - to_add;}
+            else if (vector_z < 0 && vector_x >= 0) {current_angle = pi - to_add;}
+            else if(vector_z < 0 && vector_x < 0) {current_angle = pi + to_add;}
+            else {current_angle = pi * 2.0L - to_add;}
 
             // Get the final XZ position
             current_angle += degrees_to_radians(rotation_y);
-            while(current_angle < 0) current_angle += pi_unprecise * 2.0L;
-            while(current_angle >= pi_unprecise * 2.0L) current_angle -= pi_unprecise * 2.0L;
+            while(current_angle < 0) current_angle += pi * 2.0L;
+            while(current_angle >= pi * 2.0L) current_angle -= pi * 2.0L;
             to_return[2] = std::cos(current_angle) * total_xz_length;
             to_return[0] = std::sin(current_angle) * total_xz_length;
         }
@@ -140,22 +139,22 @@ namespace scls {
             long double current_angle = std::asin(y_sin);
             // Get the Y position
             long double final_angle = current_angle + degrees_to_radians(rotation_x);
-            if(vector_y > 0) final_angle += pi_unprecise;
+            if(vector_y > 0) final_angle += pi;
             y_sin = std::sin(final_angle);
             to_return[1] = -y_sin * total_length;
 
             // Calculate the XZ multiplier
-            while(current_angle > pi_unprecise / 2.0L && current_angle < pi_unprecise * 1.5L) current_angle += pi_unprecise;
-            while(current_angle >= pi_unprecise * 2.0L) current_angle -= pi_unprecise * 2.0L;
+            while(current_angle > pi / 2.0L && current_angle < pi * 1.5L) current_angle += pi;
+            while(current_angle >= pi * 2.0L) current_angle -= pi * 2.0L;
             final_angle = current_angle + degrees_to_radians(rotation_x);
-            while(final_angle < 0) final_angle += pi_unprecise * 2.0;
-            while(final_angle >= pi_unprecise * 2.0L) final_angle -= pi_unprecise * 2.0L;
+            while(final_angle < 0) final_angle += pi * 2.0;
+            while(final_angle >= pi * 2.0L) final_angle -= pi * 2.0L;
             const long double real_final_angle = final_angle;
-            while(final_angle > pi_unprecise / 2.0L && final_angle < pi_unprecise * 1.5L) final_angle += pi_unprecise;
-            while(final_angle >= pi_unprecise * 2.0L) final_angle -= pi_unprecise * 2.0L;
+            while(final_angle > pi / 2.0L && final_angle < pi * 1.5L) final_angle += pi;
+            while(final_angle >= pi * 2.0L) final_angle -= pi * 2.0L;
             // Apply the XZ multiplier
             long double y_cos = std::abs(std::cos(final_angle));
-            if(real_final_angle > pi_unprecise / 2.0 && real_final_angle < pi_unprecise * 1.5L) y_cos = -y_cos;
+            if(real_final_angle > pi / 2.0 && real_final_angle < pi * 1.5L) y_cos = -y_cos;
             to_return[0] *= y_cos;
             to_return[2] *= y_cos;
 
@@ -211,14 +210,14 @@ namespace scls {
             // Get the current angle
             double current_angle = 0;
             if(to_return[2] >= 0 && vector_x >= 0) {current_angle = to_add;}
-            else if (to_return[2] < 0 && vector_x >= 0) {current_angle = pi_unprecise - to_add;}
-            else if(to_return[2] < 0 && vector_x < 0) {current_angle = pi_unprecise + to_add;}
-            else {current_angle = pi_unprecise * 2.0 - to_add;}
+            else if (to_return[2] < 0 && vector_x >= 0) {current_angle = pi - to_add;}
+            else if(to_return[2] < 0 && vector_x < 0) {current_angle = pi + to_add;}
+            else {current_angle = pi * 2.0 - to_add;}
 
             // Get the final XZ position
             current_angle += degrees_to_radians(rotation_y);
-            while(current_angle < 0) current_angle += pi_unprecise * 2.0;
-            while(current_angle >= pi_unprecise * 2) current_angle -= pi_unprecise * 2.0;
+            while(current_angle < 0) current_angle += pi * 2.0;
+            while(current_angle >= pi * 2) current_angle -= pi * 2.0;
 
             // Final calculation
             rotation_y_x = std::sin(current_angle);
@@ -244,14 +243,14 @@ namespace scls {
             // Get the current angle
             double current_angle = 0;
             if(vector_z >= 0 && vector_x >= 0) {current_angle = to_add;}
-            else if (vector_z < 0 && vector_x >= 0) {current_angle = pi_unprecise - to_add;}
-            else if(vector_z < 0 && vector_x < 0) {current_angle = pi_unprecise + to_add;}
-            else {current_angle = pi_unprecise * 2.0 - to_add;}
+            else if (vector_z < 0 && vector_x >= 0) {current_angle = pi - to_add;}
+            else if(vector_z < 0 && vector_x < 0) {current_angle = pi + to_add;}
+            else {current_angle = pi * 2.0 - to_add;}
 
             // Get the final XZ position
             current_angle += degrees_to_radians(rotation_y);
-            while(current_angle < 0) current_angle += pi_unprecise * 2.0;
-            while(current_angle >= pi_unprecise * 2) current_angle -= pi_unprecise * 2.0;
+            while(current_angle < 0) current_angle += pi * 2.0;
+            while(current_angle >= pi * 2) current_angle -= pi * 2.0;
             to_return[2] = std::cos(current_angle) * total_xz_length;
             to_return[0] = std::sin(current_angle) * total_xz_length;
         }
@@ -271,23 +270,23 @@ namespace scls {
             double current_angle = std::asin(y_sin);
             // Get the Y position
             double final_angle = current_angle + degrees_to_radians(rotation_x);
-            if(vector_y > 0) final_angle += pi_unprecise;
+            if(vector_y > 0) final_angle += pi;
             y_sin = std::sin(final_angle);
             to_return[1] = -y_sin * total_length;
 
             // Calculate the XZ multiplier
-            while(current_angle > pi_unprecise / 2.0 && current_angle < pi_unprecise * 1.5) current_angle += pi_unprecise;
-            while(current_angle >= pi_unprecise * 2) current_angle -= pi_unprecise * 2;
+            while(current_angle > pi / 2.0 && current_angle < pi * 1.5) current_angle += pi;
+            while(current_angle >= pi * 2) current_angle -= pi * 2;
             final_angle = current_angle + degrees_to_radians(rotation_x);
-            while(final_angle < 0) final_angle += pi_unprecise * 2;
-            while(final_angle >= pi_unprecise * 2) final_angle -= pi_unprecise * 2;
+            while(final_angle < 0) final_angle += pi * 2;
+            while(final_angle >= pi * 2) final_angle -= pi * 2;
             const double real_final_angle = final_angle;
-            while(final_angle > pi_unprecise / 2.0 && final_angle < pi_unprecise * 1.5) final_angle += pi_unprecise;
-            while(final_angle >= pi_unprecise * 2) final_angle -= pi_unprecise * 2;
+            while(final_angle > pi / 2.0 && final_angle < pi * 1.5) final_angle += pi;
+            while(final_angle >= pi * 2) final_angle -= pi * 2;
 
             // Apply the XZ multiplier
             double y_cos = std::abs(std::cos(final_angle));
-            if(real_final_angle > pi_unprecise / 2.0 && real_final_angle < pi_unprecise * 1.5) y_cos = -y_cos;
+            if(real_final_angle > pi / 2.0 && real_final_angle < pi * 1.5) y_cos = -y_cos;
             to_return[0] *= y_cos;
             to_return[2] *= y_cos;
 
@@ -724,9 +723,9 @@ namespace scls {
         // Get the current angle
         double current_angle = 0;
         if(vector_y >= 0 && vector_x >= 0) {current_angle = to_add;}
-        else if (vector_x < 0 && vector_y >= 0) {current_angle = pi_unprecise - to_add;}
-        else if(vector_x < 0 && vector_y < 0) {current_angle = pi_unprecise + to_add;}
-        else {current_angle = pi_unprecise * 2.0 - to_add;}
+        else if (vector_x < 0 && vector_y >= 0) {current_angle = pi - to_add;}
+        else if(vector_x < 0 && vector_y < 0) {current_angle = pi + to_add;}
+        else {current_angle = pi * 2.0 - to_add;}
 
         return current_angle;
     }

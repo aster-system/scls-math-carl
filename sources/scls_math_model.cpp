@@ -87,7 +87,7 @@ namespace scls {
             to_return.get()->add_uint(attributes.size(), true);
             for(std::map<unsigned int, double>::iterator it = attributes.begin();it!=attributes.end();it++) {
                 to_return.get()->add_uint(it->first, true);
-                to_return.get()->add_double(it->second, true);
+                to_return.get()->add_double(it->second, true);std::cout << "M " << it->first << " " << it->second << std::endl;
             }
 
             return to_return;
@@ -224,11 +224,17 @@ namespace scls {
             return false;
         }
 
+        // Face constructor
+        Face::Face() : Transform_Object_3D() { a_id = a_faces_number; a_faces_number++; };
+
         // Creates and return a new face object
         std::shared_ptr<Face> Face::new_face_object(){std::shared_ptr<Face> f = std::shared_ptr<Face>(new Face());f.get()->set_this_object(f);return f;}
 
         // Add a points
-        void Face::add_point(std::shared_ptr<Point> new_point){a_points.push_back(new_point);}
+        void Face::add_point(std::shared_ptr<Point> new_point){a_points.push_back(new_point);a_triangulated = false;}
+
+        // Check triangulation
+        void Face::check_triangulation(std::string method){if(!a_triangulated){print("Warning", "SCLS Math Model Maker", std::string("The face with the ID \"") + std::to_string(id()) + std::string("\" you want to use in the method \"") + method + std::string("\" is not triangulated."));}}
 
         // Returns if a side of points cross the boundary or not
         bool model_maker::Face::cross_boundary(std::shared_ptr<Point> first_point, std::shared_ptr<Point> second_point) {return __cross_boundary(points(), first_point, second_point);}
@@ -336,8 +342,7 @@ namespace scls {
             return 0;
         };
         // Do a triangulation of a face
-        std::shared_ptr<model_maker::Face::__Triangulation_Datas> model_maker::Face::triangulate() {std::shared_ptr<model_maker::Face::__Triangulation_Datas> datas = triangulate_start_datas();while(!datas.get()->finished) {triangulation_step(datas);}return datas;};
-        // Returns the needed datas to start a triangulation
+        std::shared_ptr<model_maker::Face::__Triangulation_Datas> model_maker::Face::triangulate() {std::shared_ptr<model_maker::Face::__Triangulation_Datas> datas = triangulate_start_datas();while(!datas.get()->finished) {triangulation_step(datas);}a_triangulated = true;return datas;};
         std::shared_ptr<model_maker::Face::__Triangulation_Datas> model_maker::Face::triangulate_start_datas() {
             std::shared_ptr<model_maker::Face::__Triangulation_Datas> to_return = std::make_shared<model_maker::Face::__Triangulation_Datas>();
             to_return.get()->exclusion_points_copy = a_exclusion_points;
@@ -458,6 +463,9 @@ namespace scls {
                 points_for_rendering().push_back(points()[i + 1]);
                 points_for_rendering().push_back(points()[i + 2]);
             }
+
+            // Final
+            a_triangulated = true;
         };
 
         // Do a triangulation of a full face
@@ -499,6 +507,9 @@ namespace scls {
 
         // Returns the face as a binary
         std::shared_ptr<Bytes_Set> model_maker::Face::binary() {
+            // Assert
+            check_triangulation("binary");
+
             std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
 
             // Add the ID of the face
@@ -527,6 +538,9 @@ namespace scls {
         };
         // Returns the face as a binary for a solid
         std::shared_ptr<Bytes_Set> model_maker::Face::binary_for_solid(unsigned int asker_id) {
+            // Assert
+            check_triangulation("binary_for_solid");
+
             std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
 
             // Add the positions
@@ -541,6 +555,9 @@ namespace scls {
         };
         // Returns the face as a binary STL format
         std::shared_ptr<Bytes_Set> model_maker::Face::binary_stl(double multiplication, unsigned int& triangle_count) {
+            // Assert
+            check_triangulation("binary_stl");
+
             std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
 
             // Add each points
@@ -569,6 +586,9 @@ namespace scls {
         };
         // Returns the face as binary for VBO
         std::shared_ptr<Bytes_Set> model_maker::Face::binary_vbo(unsigned int asker_id, unsigned int& total_points, Point::_VBO_Types vbo_type) {
+            // Assert
+            check_triangulation("binary_vbo");
+
             std::shared_ptr<Bytes_Set> to_return = std::make_shared<Bytes_Set>();
 
             // Add each points
@@ -929,6 +949,7 @@ namespace scls {
                 face_center.get()->points_for_rendering().push_back(second_point);
                 face_center.get()->points_for_rendering().push_back(fourth_point);
                 face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_triangulated(true);
                 face_center.get()->set_normal_x(1); face_center.get()->set_normal_z(1);
                 face_center.get()->set_parent(face_parent);
                 faces().push_back(face_center);
@@ -981,6 +1002,7 @@ namespace scls {
             face_center.get()->points_for_rendering().push_back(second_point);
             face_center.get()->points_for_rendering().push_back(fourth_point);
             face_center.get()->points_for_rendering().push_back(third_point);
+            face_center.get()->set_triangulated(true);
             face_center.get()->set_parent(face_parent);
             faces().push_back(face_center);
             faces_by_name()["face-" + std::to_string(face_number)] = face_center;
@@ -1019,6 +1041,7 @@ namespace scls {
                 face_center.get()->points_for_rendering().push_back(second_point);
                 face_center.get()->points_for_rendering().push_back(fourth_point);
                 face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_triangulated(true);
                 face_center.get()->set_parent(face_parent);
                 faces().push_back(face_center);
                 faces_by_name()["face-" + std::to_string(face_number)] = face_center;
@@ -1053,12 +1076,29 @@ namespace scls {
                 face_center.get()->points_for_rendering().push_back(second_point);
                 face_center.get()->points_for_rendering().push_back(fourth_point);
                 face_center.get()->points_for_rendering().push_back(third_point);
+                face_center.get()->set_triangulated(true);
                 face_center.get()->set_parent(face_parent);
                 faces().push_back(face_center);
                 faces_by_name()["face-" + std::to_string(face_number)] = face_center;
                 face_number++;
             }//*/
         }
+
+        // Sets the rect of the face by tis name
+        void Solid::set_face_rect_in_texture_by_name(std::string face_name, double texture_rect_x, double texture_rect_y, double texture_rect_width, double texture_rect_height) {
+            __Face_Datas_By_Solid* datas = face_data_by_name(face_name);if(datas == 0){return;}
+            datas->texture_rect_x = texture_rect_x;
+            datas->texture_rect_y = texture_rect_y;
+            datas->texture_rect_width = texture_rect_width;
+            datas->texture_rect_height = texture_rect_height;
+        };
+        void Solid::set_face_rect_in_texture_by_name(std::string face_name, double image_width, double image_height, double texture_rect_x, double texture_rect_y, double texture_rect_width, double texture_rect_height) {
+            __Face_Datas_By_Solid* datas = face_data_by_name(face_name);if(datas == 0){return;}
+            datas->texture_rect_x = texture_rect_x / static_cast<double>(image_width) + (1.0 / (static_cast<double>(image_width) * 5.0));
+            datas->texture_rect_y = texture_rect_y / static_cast<double>(image_height) + (1.0 / (static_cast<double>(image_height) * 5.0));
+            datas->texture_rect_width = texture_rect_width / static_cast<double>(image_width) - (1.0 / (static_cast<double>(image_width) * 2.0));
+            datas->texture_rect_height = texture_rect_height / static_cast<double>(image_height) - (1.0 / (static_cast<double>(image_height) * 2.0));
+        };
 
         // Returns the solid as binary
         std::shared_ptr<Bytes_Set> Solid::binary() {

@@ -30,6 +30,7 @@
 #include "../scls_math_root.h"
 #include "scls_math_formula.h"
 #include "scls_math_geometry_core.h"
+#include "scls_math_algebra/scls_math_algebra_double.h"
 
 // The namespace "scls" is used to simplify the all.
 namespace scls {

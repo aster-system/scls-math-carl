@@ -97,7 +97,7 @@ namespace scls {
         inline double norm() const {return std::sqrt(std::pow(a_x, 2) + std::pow(a_y, 2) + std::pow(a_z, 2));};
         // Normalizes the vector
         inline void normalize() {double divisor = (1.0/norm());a_x *= divisor;a_y *= divisor;a_z *= divisor;};
-        inline Point_3D normalized() {double divisor = (1.0/norm());return Point_3D(a_x * divisor, a_y * divisor, a_z * divisor);};
+        inline Point_3D normalized() {double n = norm();if(n == 0){return Point_3D(0, 0, 0);}double divisor = (1.0/n);return Point_3D(a_x * divisor, a_y * divisor, a_z * divisor);};
 
         // Points
         Point_3D point_3d_xz();

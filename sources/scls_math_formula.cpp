@@ -69,13 +69,16 @@ namespace scls {
     bool Formula_Base_Field::empty() const{return a_value.get() == 0 && algebra_elements_const().size() == 0;}
     void Formula_Base_Field::fix_emptiness(){if(empty()){a_value = multiplication_absorbing_field_element();}}
 
+    // Datas about the formula
+    bool Formula_Base_Field::is_multiplication_absorbing() const{if(is_known()){if(a_value.get() == 0){return true;}else{return a_value.get()->is_multiplication_absorbing();}}return false;};
+    bool Formula_Base_Field::is_multiplication_neutral() const{if(is_known() && a_value.get() != 0){return a_value.get()->is_multiplication_neutral();}return false;};
+
     // Multiplies an element to this one
     void Formula_Base_Field::multiply(Formula_Base_Field* formula){
-        if(is_final_element() && is_known() && (a_value.get() == 0 || a_value.get()->is_multiplication_absorbing())){return;}
-    	else if(formula->is_final_element() && formula->is_known() && (formula->a_value.get() == 0 || formula->a_value.get()->is_multiplication_absorbing())){std::shared_ptr<Algebra_Element>v=multiplication_absorbing_field_element();clear();a_value=v;return;}
-    	else if(formula->is_final_element() && formula->is_known() && formula->a_value.get()->is_multiplication_neutral()){return;}
-        else if(is_final_element() && is_known() && a_value.get()->is_multiplication_neutral()){formula->clone(this);}
-        else if(is_final_element() && formula->is_final_element() && !is_unknown() && !formula->is_unknown()){
+        if(is_multiplication_absorbing()){return;}
+    	else if(formula->is_multiplication_absorbing()){std::shared_ptr<Algebra_Element>v=multiplication_absorbing_field_element();clear();a_value=v;return;}
+    	else if(formula->is_multiplication_neutral()){return;}else if(is_multiplication_neutral()){formula->clone(this);return;}
+        else if(is_final_element() && formula->is_final_element() && is_known() && formula->is_known()){
             a_value->operate(formula->a_value.get(), "*");a_value.get()->simplify();
         }
         else {
@@ -119,7 +122,7 @@ namespace scls {
             else if(operation == std::string("*")){multiply(reinterpret_cast<Formula_Base_Field*>(other));}
             else if(operation == std::string("/")){divide(reinterpret_cast<Formula_Base_Field*>(other));}
             else if(is_final_element() && other->is_final_element() && !is_unknown() && !other->is_unknown()){
-                a_value->operate(reinterpret_cast<Formula_Base_Field*>(other)->a_value.get(), "+");
+                a_value->operate(reinterpret_cast<Formula_Base_Field*>(other)->a_value.get(), operation);
             }
             else {
                 sub_place();set_algebra_operator(operation);
@@ -136,6 +139,13 @@ namespace scls {
         // Basic
         if(algebra_operator_arity() != 1 && algebra_elements().size() == 1){std::shared_ptr<Algebra_Element>temp=algebra_elements().at(0);reinterpret_cast<Formula_Base_Field*>(temp.get())->clone(this);return SIMPLIFICATION_UNTERMINATED;}
 
+        // Children simplification
+        for(std::size_t i = 0;i<algebra_elements().size();i++) {
+            Formula_Base_Field* current_formula = reinterpret_cast<Formula_Base_Field*>(algebra_elements().at(i).get());
+            if(current_formula->is_final_element() && current_formula->is_known() && current_formula->a_value.get() == 0) {algebra_elements().erase(algebra_elements().begin() + i);i--;}
+        	else if(current_formula->simplify_step() != NO_SIMPLIFICATION){return SIMPLIFICATION_UNTERMINATED;}
+		}
+
         // Datas
     	bool simplified = false;
 
@@ -143,10 +153,11 @@ namespace scls {
             // Possible merging
         	for(std::size_t i = 0;i<algebra_elements().size();i++) {
 			    if(algebra_elements().at(i).get()->algebra_operator_name() == std::string_view("+")) {
-			    	for(std::size_t j = 0;j<algebra_elements().at(i).get()->algebra_elements().size();j++) {
-						add(reinterpret_cast<Formula_Base_Field*>(algebra_elements().at(i).get()->algebra_elements().at(j).get()));
+                    std::shared_ptr<Algebra_Element> temp_element = algebra_elements().at(i);
+                    algebra_elements().erase(algebra_elements().begin() + i);
+			    	for(std::size_t j = 0;j<temp_element.get()->algebra_elements().size();j++) {
+						add(reinterpret_cast<Formula_Base_Field*>(temp_element.get()->algebra_elements().at(j).get()));
 					}
-			    	algebra_elements().erase(algebra_elements().begin() + i);
 			    	return SIMPLIFICATION_UNTERMINATED;
 				}
 			}
@@ -167,11 +178,13 @@ namespace scls {
                             Formula_Base_Field* second_object = reinterpret_cast<Formula_Base_Field*>(algebra_elements().at(i).get()->known_algebra_element());
 
                             if(true) {
-                                if(first_object != 0 && second_object != 0) {first_object->a_value.get()->operate(second_object->a_value.get(), "+");}
+                                bool should_delete = false;
+                                if(first_object != 0 && second_object != 0) {first_object->a_value.get()->operate(second_object->a_value.get(), "+");if(first_object->a_value.get()->is_multiplication_absorbing()){should_delete = true;}}
 								else if(second_object != 0){std::shared_ptr<Algebra_Element> one = new_algebra_element("1");second_object->operate(one.get(), "+");algebra_elements()[j] = algebra_elements()[i].get()->algebra_clone();}
 								else if(first_object != 0) {std::shared_ptr<Algebra_Element> one = new_algebra_element("1");first_object->operate(one.get(), "+");}
 								else{std::shared_ptr<Algebra_Element>f=new_algebra_element("2");reinterpret_cast<Formula_Base_Field*>(algebra_elements().at(j).get())->multiply(reinterpret_cast<Formula_Base_Field*>(f.get()));}
-								algebra_elements().erase(algebra_elements().begin() + i);--i;simplified = true;break;
+								algebra_elements().erase(algebra_elements().begin() + i);--i;simplified = true;
+								if(should_delete){algebra_elements().erase(algebra_elements().begin() + j);--j;}break;
                             }
                         }
                     }
@@ -181,16 +194,21 @@ namespace scls {
         else if(algebra_operator_name() == std::string_view("*")) {
 			// Possible merging
         	for(std::size_t i = 0;i<algebra_elements().size();i++) {
-				if(algebra_elements().at(i).get()->algebra_operator_name() == std::string_view("*")) {
-					for(std::size_t j = 0;j<algebra_elements().at(i).get()->algebra_elements().size();j++) {
-						multiply(reinterpret_cast<Formula_Base_Field*>(algebra_elements().at(i).get()->algebra_elements().at(j).get()));
+                if(algebra_elements().at(i).get()->is_final_element() && algebra_elements().at(i).get()->is_known() && algebra_elements().at(i).get()->is_multiplication_neutral()){
+                    algebra_elements().erase(algebra_elements().begin() + i);
+                    return SIMPLIFICATION_UNTERMINATED;
+                }
+				else if(algebra_elements().at(i).get()->algebra_operator_name() == std::string_view("*")) {
+					std::shared_ptr<Algebra_Element> temp_element = algebra_elements().at(i);
+                    algebra_elements().erase(algebra_elements().begin() + i);
+					for(std::size_t j = 0;j<temp_element.get()->algebra_elements().size();j++) {
+						multiply(reinterpret_cast<Formula_Base_Field*>(temp_element.get()->algebra_elements().at(j).get()));
 					}
-					algebra_elements().erase(algebra_elements().begin() + i);
 					return SIMPLIFICATION_UNTERMINATED;
 				}
 			}
 
-			// Distributivity simple
+			// Distributivity simple (only one element)
 			for(int i = 0;i<static_cast<int>(algebra_elements().size());i++) {
 				// Check if the distributivity is possible
 				if(!algebra_elements().at(i).get()->is_final_element()){continue;}
@@ -206,9 +224,9 @@ namespace scls {
 						break;
 					}
 				}
-			}
+			}//*/
 
-			// Distributivity complex
+			// Distributivity complex (a lot of elements)
 			for(int i = 0;i<static_cast<int>(algebra_elements().size());i++) {
 				// Check if the distributivity is possible
 				if(algebra_elements().at(i).get()->algebra_operator_name() != std::string_view("+")){continue;}
@@ -231,14 +249,15 @@ namespace scls {
 					}
 				}
 			}
+
+			// Late modification
+			if(algebra_elements().size() == 1){std::shared_ptr<Algebra_Element> temp = algebra_elements().at(0);clear();reinterpret_cast<Formula_Base_Field*>(temp.get())->clone(this);return SIMPLIFICATION_UNTERMINATED;}
         }
 
-        for(std::size_t i = 0;i<algebra_elements().size();i++) {
+        // Sort known / unknown
+        for(std::size_t i = 1;i<algebra_elements().size();i++) {
             Formula_Base_Field* current_formula = reinterpret_cast<Formula_Base_Field*>(algebra_elements().at(i).get());
-            if(current_formula->is_final_element() && current_formula->is_known() && current_formula->a_value.get() == 0) {algebra_elements().erase(algebra_elements().begin() + i);i--;}
-        	else if(current_formula->simplify_step() != NO_SIMPLIFICATION){
-                return SIMPLIFICATION_UNTERMINATED;
-        	}
+            if(current_formula->is_known()){std::shared_ptr<Algebra_Element> e = algebra_elements().at(0);algebra_elements()[0] = algebra_elements().at(i);algebra_elements()[i] = e;}
 		}
 
         if(simplified){return SIMPLIFICATION_TERMINATED;}
@@ -256,7 +275,7 @@ namespace scls {
 	void Formula_Base::Formula_Unknown::set_value(Fraction e){set_value(std::make_shared<Fraction>(e));}
 
 	// Formula operator
-    Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("abs", 1), Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("sqrt", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("sin", 1), Algebra_Element::Algebra_Operator("tan", 1)});
+    Algebra_Element::Algebra_Operators formula_operators = Algebra_Element::Algebra_Operators({Algebra_Element::Algebra_Operator("^"), Algebra_Element::Algebra_Operator("/"), Algebra_Element::Algebra_Operator("*"), Algebra_Element::Algebra_Operator("+")}, {Algebra_Element::Algebra_Operator("abs", 1), Algebra_Element::Algebra_Operator("ln", 1), Algebra_Element::Algebra_Operator("exp", 1), Algebra_Element::Algebra_Operator("sqrt", 1), Algebra_Element::Algebra_Operator("cos", 1), Algebra_Element::Algebra_Operator("factorial", 1), Algebra_Element::Algebra_Operator("sin", 1), Algebra_Element::Algebra_Operator("tan", 1)});
 
     // Type of the object
     std::string Formula_Base::algebra_type() const{return std::string("formula_base");};
@@ -293,6 +312,8 @@ namespace scls {
     void Formula_Base::multiply(Fraction other){std::shared_ptr<Formula_Base>f=std::make_shared<Formula_Base>(other);multiply(f.get());}
     void Formula_Base::operate(Fraction other, std::string operation){std::shared_ptr<Formula_Base> temp = std::make_shared<Formula_Base>(other);operate(temp.get(), operation);}
     void Formula_Base::substract(Fraction other){std::shared_ptr<Formula_Base>f=std::make_shared<Formula_Base>(other * -1);add(f.get());}
+    // Do the operation without modification
+    std::shared_ptr<Formula_Base> Formula_Base::multiplied(Fraction other){std::shared_ptr<Formula_Base> to_return = clone();to_return.get()->multiply(other);return to_return;}
 
     // Returns a set of number which respects a precise relatio,
     Set_Number Formula_Base::check_relation(Relation* r, Formula_Base* f) {

@@ -20,19 +20,26 @@ namespace scls {
     // Clone
     void Complex::algebra_clone(Algebra_Element* e) const{reinterpret_cast<Complex*>(e)->a_real = a_real;reinterpret_cast<Complex*>(e)->a_imaginary = a_imaginary;};
     std::shared_ptr<Algebra_Element> Complex::algebra_clone() const{std::shared_ptr<Algebra_Element>f=new_algebra_element();algebra_clone(f.get());return f;};
-    std::shared_ptr<Algebra_Element> Complex::new_algebra_element() const{return std::make_shared<Complex>(0);};
-    std::shared_ptr<Algebra_Element> Complex::new_algebra_element(std::string content) const{return std::make_shared<Complex>(string_to_complex(content));};
+    std::shared_ptr<Algebra_Element> Complex::new_algebra_element() const{std::cout << "L" << std::endl;return std::make_shared<Complex>(0);};
+    std::shared_ptr<Algebra_Element> Complex::new_algebra_element(std::string content) const{std::cout << "M" << std::endl;return std::make_shared<Complex>(string_to_complex(content));};
 
     // Type of the object
     std::string Complex::algebra_type() const{return std::string("complex");};
 
+    // Returns a fraction from a std::string
+    Complex Complex::from_std_string(std::string content){return string_to_complex(content);}
+
+    // Operates this element with another one
+	void Complex::operate(Algebra_Element* other, std::string operation){
+		if(operation == "+"){_add(*reinterpret_cast<Complex*>(other));}
+		else if(operation == "*"){_multiply(*reinterpret_cast<Complex*>(other));}
+		else if(operation == "/"){_divide(*reinterpret_cast<Complex*>(other));}
+		else {scls::print("Warning", "SCLS Math Carl", "Unknown operator \"" + operation + "\" for complex numbers.");}
+	}
+
     // Returns the Complex to a simple std::string
     std::string Complex::to_mathml(Textual_Math_Settings* settings) const {
-        if(imaginary() == 0){
-            if(real().denominator() == 1){return to_std_string_simple(settings);}
-            else if(real().numerator() == 1) {return std::string("/") + std::to_string(real().denominator());}
-            else {return std::string("(") + std::to_string(real().numerator()) + std::string(")/") + std::to_string(real().denominator());}
-        }
+        if(imaginary() == 0){return real().to_mathml(settings);}
         else if(real() == 0){return to_std_string_simple(settings);}
         return std::string("(") + to_std_string_simple(settings) + std::string(")");
     }
@@ -85,8 +92,8 @@ namespace scls {
 
     // Multiplies the Complex with a Complex
     void Complex::_multiply(Complex const& obj) {
-        Fraction new_imaginary = real() * obj.imaginary() + imaginary() * obj.real();
-        Fraction new_real = real() * obj.real() - (imaginary() * obj.imaginary());
+        Double new_imaginary = real() * obj.imaginary() + imaginary() * obj.real();
+        Double new_real = real() * obj.real() - (imaginary() * obj.imaginary());
         a_imaginary = new_imaginary;
         a_real = new_real;
     };

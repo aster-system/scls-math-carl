@@ -45,14 +45,17 @@ namespace scls {
 	std::string Double::algebra_type() const{return std::string("double");};
 
 	// Operates this element with another one
+	long long d_factorial(long long f){if(f == 0){return 1;}return f * d_factorial(f - 1);}
 	void Double::operate(Algebra_Element* other, std::string operation){
 		if(operation == "+"){add(*reinterpret_cast<Double*>(other));}
 		else if(operation == "*"){multiply(*reinterpret_cast<Double*>(other));}
 		else if(operation == "/"){divide(*reinterpret_cast<Double*>(other));}
+		else if(operation == "^"){power(*reinterpret_cast<Double*>(other));}
 		else if(operation == "abs"){if(a_value < 0){a_value = -a_value;}}
 		else if(operation == "cos"){a_value = std::cos(a_value);;}
 		else if(operation == "exp"){a_value = std::exp(a_value);;}
 		else if(operation == "ln"){a_value = std::log(a_value);}
+		else if(operation == std::string_view("factorial")){a_value = d_factorial(round(a_value));}
 		else if(operation == "sin"){a_value = std::sin(a_value);}
 		else if(operation == "sqrt"){a_value = std::sqrt(a_value);}
 		else if(operation == "tan"){a_value = std::tan(a_value);}
@@ -98,6 +101,9 @@ namespace scls {
     // Returns if this double is equal to another
     bool Double::equal(Double obj) const {return obj.a_value == a_value;};
 
+    // Does the power of the Double with an another Double
+    void Double::power(Double obj){a_value = std::pow(a_value, obj.a_value);}
+
     // Multiplies the double with an another Fraction
     void Double::multiply(Double obj) { a_value *= obj.a_value;};
     Double Double::multiply_without_modification(Double obj) const { return Double(a_value * obj.a_value); };
@@ -118,6 +124,8 @@ namespace scls {
 	Double& Double::operator/=(Double obj) { divide(obj); return *this; };
 	// Equality operator
 	bool Double::operator==(Double obj) const { return equal(obj); }
+	bool Double::operator==(int obj) const{ return equal(Double(obj)); }
+	bool Double::operator!=(int obj) const{ return !equal(Double(obj)); }
 	// Greater or equal than than operator
 	bool Double::operator>=(Double r) const { return equal(r) || a_value > r.a_value; }
 	// Greater than than operator

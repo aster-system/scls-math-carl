@@ -47,35 +47,49 @@ namespace scls {
     	Matrix(int width, int height, std::vector<std::shared_ptr<Formula_Base>> elements);
 
     	// Matrix colum
+    	static Matrix matrix_from_column(std::vector<Matrix> c);
+    	static Matrix matrix_column(int height);
     	static Matrix matrix_column(std::vector<std::shared_ptr<Formula_Base>> elements);
     	// Matrix random
+    	static Matrix matrix_diagonalizable_random_integer_included_between(int width, int min, int max);
     	static Matrix matrix_random_integer_included_between(int width, int height, int min, int max);
+    	static Matrix matrix_with_rank_random_integer_included_between(int width, int rank, int min, int max);
 
         // Do a matricial addition
         void add(Matrix* m);
 
         // Clone the matrice
+        Matrix clone();
         void clone(Matrix* m);
         std::shared_ptr<Matrix> clone_shared_ptr();
 
         // Do a matrix multiplication
+        std::shared_ptr<Matrix> multiplied_shared_ptr(Fraction f);
         void multiply(Formula_Base* f);
+        void multiply(Fraction f);
 
         // Do a matrix product (this * m)
         Matrix product(Matrix* m);
 
         // Access to an element
-        Formula_Base* element_at(int x);
-        Formula_Base* element_at(int x, int y);
-        std::shared_ptr<Formula_Base> element_at_shared_ptr(int x, int y);
+        Formula_Base* element_at(int x) const;
+        Formula_Base* element_at(int x, int y) const;
+        std::shared_ptr<Formula_Base> element_at_shared_ptr(int x, int y) const;
         void set_element_at(int x, std::shared_ptr<Formula_Base> value);
         void set_element_at(int x, int y, std::shared_ptr<Formula_Base> value);
 
         // Get a sub-matrix
+        std::shared_ptr<Matrix> sub_line_shared_ptr(int line, int start, int width) const;
         Matrix sub_matrix_copy(int x, int y, int width, int height);
 
         // Multiply a value to a line
         void multiply_line(int line, Formula_Base* f);
+
+        // Set the column of the matrix with a column matrix
+        void set_column(int column, Matrix* column_matrix);
+
+        // Set the line of the matrix with a line matrix
+        void set_line(int line, Matrix* line_matrix);
 
         // Subtract a line with an another line (with a multiplication)
         void subtract_line(int line_1, int line_2, Formula_Base* multiple);
@@ -86,7 +100,7 @@ namespace scls {
         // Returns the matrix to an MathML
         std::string to_mathml(scls::Textual_Math_Settings* settings);
         // Returns the matrix to an std::string
-        std::string to_std_string(scls::Textual_Math_Settings* settings);
+        std::string to_std_string(scls::Textual_Math_Settings* settings) const;
 
         // Getters and setters
         inline int height() const {return a_height;};
@@ -102,6 +116,12 @@ namespace scls {
         // Elements
         std::vector<std::shared_ptr<Formula_Base>> a_elements;
     };
+
+    // Characteristic polynomial
+    std::shared_ptr<Formula_Base> characteristic_polynomial(Matrix* m);
+
+    // Determinant of a matrix
+    std::shared_ptr<Formula_Base> determinant(const scls::Matrix* matrix);
 
     // Gaussian elemination
     std::shared_ptr<Matrix> gaussian_elimination_shared_ptr(Matrix* to_reduce);

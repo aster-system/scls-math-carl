@@ -146,7 +146,7 @@ namespace scls {
     	std::string t = std::string();t += to_test;
     	return string_is_special(operator_order, t);
     }
-    std::vector<std::string> algebra_functions = {"ln", "exp", "sqrt", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "abs", "random", "random_int_between_included", "repetition"};
+    std::vector<std::string> algebra_functions = {"ln", "exp", "sqrt", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "abs", "factorial", "random", "random_int_between_included", "repetition", "sum"};
     void __string_to_algebra_element_operator(Algebra_Element* element, const Math_Environment* env, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order, int position) {
         // Cut the text operator by * operator
     	std::vector<std::string> cutted = cut_string_out_of_2(source, operator_order.at(position).name(), "(", ")");
@@ -154,8 +154,22 @@ namespace scls {
             std::shared_ptr<Algebra_Element> current_element;
             if(position <= 0) {
                 std::vector<std::string> parts = cut_string_out_of_2(cutted.at(i), std::string(">"), "(", ")");
+                std::vector<std::string> in_function_parts = std::vector<std::string>();
+
+                // Convert the text to the element
                 if(parts.at(parts.size() - 1).size() < 2 || (parts.at(parts.size() - 1).at(0) != '(')) {current_element = element->new_algebra_element(parts.at(parts.size() - 1));}
-                else {current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), env, parts.at(parts.size() - 1).substr(1, parts.at(parts.size() - 1).size() - 2), operator_order, operator_order.size() - 1);}
+                else {
+                    // Parts of the function
+                    if(limits_at_same_leveling(parts.at(parts.size() - 1), '(', ')')){parts[parts.size() - 1] = parts[parts.size() - 1].substr(1, parts.at(parts.size() - 1).size() - 2);}
+                    in_function_parts = scls::cut_string_out_of_2(parts.at(parts.size() - 1), ",", "(", ")", false);
+                    if(in_function_parts.size() > 0){parts[parts.size() - 1] = std::string("(") + in_function_parts.at(0) + std::string(")");}
+
+                    // Create the element
+                    current_element = element->new_algebra_element();
+                    std::string current_element_string = parts.at(parts.size() - 1)
+                    ;if(current_element_string.size() > 2){current_element_string = current_element_string.substr(1, parts.at(parts.size() - 1).size() - 2);}
+                    __string_to_algebra_element_operator(current_element.get(), env, current_element_string, operator_order, operator_order.size() - 1);
+                }
 
                 // ONLY WORKS FOR THE FUNCTIONS IN "algebra_functions"
                 if(parts.size() == 2) {
@@ -168,6 +182,20 @@ namespace scls {
                         if(env != 0) {
                             current_element = element->new_algebra_element(std::to_string(env->repetition(current_element.get()->value_to_double())));
                         }
+                    }
+                    else if(needed_function == std::string_view("sum")) {
+                    	// Create the element
+                    	std::shared_ptr<Algebra_Element> current_element_sum_count = element->new_algebra_element();
+                    	__string_to_algebra_element_operator(current_element_sum_count.get(), env, in_function_parts.at(1), operator_order, operator_order.size() - 1);
+
+                    	// Sum
+                    	std::shared_ptr<Algebra_Element> final_element = element->new_algebra_element();
+                    	int needed_value = current_element_sum_count.get()->value_to_double();
+                    	for(int i = 0;i<needed_value;i++) {
+                    		std::shared_ptr<Algebra_Element> needed_element = reinterpret_cast<Formula_Base_Template<Double>*>(current_element.get())->replace_unknowns("k", Double(i));
+                    		final_element.get()->operate(needed_element.get(), "+");
+                    	}
+                    	current_element = final_element;
                     }
                     else {current_element.get()->operate(0, parts.at(0));}
                 }

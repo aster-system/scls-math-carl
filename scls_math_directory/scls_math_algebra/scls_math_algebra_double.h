@@ -109,6 +109,9 @@ namespace scls {
         void multiply(Double obj);
         Double multiply_without_modification(Double obj) const;
 
+        // Does the power of the Double with an another Double
+        void power(Double obj);
+
         // Returns the inverse of this element
         virtual std::shared_ptr<__Field_Element> opposite(){return std::make_shared<Double>(-a_value);};
         virtual std::shared_ptr<__Field_Element> inverse(){return std::make_shared<Double>(1.0 / a_value);};
@@ -125,6 +128,8 @@ namespace scls {
         Double& operator--(int);
         // Equality operator
         bool operator==(Double obj) const;
+        bool operator==(int obj) const;
+        bool operator!=(int obj) const;
         // Greater or equal than than operator
         bool operator>=(Double r) const;
         // Greater than than operator

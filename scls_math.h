@@ -44,6 +44,8 @@
 #include "scls_math_directory/scls_math_graph.h"
 #include "scls_math_directory/scls_math_matrix.h"
 #include "scls_math_directory/scls_math_algebra/scls_math_algebra_double.h"
+// Analysis in SCLS Math
+#include "scls_math_directory/scls_math_analysis/scls_math_analysis_integration.h"
 // Geometry in SCLS Math
 #include "scls_math_directory/scls_math_2d_physic.h"
 #include "scls_math_directory/scls_math_geometry_core.h"
