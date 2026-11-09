@@ -673,6 +673,9 @@ namespace scls {
         return physic;
     }
 
+    // Creates a new field
+    void Physic_Engine::new_vector_field_acceleration(std::shared_ptr<Formula_Base> x, std::shared_ptr<Formula_Base> y){a_vector_fields_acceleration.push_back(Vector_Field(x, y));}
+
     // Returns a physic case by its coordinates
     Physic_Object::Physic_Case* Physic_Engine::physic_case(int x, int y){
         if((-a_physic_map_start_x) + x < 0 || (-a_physic_map_start_x) + x >= static_cast<int>(a_physic_map.size())){return 0;}

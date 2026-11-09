@@ -117,7 +117,7 @@ namespace scls {
         void set_unknown_value_by_name(std::string name, Fraction new_value);
         void set_unknown_value_by_name(std::string name, std::shared_ptr<Formula_Base> new_value);
         // Returns a value by its name
-        scls::Fraction value_by_name(std::string name)const;
+        Fraction value_by_name(std::string name)const;
         // Returns a unknown by its name
         Formula_Base::Formula_Unknown* unknown_by_name(std::string name)const;
         std::shared_ptr<Formula_Base::Formula_Unknown> unknown_shared_ptr_by_name(std::string name)const;
@@ -127,9 +127,9 @@ namespace scls {
 
         // Returns a number value
         double value_double(std::string base)const;
-        scls::Fraction value_number(std::string base)const;
+        Fraction value_number(std::string base)const;
         // Returns a point 2D value
-        scls::Point_2D_Formula value_point_2d(std::string base) const;
+        Point_2D_Formula value_point_2d(std::string base) const;
 
         // Namespaces
         // Add a namespace in the stack

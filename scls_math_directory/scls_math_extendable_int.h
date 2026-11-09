@@ -68,7 +68,7 @@ namespace scls {
 
         // Multiply an integer to this one
         void multiply(int64_t c);
-        void multiply(Extendable_Int* c);
+        void multiply(const Extendable_Int* c);
 
         // Shifts the number
         void shift_left(int n);
@@ -79,6 +79,9 @@ namespace scls {
 
         // Sub an integer to this one
         void sub(Extendable_Int* c);
+
+        // Return the value of the object in C++
+        virtual std::string to_cpp() const;
 
         // Returns the number to an int64
         int32_t to_int32() const;
@@ -97,6 +100,9 @@ namespace scls {
         inline void set_negative(bool new_negative){a_negative = new_negative;}
 
         // Operator
+        Extendable_Int operator*(const Extendable_Int& obj) const;
+        // Comparisons
+        bool operator==(const Extendable_Int& i) const;
         bool operator==(int64_t i) const;
         bool operator!=(int64_t i) const;
         bool operator<(int64_t i) const;

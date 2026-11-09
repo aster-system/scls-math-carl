@@ -44,6 +44,14 @@ namespace scls {
 	// Type of the object
 	std::string Double::algebra_type() const{return std::string("double");};
 
+	// Evaluate a relation of this element with another one
+    Algebra_Element::Relation_State Double::evaluate_relation(Algebra_Element* other, std::string relation) {
+        return Relation_State::RS_Not_In_Relation;
+    }
+
+    // Returns if two elements are equal or not
+    bool Double::is_equal(Algebra_Element* other) const{return a_value == reinterpret_cast<Double*>(other)->a_value;}
+
 	// Operates this element with another one
 	long long d_factorial(long long f){if(f == 0){return 1;}return f * d_factorial(f - 1);}
 	void Double::operate(Algebra_Element* other, std::string operation){
@@ -77,6 +85,9 @@ namespace scls {
 	double Double::to_double_ceil() const {return std::ceil(a_value);};
 	double Double::to_double_floor() const {return std::floor(a_value);};
 	double Double::to_double_round() const {return std::round(a_value);};
+
+	// Return the value of the object in C++
+	std::string Double::to_cpp() const{return std::to_string(a_value);}
 
 	// Returns the double to MathML
 	std::string Double::to_mathml(Textual_Math_Settings* settings)const{return scls::Fraction::from_double(a_value).to_mathml(settings);};

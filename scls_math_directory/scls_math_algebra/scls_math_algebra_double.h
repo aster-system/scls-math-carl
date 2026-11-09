@@ -63,6 +63,12 @@ namespace scls {
         virtual bool is_multiplication_neutral() const{return a_value == 1;};
         virtual bool is_multiplication_absorbing() const {return a_value == 0;};
 
+        // Returns if two elements are equal or not
+        virtual bool is_equal(Algebra_Element* other) const;
+
+        // Evaluate a relation of this element with another one
+        virtual Relation_State evaluate_relation(Algebra_Element* other, std::string relation);
+
         // Operates this element with another one
         virtual void operate(Algebra_Element* other, std::string operation);
 
@@ -80,8 +86,13 @@ namespace scls {
         double to_double_ceil() const;
         double to_double_floor() const;
         double to_double_round() const;
+
+        // Return the value of the object in C++
+        virtual std::string to_cpp() const;
+
         // Returns the fraction to MathML
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;
+
         // Returns the fraction to std::string, in the fraction redaction
         std::string to_std_string_fraction(Textual_Math_Settings* settings) const;
         std::string to_std_string(unsigned int max_number_size, Textual_Math_Settings* settings) const;

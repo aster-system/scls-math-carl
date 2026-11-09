@@ -43,6 +43,11 @@ namespace scls {
 	// Type of the object
 	std::string Boolean::algebra_type() const{return std::string("boolean");};
 
+	// Returns if two elements are equal or not
+	bool Boolean::is_equal(Algebra_Element* other) const {
+		return a_value == reinterpret_cast<Boolean*>(other)->a_value;
+	}
+
     // Replaces the unknowns
 	void Boolean::replace_unknowns_algebra(Algebra_Element* element, Algebra_Element::Unknowns_Container* values_raw) const {
 	    Boolean::Unknowns_Container* values = reinterpret_cast<Boolean::Unknowns_Container*>(values_raw);

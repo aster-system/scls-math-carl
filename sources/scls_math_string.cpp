@@ -133,21 +133,17 @@ namespace scls {
 		}
 		return false;
 	}
-    bool string_is_operator(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, char to_test) {
-    	std::string t = std::string();t += to_test;
-    	return string_is_operator(operator_order, t);
-    }
+    bool string_is_operator(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, char to_test) {std::string t = std::string();t += to_test;return string_is_operator(operator_order, t);}
     bool string_is_special(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, std::string to_test){
-    	if(to_test == std::string_view("-") || to_test == std::string_view("(")  || to_test == std::string_view(")")){return true;}
+    	if(to_test == std::string_view("-") || to_test == std::string_view("(")  || to_test == std::string_view(")") || to_test == std::string_view(",")){return true;}
     	else if(string_is_operator(operator_order, to_test)){return true;}
 		return false;
 	}
-    bool string_is_special(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, char to_test){
-    	std::string t = std::string();t += to_test;
-    	return string_is_special(operator_order, t);
-    }
+    bool string_is_special(const std::vector<Algebra_Element::Algebra_Operator>& operator_order, char to_test){std::string t = std::string();t += to_test;return string_is_special(operator_order, t);}
+
+    // Parse the element
     std::vector<std::string> algebra_functions = {"ln", "exp", "sqrt", "cos", "sin", "tan", "arcsin", "arccos", "arctan", "abs", "factorial", "random", "random_int_between_included", "repetition", "sum"};
-    void __string_to_algebra_element_operator(Algebra_Element* element, const Math_Environment* env, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order, int position) {
+    void __string_to_algebra_element_operator(Algebra_Element* element, const Math_Environment* env, std::string source, const std::vector<Algebra_Element::Algebra_Operator>& operator_order, int position, int calculation_position) {
         // Cut the text operator by * operator
     	std::vector<std::string> cutted = cut_string_out_of_2(source, operator_order.at(position).name(), "(", ")");
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
@@ -168,7 +164,7 @@ namespace scls {
                     current_element = element->new_algebra_element();
                     std::string current_element_string = parts.at(parts.size() - 1)
                     ;if(current_element_string.size() > 2){current_element_string = current_element_string.substr(1, parts.at(parts.size() - 1).size() - 2);}
-                    __string_to_algebra_element_operator(current_element.get(), env, current_element_string, operator_order, operator_order.size() - 1);
+                    __string_to_algebra_element_operator(current_element.get(), env, current_element_string, operator_order, operator_order.size() - 1, i);
                 }
 
                 // ONLY WORKS FOR THE FUNCTIONS IN "algebra_functions"
@@ -184,23 +180,28 @@ namespace scls {
                         }
                     }
                     else if(needed_function == std::string_view("sum")) {
+                        // Assert
+                        if(in_function_parts.size() <= 1){print("Warning", "SCLS Math", "The formula \"" + source + "\" you want to parse use a \sum\" function without enough parameter (" + std::to_string(in_function_parts.size()) + " found, where at least 2 should be used).");}
+
                     	// Create the element
                     	std::shared_ptr<Algebra_Element> current_element_sum_count = element->new_algebra_element();
-                    	__string_to_algebra_element_operator(current_element_sum_count.get(), env, in_function_parts.at(1), operator_order, operator_order.size() - 1);
+                    	__string_to_algebra_element_operator(current_element_sum_count.get(), env, in_function_parts.at(1), operator_order, operator_order.size() - 1, i);
 
                     	// Sum
                     	std::shared_ptr<Algebra_Element> final_element = element->new_algebra_element();
                     	int needed_value = current_element_sum_count.get()->value_to_double();
                     	for(int i = 0;i<needed_value;i++) {
                     		std::shared_ptr<Algebra_Element> needed_element = reinterpret_cast<Formula_Base_Template<Double>*>(current_element.get())->replace_unknowns("k", Double(i));
-                    		final_element.get()->operate(needed_element.get(), "+");
+                    		final_element.get()->operate(needed_element.get(), "+");std::cout << "UNKNOWN NAME MAJ FOR SUM " << needed_element.get()->to_std_string(0) << std::endl;
                     	}
                     	current_element = final_element;
                     }
                     else {current_element.get()->operate(0, parts.at(0));}
                 }
             }
-            else{current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), env, cutted.at(i), operator_order, position - 1);}
+            else{current_element = element->new_algebra_element();__string_to_algebra_element_operator(current_element.get(), env, cutted.at(i), operator_order, position - 1, i);}
+
+            // Last step
             element->operate(current_element.get(), operator_order.at(position).name());
         }
     }
@@ -223,7 +224,7 @@ namespace scls {
 				else if(i > 0 && !string_is_special(operator_order, last_char)) {
 					std::string total_function = std::string();
 					int current_pos = i - 1;
-					while(current_pos >= 0 && (!string_is_operator(operator_order, source[current_pos]) && source[current_pos]!='(' && source[current_pos]!=')')){total_function=source[current_pos]+total_function;current_pos--;}
+					while(current_pos >= 0 && (!string_is_operator(operator_order, source[current_pos]) && source[current_pos]!='(' && source[current_pos]!=')' && source[current_pos]!=',')){total_function=source[current_pos]+total_function;current_pos--;}
 					std::size_t index = 0;char l = -1;
 					for(;index<algebra_functions.size();index++) {if(algebra_functions.at(index) == total_function) {l=0;break;}}
 
@@ -263,6 +264,6 @@ namespace scls {
 		}
 
         // Cut the text operator by * operator
-        __string_to_algebra_element_operator(element, env, source, operator_order, operator_order.size() - 1);
+        __string_to_algebra_element_operator(element, env, source, operator_order, operator_order.size() - 1, 0);
     }
 }

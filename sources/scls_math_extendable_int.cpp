@@ -150,7 +150,7 @@ namespace scls {
 
     // Multiply an integer to this one
     void Extendable_Int::multiply(int64_t c){Extendable_Int i = Extendable_Int(c);multiply(&i);}
-    void Extendable_Int::multiply(Extendable_Int* c) {
+    void Extendable_Int::multiply(const Extendable_Int* c) {
         // Size
         if(c->a_parts.size() == 1) {
             // Do the multiplication
@@ -265,6 +265,9 @@ namespace scls {
         }
     }
 
+    // Return the value of the object in C++
+    std::string Extendable_Int::to_cpp() const {return std::string("scls::Extendable_Int(") + std::to_string(to_int64()) + std::string(")");}
+
     // Returns the number to an int32
     int32_t Extendable_Int::to_int32() const {if(a_negative){return static_cast<int32_t>(a_parts.at(0)) * -1;}return a_parts.at(0);}
     int64_t Extendable_Int::to_int64() const {
@@ -323,6 +326,11 @@ namespace scls {
     };
 
     // Operator
+    Extendable_Int Extendable_Int::operator*(const Extendable_Int& obj) const {Extendable_Int i = *this;i.multiply(&obj);return i;};
+    // Comparisons
+    bool Extendable_Int::operator==(const Extendable_Int& i) const {
+		return is_equal(&i);
+	}
     bool Extendable_Int::operator==(int64_t i) const {
     	Extendable_Int temp = Extendable_Int(i);
     	return is_equal(&temp);

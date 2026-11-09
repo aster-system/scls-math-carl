@@ -58,6 +58,12 @@ namespace scls {
         // Return if the element is a precise algebric element
         virtual bool is_multiplication_neutral() const{return a_real == 1 && a_imaginary == 0;};
 
+        // Returns if two elements are equal or not
+        virtual bool is_equal(Algebra_Element* other) const;
+
+        // Evaluate a relation of this element with another one
+        virtual Relation_State evaluate_relation(Algebra_Element* other, std::string relation);
+
         // Operates this element with another one
         virtual void operate(Algebra_Element* other, std::string operation);
 
@@ -80,6 +86,9 @@ namespace scls {
         inline void set_imaginary(Fraction new_imaginary) {a_imaginary=new_imaginary.to_double();};
         inline void set_real(Double new_real) {a_real=new_real;};
         inline void set_real(Fraction new_real) {a_real=new_real.to_double();};
+
+        // Return the value of the object in C++
+        virtual std::string to_cpp() const;
 
         // Returns the Complex to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;

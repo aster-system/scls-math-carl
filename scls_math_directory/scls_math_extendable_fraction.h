@@ -42,7 +42,7 @@ namespace scls {
         Extendable_Fraction(Extendable_Int value);
         Extendable_Fraction(int64_t numerator, int64_t denominator);
         Extendable_Fraction(Extendable_Int numerator, Extendable_Int denominator);
-        virtual ~Extendable_Fraction();
+        virtual ~Extendable_Fraction() = default;
 
         // Creates a new algebra element of the same type
         void clone(Extendable_Fraction* e) const{clone_base(e);e->a_denominator = a_denominator;e->a_numerator = a_numerator;};
@@ -68,6 +68,12 @@ namespace scls {
         // Multiply two fractions
         void multiply(Extendable_Fraction* other);
 
+        // Evaluate a relation of this element with another one
+        virtual Relation_State evaluate_relation(Algebra_Element* other, std::string relation);
+
+        // Returns if two elements are equal or not
+        virtual bool is_equal(Algebra_Element* other) const;
+
         // Operates this element with another one
         virtual void operate(Algebra_Element* other, std::string operation);
 
@@ -83,6 +89,9 @@ namespace scls {
 
         // Returns the number to a double
         double to_double() const;
+
+        // Return the value of the object in C++
+        virtual std::string to_cpp() const;
 
         // Returns the element to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;

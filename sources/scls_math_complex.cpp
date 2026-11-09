@@ -29,6 +29,16 @@ namespace scls {
     // Returns a fraction from a std::string
     Complex Complex::from_std_string(std::string content){return string_to_complex(content);}
 
+    // Returns if two elements are equal or not
+	bool Complex::is_equal(Algebra_Element* other) const {
+		return a_real.is_equal(&reinterpret_cast<Complex*>(other)->a_real) && a_imaginary.is_equal(&reinterpret_cast<Complex*>(other)->a_imaginary);
+	}
+
+    // Evaluate a relation of this element with another one
+    Algebra_Element::Relation_State Complex::evaluate_relation(Algebra_Element* other, std::string relation) {
+        return Relation_State::RS_Not_In_Relation;
+    }
+
     // Operates this element with another one
 	void Complex::operate(Algebra_Element* other, std::string operation){
 		if(operation == "+"){_add(*reinterpret_cast<Complex*>(other));}
@@ -36,6 +46,9 @@ namespace scls {
 		else if(operation == "/"){_divide(*reinterpret_cast<Complex*>(other));}
 		else {scls::print("Warning", "SCLS Math Carl", "Unknown operator \"" + operation + "\" for complex numbers.");}
 	}
+
+	// Return the value of the object in C++
+	std::string Complex::to_cpp() const {return std::string("scls::Complex(") + std::to_string(a_real.to_double()) + std::string(" ,") + std::to_string(a_imaginary.to_double()) + std::string(")");}
 
     // Returns the Complex to a simple std::string
     std::string Complex::to_mathml(Textual_Math_Settings* settings) const {

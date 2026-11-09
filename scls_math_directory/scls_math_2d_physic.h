@@ -359,7 +359,7 @@ namespace scls {
         Raycast_Result raycast(double x_start, double y_start, double x_direction, double y_direction, double distance);
 
         // Creates a new field
-        void new_vector_field_acceleration(std::shared_ptr<Formula_Base> x, std::shared_ptr<Formula_Base> y){a_vector_fields_acceleration.push_back(Vector_Field(x, y));};
+        void new_vector_field_acceleration(std::shared_ptr<Formula_Base> x, std::shared_ptr<Formula_Base> y);
 
         // Soft reset the engine
         void soft_reset(double used_delta_time);

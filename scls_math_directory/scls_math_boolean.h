@@ -69,6 +69,7 @@ namespace scls {
     	// Boolean constructor
     	Boolean(){};
     	Boolean(std::string unknown_name):Boolean(){new_unknown(unknown_name);};
+    	virtual ~Boolean() = default;
 
     	// Adds an operator
     	void add_and(char other){if(other == 0){clear();a_value = false;}};
@@ -111,6 +112,12 @@ namespace scls {
     	// Creates the unknown
     	virtual Algebra_Element::__Algebra_Unknown* create_unknown(){clear();a_unknown = std::make_shared<__Boolean_Unknown>();return a_unknown.get();};
 
+    	// Evaluate a relation of this element with another one
+        virtual Relation_State evaluate_relation(Algebra_Element* other, std::string relation){return Algebra_Element::Relation_State::RS_Not_In_Relation;};
+
+        // Returns if two elements are equal or not
+        virtual bool is_equal(Algebra_Element* other) const;
+
     	// Operates this element with another one
         void operate(Algebra_Element* other, std::string operation){if(operation == std::string("+")){add_or(other);}else if(operation == std::string(".")){add_and(other);}};
 
@@ -123,6 +130,9 @@ namespace scls {
 
     	// Get each unknowns
     	std::vector<std::string> unknowns();
+
+    	// Return the value of the object in C++
+    	virtual std::string to_cpp() const{return std::to_string(a_value);};
 
     	// Returns the element to a simple std::string
     	virtual std::string to_mathml(Textual_Math_Settings* settings) const {if(is_unknown()){return algebra_unknown()->name;}return std::string();};

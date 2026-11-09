@@ -36,7 +36,6 @@ namespace scls {
     Extendable_Fraction::Extendable_Fraction(Extendable_Int value):a_numerator(value){};
     Extendable_Fraction::Extendable_Fraction(int64_t numerator, int64_t denominator):a_denominator(denominator),a_numerator(numerator){};
     Extendable_Fraction::Extendable_Fraction(Extendable_Int numerator, Extendable_Int denominator):a_denominator(denominator),a_numerator(numerator){};
-    Extendable_Fraction::~Extendable_Fraction(){};
 
     // Add two fractions
     void Extendable_Fraction::add(Extendable_Fraction* other) {
@@ -77,6 +76,14 @@ namespace scls {
         a_numerator.multiply(&other->a_numerator);
         normalize();
     }
+
+    // Evaluate a relation of this element with another one
+    Algebra_Element::Relation_State Extendable_Fraction::evaluate_relation(Algebra_Element* other, std::string relation) {
+        return Relation_State::RS_Not_In_Relation;
+    }
+
+    // Returns if two elements are equal or not
+    bool Extendable_Fraction::is_equal(Algebra_Element* other) const{return a_numerator * reinterpret_cast<Extendable_Fraction*>(other)->a_denominator == a_denominator * reinterpret_cast<Extendable_Fraction*>(other)->a_numerator;}
 
     // Operates this element with another one
     void Extendable_Fraction::operate(Algebra_Element* other, std::string operation) {
@@ -153,6 +160,9 @@ namespace scls {
         double s = -(a_numerator < 0);if(s == 0){s = 1;}
         return (static_cast<double>(p_1) / static_cast<double>(p_2)) * s;
     }
+
+    // Return the value of the object in C++
+    std::string Extendable_Fraction::to_cpp() const {return std::string("scls::Extendable_Fraction(") + a_numerator.to_cpp() + std::string(", ") + a_denominator.to_cpp() + std::string(")");}
 
     // Convert directly to std string
     std::string Extendable_Fraction::to_mathml(Textual_Math_Settings* settings) const {return to_std_string(settings);}
