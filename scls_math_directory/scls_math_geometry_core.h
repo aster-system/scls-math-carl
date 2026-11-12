@@ -52,10 +52,6 @@ namespace scls {
     //
     //*********
 
-    // Convert degrees to radians
-    inline constexpr long double pi = 3.141592653589793238462643383279L;
-    inline long double degrees_to_radians(long double degrees) {return (degrees / 180.0L) * pi;};
-
     // Rotates a 3D vector and returns it normalized
     double* rotate_vector_3d_cylindrical(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z);
     double* rotate_vector_3d_cylindrical(long double vector_x, long double vector_y, long double vector_z, long double rotation_x, long double rotation_y, long double rotation_z, long double anchor_x, long double anchor_y, long double anchor_z);

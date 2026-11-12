@@ -200,52 +200,6 @@ namespace scls {
 	// Stream operator overloading (indev)
     std::ostream& operator<<(std::ostream& os, const Complex& obj);
 
-    typedef __Monomonial_Template<Complex> __Monomonial;
-    typedef Polynomial_Template<Complex> Polynomial;
-
-    /*// Complex polynomial
-    class Polynomial_Complex {
-        public:
-            // Polynomial_Complex constructor
-            Polynomial_Complex(){a_polynomial.push_back(__Polynomial_Complex_Member());a_polynomial.push_back(__Polynomial_Complex_Member());a_polynomial[0].unknown = std::string("");a_polynomial[1].unknown = std::string("i");};
-
-            // Conjugates the polynomial
-            inline std::shared_ptr<Polynomial_Complex> conjugate(){std::shared_ptr<Polynomial_Complex> to_return = std::make_shared<Polynomial_Complex>(*this);to_return.get()->imaginary_polynomial()->multiply(scls::Complex(-1));return to_return;};
-            // Converts a polynomial to a complex
-            static std::shared_ptr<Polynomial_Complex> from_polynomial(Polynomial_Template<Complex>* polynomial);
-            // Returns the imaginary polynomial
-            inline Polynomial_Template<Complex>* imaginary_polynomial() const {for(int i = 0;i<static_cast<int>(a_polynomial.size());i++){if(a_polynomial[i].unknown == std::string("i")){return a_polynomial[i].polynomial.get();}}return 0;};
-            // Returns the real polynomial
-            inline Polynomial_Template<Complex>* real_polynomial() const {for(int i = 0;i<static_cast<int>(a_polynomial.size());i++){if(a_polynomial[i].unknown == std::string("")){return a_polynomial[i].polynomial.get();}}return 0;};
-            // Returns the polynomial to an entire polynomial
-            inline std::shared_ptr<Polynomial_Template<Complex>> to_polynomial() const {std::shared_ptr<Polynomial_Template<Complex>> to_return = std::make_shared<Polynomial_Template<Complex>>(*real_polynomial());to_return.get()->__add(imaginary_polynomial());to_return.get()->multiply(scls::Complex(0, 1));return to_return;};
-
-        private:
-            // Struct representating each members of the number
-            struct __Polynomial_Complex_Member{std::shared_ptr<Polynomial_Template<Complex>>polynomial=std::make_shared<Polynomial_Template<Complex>>();std::string unknown = std::string();};
-
-            // Each parts of the polynomial
-            std::vector<__Polynomial_Complex_Member> a_polynomial;
-        };
-
-    // Complex formula
-
-    // Trigonometric complex
-    struct Complex_Polar {
-    	// Complex_Polar constructor
-    	Complex_Polar(std::shared_ptr<__Formula_Base_Template<Complex>> needed_argument, std::shared_ptr<__Formula_Base_Template<Complex>> needed_modulus):a_argument(needed_argument),a_modulus(needed_modulus){};
-
-    	// Converts the polar complex to an algebric complex
-    	Complex to_complex() const {Complex c(scls::Fraction::from_double(std::cos(a_argument.get()->value_to_double())), scls::Fraction::from_double(std::sin(a_argument.get()->value_to_double())));return c * a_modulus.get()->value_to_fraction();};
-
-    	// Getters and setters
-    	__Formula_Base_Template<Complex>* argument(){return a_argument.get();};
-    	__Formula_Base_Template<Complex>* modulus(){return a_modulus.get();};
-
-    	// Module and argument
-    	std::shared_ptr<__Formula_Base_Template<Complex>> a_argument;
-    	std::shared_ptr<__Formula_Base_Template<Complex>> a_modulus;
-    };//*/
 }
 
 

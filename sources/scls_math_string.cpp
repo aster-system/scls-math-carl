@@ -181,7 +181,7 @@ namespace scls {
                     }
                     else if(needed_function == std::string_view("sum")) {
                         // Assert
-                        if(in_function_parts.size() <= 1){print("Warning", "SCLS Math", "The formula \"" + source + "\" you want to parse use a \sum\" function without enough parameter (" + std::to_string(in_function_parts.size()) + " found, where at least 2 should be used).");}
+                        if(in_function_parts.size() <= 1){print("Warning", "SCLS Math", "The formula \"" + source + "\" you want to parse use a \"sum\" function without enough parameter (" + std::to_string(in_function_parts.size()) + " found, where at least 2 should be used).");}
 
                     	// Create the element
                     	std::shared_ptr<Algebra_Element> current_element_sum_count = element->new_algebra_element();

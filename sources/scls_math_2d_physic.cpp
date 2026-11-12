@@ -313,7 +313,7 @@ namespace scls {
         to_return_2.get()->angle = scls::vector_2d_angle(position_from_2);
 
         double difference_angle = scls::vector_2d_angle(velocity_from_1) - scls::vector_2d_angle(line_vector_normal);
-        scls::Point_2D new_velocity_direction = line_vector_normal.rotated(difference_angle * (180.0/SCLS_PI)).normalized() * -1;
+        scls::Point_2D new_velocity_direction = line_vector_normal.rotated(difference_angle * (180.0/pi)).normalized() * -1;
 
         // Calculate the velocity of the object 1
         double multiplier = velocity_from_1.norm();
@@ -365,8 +365,8 @@ namespace scls {
             scls::Point_2D p_1 = scls::Point_2D(collision_rect.get()->min_absolute_x(), collision_rect.get()->min_absolute_y()) - base;
             scls::Point_2D p_2 = scls::Point_2D(collision_rect.get()->min_absolute_x_next(), collision_rect.get()->min_absolute_y_next()) - base;
             double angle_1 = scls::vector_2d_angle(p_1);double angle_2 = scls::vector_2d_angle(p_2);
-            while(angle_1 >= SCLS_PI){angle_1 -= SCLS_PI * 2.0;}while(angle_1 < -SCLS_PI){angle_1 += SCLS_PI * 2.0;}
-            while(angle_2 >= SCLS_PI){angle_2 -= SCLS_PI * 2.0;}while(angle_2 < -SCLS_PI){angle_2 += SCLS_PI * 2.0;}
+            while(angle_1 >= pi){angle_1 -= pi * 2.0;}while(angle_1 < -pi){angle_1 += pi * 2.0;}
+            while(angle_2 >= pi){angle_2 -= pi * 2.0;}while(angle_2 < -pi){angle_2 += pi * 2.0;}
             collision_bottom = (scls::sign(angle_1) != scls::sign(angle_2));
         }
 

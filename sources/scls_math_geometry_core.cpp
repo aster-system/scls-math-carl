@@ -734,7 +734,7 @@ namespace scls {
 
     // Returns a point 3D with an angle (on y axis)
     Point_3D vector_with_angle(double angle){return scls::Point_3D(cos(angle), 0, sin(angle));};
-    Point_3D vector_with_angle_degrees(double angle){angle *= SCLS_PI/180.0; return scls::Point_3D(cos(angle), 0, sin(angle));};
+    Point_3D vector_with_angle_degrees(double angle){angle *= pi/180.0; return scls::Point_3D(cos(angle), 0, sin(angle));};
 
     //*********
     //

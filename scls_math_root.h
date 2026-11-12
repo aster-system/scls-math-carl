@@ -65,12 +65,6 @@
 #endif // SCLS_INIT
 
 // Define some usefull numbers
-#ifndef SCLS_PI
-#define SCLS_PI 3.1415926535
-#endif // SCLS_PI
-#ifndef SCLS_HALP_PI
-#define SCLS_HALF_PI 1.5707963267948966
-#endif // SCLS_HALP_PI
 #ifndef SCLS_RADIANS_TO_ANGLE
 #define SCLS_RADIANS_TO_ANGLE 57.2957795131
 #endif // SCLS_RADIANS_TO_ANGLE

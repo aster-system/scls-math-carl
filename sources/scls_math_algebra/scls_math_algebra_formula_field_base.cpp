@@ -25,7 +25,7 @@
 //
 
 // Include the good header file
-#include "../../scls_math_directory/scls_math_algebra/scls_math_algebra_formula_template.h"
+#include "../../scls_math_directory/scls_math_algebra/scls_math_algebra_formula_field_base.h"
 
 namespace scls {
     //*********
