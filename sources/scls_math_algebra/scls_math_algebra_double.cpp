@@ -69,6 +69,13 @@ namespace scls {
 		else if(operation == "tan"){a_value = std::tan(a_value);}
 	}
 
+	// Returns the neutral of known operations
+    std::shared_ptr<Algebra_Element> Double::operation_neutral(std::string operation) const {
+        if(operation == std::string_view("+")){return std::make_shared<Double>(0);}
+        else if(operation == std::string_view("*")){return std::make_shared<Double>(1);}
+        return std::shared_ptr<Double>();
+    }
+
 	// Returns the absolute value of the double
 	Double Double::abs() const{if(a_value >= 0){return Double(a_value);}return Double(-a_value);};
 	// Returns the inverse of the double
@@ -88,6 +95,9 @@ namespace scls {
 
 	// Return the value of the object in C++
 	std::string Double::to_cpp() const{return std::to_string(a_value);}
+
+	// Return the value of the object in GLSL
+	std::string Double::to_glsl() const{return std::to_string(a_value);}
 
 	// Returns the double to MathML
 	std::string Double::to_mathml(Textual_Math_Settings* settings)const{return scls::Fraction::from_double(a_value).to_mathml(settings);};

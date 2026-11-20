@@ -87,13 +87,16 @@ namespace scls {
         virtual void clone(Formula_Base_Field* b) const {Formula_Base_Field::clone(b);};
         virtual std::shared_ptr<Algebra_Element> algebra_clone() const {return clone();};
         virtual std::shared_ptr<Formula_Base_Template<T>> clone() const {std::shared_ptr<Formula_Base_Template<T>> b = std::make_shared<Formula_Base_Template<T>>();clone(b.get());b.get()->a_modified = a_modified;return b;};
+        virtual std::shared_ptr<Formula_Base_Field> formula_clone() const {return clone();};
 
         // Creates a new algebra element of the same type
         virtual std::shared_ptr<Algebra_Element> new_algebra_element() const {std::shared_ptr<Formula_Base_Template<T>> s = std::make_shared<Formula_Base_Template<T>>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;s.get()->a_modified = false;return s;};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const {std::shared_ptr<Formula_Base_Template<T>> s = std::make_shared<Formula_Base_Template<T>>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
         static std::shared_ptr<Formula_Base_Template<T>> new_formula() {std::shared_ptr<Formula_Base_Template<T>> s = std::make_shared<Formula_Base_Template<T>>();s.get()->a_this_object=s;return s;};
         static std::shared_ptr<Formula_Base_Template<T>> new_formula(T content) {std::shared_ptr<Formula_Base_Template<T>> s = std::make_shared<Formula_Base_Template<T>>(content);s.get()->a_this_object=s;return s;};
+        static std::shared_ptr<Formula_Base_Template<T>> new_formula(std::shared_ptr<Algebra_Element> content) {std::shared_ptr<Formula_Base_Template<T>> s = std::make_shared<Formula_Base_Template<T>>(content);s.get()->a_this_object=s;return s;};
         static std::shared_ptr<Formula_Base_Template<T>> new_formula(std::string content) {std::shared_ptr<Formula_Base_Template<T>> s = std::make_shared<Formula_Base_Template<T>>(content);s.get()->a_this_object=s;return s;};
+        virtual std::shared_ptr<Formula_Base_Field> new_formula_field(std::string content) const {return new_formula(content);};
 
         // Type of the object
         virtual std::string algebra_type() const{return std::string("formula_base_template");};
@@ -120,6 +123,13 @@ namespace scls {
         void multiply(T other){std::shared_ptr<Formula_Base_Template<T>>f=new_formula(other);multiply(f.get());};
         void operate(T other, std::string operation){std::shared_ptr<Formula_Base_Template<T>>f=new_formula(other);operate(f.get(), operation);};
         void substract(T other){std::shared_ptr<Formula_Base_Template<T>>f=new_formula(other);substract(f.get());};
+
+        // Returns the neutral of known operations
+        std::shared_ptr<Algebra_Element> operation_neutral(std::string operation) const {
+            std::shared_ptr<Algebra_Element> n = algebra_value_for_type()->operation_neutral(operation);
+            if(n.get() == 0){return std::shared_ptr<Formula_Base_Template<T>>();}
+            return new_formula(n);
+        }
 
         // Creates the unknown
         virtual Algebra_Element::__Algebra_Unknown* create_unknown(){clear();a_unknown = std::make_shared<Formula_Unknown>();return a_unknown.get();};;
@@ -162,8 +172,16 @@ namespace scls {
         virtual double value_to_double(std::string unknown, T f) const{std::shared_ptr<Formula_Base_Template<T>> u = replace_unknowns(unknown, f);return u.get()->value_to_double();};
         virtual double value_to_double() const{if(a_value.get() == 0){return 0;}return value()->to_double();};;
 
+        // Get an non-empty pointer containing an "T" object (useful if algebra_value() == 0 but the formula as children)
+        virtual Algebra_Element* algebra_value_for_type() const{return a_value_for_type.get();};
+
         // Getters and setters
         T* value() const {return reinterpret_cast<T*>(algebra_value());};
+
+    private:
+
+        // Object containing the data for the type of the formula
+        std::shared_ptr<T> a_value_for_type = std::make_shared<T>();
     };
 }
 

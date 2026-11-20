@@ -172,6 +172,9 @@ namespace scls {
         virtual bool is_multiplication_absorbing() const{return false;};
         virtual bool is_multiplication_neutral() const{return false;};
 
+        // Returns the neutral of known operations
+        virtual std::shared_ptr<Algebra_Element> operation_neutral(std::string operation) const = 0;
+
         // Creates a new algebra element of the same type
         void clone_base(Algebra_Element* e) const;
         void clone_base_without_sub_elements(Algebra_Element* e) const;
@@ -235,6 +238,9 @@ namespace scls {
 
         // Return the value of the object in C++
         virtual std::string to_cpp() const = 0;
+
+        // Returns the formula as a GLSL function
+        virtual std::string to_glsl() const = 0;
 
         // Returns the element to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const = 0;

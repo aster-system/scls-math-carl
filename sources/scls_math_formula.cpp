@@ -81,6 +81,10 @@ namespace scls {
     // Do the operation without modification
     std::shared_ptr<Formula_Base> Formula_Base::multiplied(Fraction other){std::shared_ptr<Formula_Base> to_return = clone();to_return.get()->multiply(other);return to_return;}
 
+    // Returns the neutral of known operations
+    std::shared_ptr<Algebra_Element> Formula_Base::operation_neutral(std::string operation) const {return new_formula(algebra_value_for_type()->operation_neutral(operation));}
+    std::shared_ptr<Algebra_Element> Extendable_Formula_Base::operation_neutral(std::string operation) const {return new_formula(algebra_value_for_type()->operation_neutral(operation));}
+
     // Returns a set of number which respects a precise relatio,
     Set_Number Formula_Base::check_relation(Relation* r, Formula_Base* f) {
     	Set_Number to_return = Set_Number::real();
@@ -235,6 +239,10 @@ namespace scls {
     double Extendable_Formula_Base::value_to_double() const {if(a_value.get() == 0){return 0;}return value<Extendable_Fraction>()->to_double();};
     double Formula_Base::value_to_double(Unknowns_Container* values) const {std::shared_ptr<Formula_Base> u = replace_unknowns(values);return u.get()->value_to_double();};
     double Formula_Base::value_to_double() const {if(a_value.get() == 0){return 0;}return value<Fraction>()->to_double();};
+
+    // Get an non-empty pointer containing an "T" object (useful if algebra_value() == 0 but the formula as children)
+    Algebra_Element* Extendable_Formula_Base::algebra_value_for_type() const{return a_value_for_type.get();};
+    Algebra_Element* Formula_Base::algebra_value_for_type() const{return a_value_for_type.get();};
 
     // Returns the continuity domain
 	Set_Number continuity_domain() {return Set_Number::real();}
@@ -430,6 +438,101 @@ namespace scls {
         to_return.get()->simplify();
         return to_return;
     }
+
+    void derivate(Formula_Base_Field* formula_to_return, Formula_Base_Field* formula_to_derivate, std::string unknown) {
+        if(formula_to_derivate->is_final_element()) {
+            if(formula_to_derivate->is_known() || formula_to_derivate->algebra_unknown_name() != unknown){formula_to_return->set_value_as_formula(formula_to_return->algebra_value()->operation_neutral("+"));}
+            else {formula_to_return->set_value_as_formula(formula_to_return->algebra_value_for_type()->operation_neutral("*"));}
+        }
+        else if(formula_to_derivate->algebra_elements_const().size() == 1){
+            std::string function_name = formula_to_derivate->algebra_operator_name();
+            std::shared_ptr<Formula_Base_Field> content = reinterpret_cast<Formula_Base_Field*>(formula_to_derivate->algebra_elements_const().at(0).get())->formula_clone();
+            std::shared_ptr<Formula_Base_Field> content_derivated = content.get()->formula_clone();
+            derivate(content_derivated.get(), content.get(), unknown);
+
+            // Get the good function
+            content.get()->clone(formula_to_return);
+            std::string new_function = std::string();
+            if(function_name == std::string_view("cos")){new_function = std::string("sin");}
+            else if(function_name == std::string_view("sin")){new_function = std::string("cos");}
+            else if(function_name == std::string_view("exp")){new_function = std::string("exp");}
+            else if(function_name == std::string_view("tan")){new_function = std::string("tan");}
+            if(new_function != std::string_view()){
+                formula_to_return->sub_place();
+                formula_to_return->set_algebra_operator(new_function, 1);
+            }
+
+            // Post-function operation
+            if(function_name == std::string_view("cos")){formula_to_return->operate(formula_to_return->new_formula_field("-1").get(), "*");}
+            else if(function_name == std::string_view("ln")){std::shared_ptr<Formula_Base_Field> temp = formula_to_return->formula_clone();formula_to_return->set_value_as_formula(formula_to_return->operation_neutral("*"));formula_to_return->operate(temp.get(), std::string("/"));}
+            else if(function_name == std::string_view("tan")){formula_to_return->operate(formula_to_return, std::string("*"));formula_to_return->operate(formula_to_return->operation_neutral("*").get(), std::string("+"));}
+
+            // Post composition operation
+            formula_to_return->operate(content_derivated.get(), "*");
+        }
+        /*
+        else {
+            std::string needed_operator = formula->algebra_operator_name();
+            if(needed_operator == std::string_view("+")) {
+                to_return = derivate(formula->formula_element(0), unknown);
+
+                for(std::size_t i = 1;i<formula->algebra_elements_const().size();i++) {
+                    std::shared_ptr<scls::Formula_Base> current_derivate = derivate(formula->formula_element(i), unknown);
+
+                    // Chain rule
+                    to_return.get()->operate(current_derivate.get(), "+");
+                }
+            }
+            else if(needed_operator == std::string_view("*")) {
+                to_return = formula->formula_element(0)->clone();
+                std::shared_ptr<scls::Formula_Base> next_derivate = derivate(to_return.get(), unknown);
+
+                for(std::size_t i = 1;i<formula->algebra_elements_const().size();i++) {
+                    std::shared_ptr<scls::Formula_Base> current = formula->formula_element(i)->clone();
+                    std::shared_ptr<scls::Formula_Base> current_derivate = derivate(formula->formula_element(i), unknown);
+                    std::shared_ptr<scls::Formula_Base> to_return_current = to_return.get()->clone();
+                    std::shared_ptr<scls::Formula_Base> to_return_derivate = next_derivate.get()->clone();
+
+                    // Chain rule
+                    to_return.get()->operate(current.get(), "*");
+                    to_return_current.get()->operate(current_derivate.get(), "*");
+                    to_return_derivate.get()->operate(current.get(), "*");
+                    to_return_current.get()->operate(to_return_derivate.get(), "+");
+                    next_derivate = to_return_current;
+                }
+
+                to_return = next_derivate;
+            }
+            else if(needed_operator == std::string_view("/")) {
+                to_return = formula->formula_element(0)->clone();
+                std::shared_ptr<scls::Formula_Base> next_derivate = derivate(to_return.get(), unknown);
+
+                for(std::size_t i = 1;i<formula->algebra_elements_const().size();i++) {
+                    std::shared_ptr<scls::Formula_Base> current = formula->formula_element(i)->clone();
+                    std::shared_ptr<scls::Formula_Base> current_derivate = derivate(formula->formula_element(i), unknown);
+                    std::shared_ptr<scls::Formula_Base> to_return_current = to_return.get()->clone();
+                    std::shared_ptr<scls::Formula_Base> to_return_derivate = next_derivate.get()->clone();
+
+                    // Chain rule
+                    to_return.get()->operate(current.get(), "*");
+                    to_return_current.get()->operate(current_derivate.get(), "*");
+                    to_return_derivate.get()->operate(current.get(), "*");
+                    std::shared_ptr<scls::Formula_Base>temp=std::make_shared<Formula_Base>(Fraction(-1));
+                    to_return_current.get()->operate(temp.get(), "*");
+                    to_return_current.get()->operate(to_return_derivate.get(), "+");
+                    current.get()->operate(current.get(), "*");
+                    to_return_current.get()->operate(current.get(), "/");
+                    next_derivate = to_return_current;
+                }
+
+                to_return = next_derivate;
+            }
+        }
+        //*/
+
+        formula_to_return->simplify();
+    }
+    //*/
 
     // Apply a McLaurin serie
     std::shared_ptr<scls::Extendable_Formula_Base> mclaurin(scls::Extendable_Formula_Base* formula, std::shared_ptr<scls::Extendable_Formula_Base>& f_derivated, std::string unknown, int step) {

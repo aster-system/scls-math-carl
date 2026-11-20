@@ -68,6 +68,7 @@ namespace scls {
 
     	// Boolean constructor
     	Boolean(){};
+    	Boolean(bool new_value):a_value(new_value){};
     	Boolean(std::string unknown_name):Boolean(){new_unknown(unknown_name);};
     	virtual ~Boolean() = default;
 
@@ -119,7 +120,10 @@ namespace scls {
         virtual bool is_equal(Algebra_Element* other) const;
 
     	// Operates this element with another one
-        void operate(Algebra_Element* other, std::string operation){if(operation == std::string("+")){add_or(other);}else if(operation == std::string(".")){add_and(other);}};
+        virtual void operate(Algebra_Element* other, std::string operation){if(operation == std::string("+")){add_or(other);}else if(operation == std::string(".")){add_and(other);}};
+
+        // Returns the neutral of known operations
+        virtual std::shared_ptr<Algebra_Element> operation_neutral(std::string operation) const;
 
         // Available operators for this object
         virtual const Algebra_Operators& operators() const;
@@ -133,6 +137,9 @@ namespace scls {
 
     	// Return the value of the object in C++
     	virtual std::string to_cpp() const{return std::to_string(a_value);};
+
+    	// Return the value of the object in C++
+    	virtual std::string to_glsl() const{print("Warning", "SCLS Math Carl", "No available conversion in GLSL for a Boolean.");return std::string();};
 
     	// Returns the element to a simple std::string
     	virtual std::string to_mathml(Textual_Math_Settings* settings) const {if(is_unknown()){return algebra_unknown()->name;}return std::string();};

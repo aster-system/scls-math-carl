@@ -118,6 +118,7 @@ namespace scls {
             inline void set_texture_multiplier_y(unsigned int asker_id, double new_texture_multiplier_y) { face_datas(asker_id).attributes[SCLS_3D_POINT_ATTRIBUTES_TEXTURE_MULTIPLIER_Y] = new_texture_multiplier_y; };
             inline void set_texture_multiplier_z(unsigned int asker_id, double new_texture_multiplier_z) { face_datas(asker_id).attributes[SCLS_3D_POINT_ATTRIBUTES_TEXTURE_MULTIPLIER_Z] = new_texture_multiplier_z; };
             inline void set_texture_x(unsigned int asker_id, double new_texture_x) { face_datas(asker_id).attributes[SCLS_3D_POINT_ATTRIBUTES_TEXTURE_X] = new_texture_x; };
+            inline void set_texture_xy(unsigned int asker_id, double new_texture_x, double new_texture_y) {__Point_Datas_By_Face& f = face_datas(asker_id);f.attributes[SCLS_3D_POINT_ATTRIBUTES_TEXTURE_X] = new_texture_x;f.attributes[SCLS_3D_POINT_ATTRIBUTES_TEXTURE_Y] = new_texture_y;};
             inline void set_texture_y(unsigned int asker_id, double new_texture_y) { face_datas(asker_id).attributes[SCLS_3D_POINT_ATTRIBUTES_TEXTURE_Y] = new_texture_y; };
             inline double texture_multiplier_x(unsigned int asker_id) {return face_datas(asker_id).attributes[SCLS_3D_POINT_ATTRIBUTES_TEXTURE_MULTIPLIER_X];};
             inline double texture_multiplier_y(unsigned int asker_id) {return face_datas(asker_id).attributes[SCLS_3D_POINT_ATTRIBUTES_TEXTURE_MULTIPLIER_Y];};

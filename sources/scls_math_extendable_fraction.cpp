@@ -93,6 +93,13 @@ namespace scls {
         else if(operation == "exp"){double temp = to_double();temp = std::exp(temp);(*this) = Fraction::from_double(temp);}
     }
 
+    // Returns the neutral of known operations
+    std::shared_ptr<Algebra_Element> Extendable_Fraction::operation_neutral(std::string operation) const {
+        if(operation == std::string_view("+")){return std::make_shared<Extendable_Fraction>(0);}
+        else if(operation == std::string_view("*")){return std::make_shared<Extendable_Fraction>(1);}
+        return std::shared_ptr<Extendable_Fraction>();
+    }
+
     // Substract two fractions
     void Extendable_Fraction::sub(Extendable_Fraction* other) {
         Extendable_Fraction modified = (*other);
@@ -163,6 +170,9 @@ namespace scls {
 
     // Return the value of the object in C++
     std::string Extendable_Fraction::to_cpp() const {return std::string("scls::Extendable_Fraction(") + a_numerator.to_cpp() + std::string(", ") + a_denominator.to_cpp() + std::string(")");}
+
+    // Return the value of the object in GLSL
+    std::string Extendable_Fraction::to_glsl() const {return std::to_string(to_double());}
 
     // Convert directly to std string
     std::string Extendable_Fraction::to_mathml(Textual_Math_Settings* settings) const {return to_std_string(settings);}

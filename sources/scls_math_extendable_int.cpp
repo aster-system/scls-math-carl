@@ -268,6 +268,9 @@ namespace scls {
     // Return the value of the object in C++
     std::string Extendable_Int::to_cpp() const {return std::string("scls::Extendable_Int(") + std::to_string(to_int64()) + std::string(")");}
 
+    // Returns the formula as a GLSL function
+    std::string Extendable_Int::to_glsl() const{return std::to_string(to_int64());}
+
     // Returns the number to an int32
     int32_t Extendable_Int::to_int32() const {if(a_negative){return static_cast<int32_t>(a_parts.at(0)) * -1;}return a_parts.at(0);}
     int64_t Extendable_Int::to_int64() const {

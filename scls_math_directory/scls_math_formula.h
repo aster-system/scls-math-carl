@@ -75,6 +75,9 @@ namespace scls {
 
         // Creates a new formula
         static std::shared_ptr<Formula_Base> new_formula(Fraction content) {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>(content);s.get()->a_this_object=s;return s;};
+        static std::shared_ptr<Formula_Base> new_formula(std::shared_ptr<Algebra_Element> content) {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>(content);s.get()->a_this_object=s;return s;};
+        virtual std::shared_ptr<Formula_Base> new_formula(std::string content) const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
+        virtual std::shared_ptr<Formula_Base_Field> new_formula_field(std::string content) const {return new_formula(content);};
 
         // Creates a new algebra element of the same type
         void algebra_clone(Formula_Base* b) const {Formula_Base_Field::algebra_clone(b);};
@@ -82,9 +85,10 @@ namespace scls {
         virtual void clone(Formula_Base_Field* b) const {Formula_Base_Field::clone(b);};
         virtual std::shared_ptr<Algebra_Element> algebra_clone() const {return clone();};
         virtual std::shared_ptr<Formula_Base> clone() const {std::shared_ptr<Formula_Base> b = std::make_shared<Formula_Base>();clone(b.get());b.get()->a_modified = a_modified;return b;};
+        virtual std::shared_ptr<Formula_Base_Field> formula_clone() const {return clone();};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element() const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;s.get()->a_modified = false;return s;};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
-        virtual std::shared_ptr<Formula_Base> new_formula(std::string content) const {std::shared_ptr<Formula_Base> s = std::make_shared<Formula_Base>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
+
 
         // Type of the object
         virtual std::string algebra_type() const;
@@ -127,6 +131,9 @@ namespace scls {
         // Do the operation without modification
         std::shared_ptr<Formula_Base> multiplied(Fraction other);
 
+        // Returns the neutral of known operations
+        virtual std::shared_ptr<Algebra_Element> operation_neutral(std::string operation) const;
+
         // Equality operators
         bool equals(Fraction f);
 
@@ -159,8 +166,16 @@ namespace scls {
         virtual double value_to_double(Unknowns_Container* values) const;
         virtual double value_to_double() const;
 
+        // Get an non-empty pointer containing an "T" object (useful if algebra_value() == 0 but the formula as children)
+        virtual Algebra_Element* algebra_value_for_type() const;
+
         // Getters and setters
         template <typename T> T* value() const {return reinterpret_cast<T*>(algebra_value());};
+
+    private:
+
+        // Object containing the data for the type of the formula
+        std::shared_ptr<Fraction> a_value_for_type = std::make_shared<Fraction>();
     };
 
     class Extendable_Formula_Base : public Formula_Base_Field {
@@ -199,7 +214,9 @@ namespace scls {
         Extendable_Formula_Base(std::string unknown_name):Extendable_Formula_Base(){if(string_is_number(unknown_name)){a_value = std::make_shared<Extendable_Fraction>(Fraction::from_std_string(unknown_name));}else{new_unknown(unknown_name);}};
 
         // Creates a new formula
+        static std::shared_ptr<Extendable_Formula_Base> new_formula(std::shared_ptr<Algebra_Element> content) {std::shared_ptr<Extendable_Formula_Base> s = std::make_shared<Extendable_Formula_Base>(content);s.get()->a_this_object=s;return s;};
         static std::shared_ptr<Extendable_Formula_Base> new_formula(Extendable_Fraction content) {std::shared_ptr<Extendable_Formula_Base> s = std::make_shared<Extendable_Formula_Base>(content);s.get()->a_this_object=s;return s;};
+        virtual std::shared_ptr<Formula_Base_Field> new_formula_field(std::string content) const {return new_formula(content);};
 
         // Creates a new algebra element of the same type
         void algebra_clone(Extendable_Formula_Base* b) const {Formula_Base_Field::algebra_clone(b);};
@@ -207,6 +224,7 @@ namespace scls {
         virtual void clone(Formula_Base_Field* b) const {Formula_Base_Field::clone(b);};
         virtual std::shared_ptr<Algebra_Element> algebra_clone() const {return clone();};
         virtual std::shared_ptr<Extendable_Formula_Base> clone() const {std::shared_ptr<Extendable_Formula_Base> b = std::make_shared<Extendable_Formula_Base>();clone(b.get());b.get()->a_modified = a_modified;return b;};
+        virtual std::shared_ptr<Formula_Base_Field> formula_clone() const {return clone();};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element() const {std::shared_ptr<Extendable_Formula_Base> s = std::make_shared<Extendable_Formula_Base>();s.get()->a_parent=a_this_object;s.get()->a_this_object=s;s.get()->a_modified = false;return s;};
         virtual std::shared_ptr<Algebra_Element> new_algebra_element(std::string content) const {std::shared_ptr<Extendable_Formula_Base> s = std::make_shared<Extendable_Formula_Base>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
         virtual std::shared_ptr<Extendable_Formula_Base> new_formula(std::string content) const {std::shared_ptr<Extendable_Formula_Base> s = std::make_shared<Extendable_Formula_Base>(content);s.get()->a_parent=a_this_object;s.get()->a_this_object=s;return s;};
@@ -237,6 +255,9 @@ namespace scls {
         void operate(Extendable_Fraction other, std::string operation);
         void substract(Extendable_Fraction other);
 
+        // Returns the neutral of known operations
+        virtual std::shared_ptr<Algebra_Element> operation_neutral(std::string operation) const;
+
         // Creates the unknown
         virtual Algebra_Element::__Algebra_Unknown* create_unknown();
 
@@ -256,9 +277,17 @@ namespace scls {
         virtual double value_to_double(Extendable_Unknowns_Container* values) const;
         virtual double value_to_double() const;
 
+        // Get an non-empty pointer containing an "T" object (useful if algebra_value() == 0 but the formula as children)
+        virtual Algebra_Element* algebra_value_for_type() const;
+
         // Getters and setters
         inline Algebra_Element* algebra_value() const {return a_value.get();};
         template <typename T> T* value() const {return reinterpret_cast<T*>(algebra_value());};
+
+    private:
+
+        // Object containing the data for the type of the formula
+        std::shared_ptr<Extendable_Fraction> a_value_for_type = std::make_shared<Extendable_Fraction>();
     };
 
     class Relation_Module : public Relation {
@@ -363,6 +392,7 @@ namespace scls {
 	Set_Number deravibility_domain();
 
     // Derivate a formula
+    void derivate(Formula_Base_Field* formula_to_return, Formula_Base_Field* formula_to_derivate, std::string unknown);
     std::shared_ptr<scls::Extendable_Formula_Base> derivate(scls::Extendable_Formula_Base* f, std::string unknown);
     std::shared_ptr<scls::Formula_Base> derivate(scls::Formula_Base* f, std::string unknown);
 

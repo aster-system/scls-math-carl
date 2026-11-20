@@ -47,8 +47,18 @@ namespace scls {
 		else {scls::print("Warning", "SCLS Math Carl", "Unknown operator \"" + operation + "\" for complex numbers.");}
 	}
 
+	// Returns the neutral of known operations
+    std::shared_ptr<Algebra_Element> Complex::operation_neutral(std::string operation) const {
+        if(operation == std::string_view("+")){return std::make_shared<Complex>(0);}
+        else if(operation == std::string_view("*")){return std::make_shared<Complex>(1);}
+        return std::shared_ptr<Complex>();
+    }
+
 	// Return the value of the object in C++
 	std::string Complex::to_cpp() const {return std::string("scls::Complex(") + std::to_string(a_real.to_double()) + std::string(" ,") + std::to_string(a_imaginary.to_double()) + std::string(")");}
+
+	// Return the value of the object in GLSL
+	std::string Complex::to_glsl() const {print("Warning", "SCLS Math Carl", "No available conversion in GLSL for a complex number.");return std::string(")");}
 
     // Returns the Complex to a simple std::string
     std::string Complex::to_mathml(Textual_Math_Settings* settings) const {

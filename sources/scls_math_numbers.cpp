@@ -82,6 +82,13 @@ namespace scls {
         else if(operation == "tan"){double d = to_double();d = std::tan(d);set_from_double(d);}
     }
 
+    // Returns the neutral of known operations
+    std::shared_ptr<Algebra_Element> __Fraction_Base::operation_neutral(std::string operation) const {
+        if(operation == std::string_view("+")){return std::make_shared<__Fraction_Base>(0);}
+        else if(operation == std::string_view("*")){return std::make_shared<__Fraction_Base>(1);}
+        return std::shared_ptr<__Fraction_Base>();
+    }
+
     // Returns the absolute value of the fraction
     __Fraction_Base __Fraction_Base::abs() const{if(to_double() >= 0){return *this;}return (*this) * -1;};
     // Returns the inverse of the fraction
@@ -157,6 +164,9 @@ namespace scls {
 
     // Return the value of the object in C++
     std::string __Fraction_Base::to_cpp() const {return std::string("scls::__Fraction_Base(") + std::to_string(a_numerator) + std::string(", ") + std::to_string(a_denominator) + std::string(")");}
+
+    // Return the value of the object in GLSL
+    std::string __Fraction_Base::to_glsl() const {return std::to_string(to_double());}
 
     // Returns the fraction to MathML
     std::string __Fraction_Base::to_mathml(Textual_Math_Settings* settings)const{if(a_denominator == 1){return std::string("<math><mi>") + std::to_string(numerator()) + std::string("</mi></math>");}return std::string("<math><frac><mrow>") + std::to_string(a_numerator) + "</mrow><mrow>" + std::to_string(a_denominator) + std::string("</mrow></frac></math>");};

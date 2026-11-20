@@ -67,6 +67,9 @@ namespace scls {
         // Operates this element with another one
         virtual void operate(Algebra_Element* other, std::string operation);
 
+        // Returns the neutral of known operations
+        virtual std::shared_ptr<Algebra_Element> operation_neutral(std::string operation) const;
+
         // Returns a fraction from a double
         static Complex from_double(double result){return __Fraction_Base::from_double(result);};
         // Returns a fraction from a std::string
@@ -89,6 +92,9 @@ namespace scls {
 
         // Return the value of the object in C++
         virtual std::string to_cpp() const;
+
+        // Return the value of the object in GLSL
+        virtual std::string to_glsl() const;
 
         // Returns the Complex to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;

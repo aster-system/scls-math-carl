@@ -48,6 +48,13 @@ namespace scls {
 		return a_value == reinterpret_cast<Boolean*>(other)->a_value;
 	}
 
+	// Returns the neutral of known operations
+    std::shared_ptr<Algebra_Element> Boolean::operation_neutral(std::string operation) const {
+        if(operation == std::string_view("+")){return std::make_shared<Boolean>(false);}
+        else if(operation == std::string_view(".")){return std::make_shared<Boolean>(true);}
+        return std::shared_ptr<Boolean>();
+    }
+
     // Replaces the unknowns
 	void Boolean::replace_unknowns_algebra(Algebra_Element* element, Algebra_Element::Unknowns_Container* values_raw) const {
 	    Boolean::Unknowns_Container* values = reinterpret_cast<Boolean::Unknowns_Container*>(values_raw);

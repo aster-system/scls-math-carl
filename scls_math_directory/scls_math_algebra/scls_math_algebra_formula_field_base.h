@@ -93,6 +93,11 @@ namespace scls {
         virtual std::shared_ptr<Algebra_Element> algebra_clone() const = 0;
         virtual void algebra_clone(Algebra_Element* b) const {clone(reinterpret_cast<Formula_Base_Field*>(b));};
         virtual void clone(Formula_Base_Field* b) const {clone_base(b);if(a_value.get() != 0){b->a_value = a_value.get()->algebra_clone();}else{b->a_value.reset();};};
+        virtual std::shared_ptr<Formula_Base_Field> formula_clone() const  = 0;
+        virtual std::shared_ptr<Formula_Base_Field> new_formula_field(std::string content) const  = 0;
+
+        // Set the value of the formula
+        virtual void set_value_as_formula(std::shared_ptr<Algebra_Element> new_value);
 
         // Returns if the formula is empty
         bool empty() const;
@@ -133,12 +138,18 @@ namespace scls {
         virtual std::string to_cpp() const;
         virtual std::string to_cpp_function(const std::string& function_name);
 
+        // Returns the formula as a GLSL function
+		virtual std::string to_glsl() const;
+
         // Returns the element to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;
         virtual std::string to_std_string(Textual_Math_Settings* settings) const;
 
         // Different kinds of values
         virtual double value_to_double() const = 0;
+
+        // Get an non-empty pointer containing an "T" object (useful if algebra_value() == 0 but the formula as children)
+        virtual Algebra_Element* algebra_value_for_type() const = 0;
 
         // Getters and setters
         inline Algebra_Element* algebra_value() const {return a_value.get();};

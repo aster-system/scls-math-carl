@@ -77,6 +77,9 @@ namespace scls {
         // Operates this element with another one
         virtual void operate(Algebra_Element* other, std::string operation);
 
+        // Returns the neutral of known operations
+        virtual std::shared_ptr<Algebra_Element> operation_neutral(std::string operation) const;
+
         // Substract two fractions
         void sub(Extendable_Fraction* other);
 
@@ -92,6 +95,9 @@ namespace scls {
 
         // Return the value of the object in C++
         virtual std::string to_cpp() const;
+
+        // Return the value of the object in GLSL
+        virtual std::string to_glsl() const;
 
         // Returns the element to a simple std::string
         virtual std::string to_mathml(Textual_Math_Settings* settings) const;

@@ -83,6 +83,9 @@ namespace scls {
         // Return the value of the object in C++
         virtual std::string to_cpp() const;
 
+        // Returns the formula as a GLSL function
+        virtual std::string to_glsl() const;
+
         // Returns the number to an int64
         int32_t to_int32() const;
         int64_t to_int64() const;

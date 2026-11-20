@@ -151,6 +151,9 @@ namespace scls {
         simplify();
     }
 
+    // Set the value of the formula
+    void Formula_Base_Field::set_value_as_formula(std::shared_ptr<Algebra_Element> new_value){clear();a_value = new_value;}
+
     // Simplify the expression
     char Formula_Base_Field::simplify_step() {
         // Basic
@@ -323,6 +326,32 @@ namespace scls {
 
     	// Finish the result
     	to_return += std::string("}");
+		return to_return;
+    }
+
+    // Returns the formula as a GLSL function
+    std::string Formula_Base_Field::to_glsl() const {
+    	std::string to_return = std::string();
+
+		// Add what is needed to add
+		if(is_final_element()) {
+			if(is_unknown()){to_return = algebra_unknown()->name;}
+			else{to_return = algebra_value()->to_glsl();}
+		}
+		else {
+			if(algebra_operator_arity() == 1) {
+				to_return = algebra_operator_name() + std::string("(") + algebra_elements_const().at(0).get()->to_glsl() + std::string(")");
+			}
+			else {
+				to_return += std::string("(");
+				for(std::size_t i = 0;i<algebra_elements_const().size() - 1;i++) {
+					to_return += algebra_elements_const().at(i).get()->to_glsl();
+					to_return += std::string(" ") + algebra_operator_name() + std::string(" ");
+				}
+				to_return += algebra_elements_const().at(algebra_elements_const().size() - 1).get()->to_glsl() + std::string(")");
+			}
+		}
+
 		return to_return;
     }
 
